@@ -14,6 +14,7 @@
     volume: 0.7,
     sayName: true,
     hatchWho: 'animals',    // 'animals' | 'photos' | 'both'
+    hatchStyle: 'random',   // shell effect id from js/hatch/*, or 'random'
     hatchMode: 'tap',       // 'tap' (hatch waits for you) | 'auto'
     showPause: false,       // pause button visible on timer screen
     showAdjust: false,      // −/+ time buttons visible on timer screen

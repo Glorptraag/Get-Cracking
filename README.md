@@ -26,6 +26,7 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 | **A continuous cue as well.** A ground ring on the diorama empties as time runs out. Its pebbles light up at each crack step, so the ring and the egg tell the same story. | `buildRing` in `js/app.js` |
 | **The idle egg is alive.** It breathes, and its wobbles get bigger at each stage. Tapping it gives a harmless "boop" and never changes the timer. | CSS `egg-breathe / egg-wobble / egg-hop` |
 | **The hatch.** Squash for anticipation, stretch, the lid flies off, the friend peeks out of the shell (clipped to the shell rim), then hops out in front with a squash-and-settle bounce. | `Egg.hatch()` |
+| **Shells that do something physical.** After a shared squash-and-stretch, the intact egg is swapped for loose shell pieces and a *hatch style* takes over: **Roll away**, **Kaboom** or **Crumble** (the Looney Tunes falling-teeth gag). Grown-ups can pick one or let it be a surprise, and preview each one in settings. | `js/shellfx.js`, `js/hatch/*.js` |
 | **The reward lingers.** After hatching, the friend loops hops, blinks, waves and wags. Tapping it makes it jump again. | CSS `.idle …` |
 | **Ending on a celebration.** Time's up plays a soft sparkle, never an alarm. The full tune plays on the hatch. | `Sound.ready()`, `Sound.endTune()` |
 | **Sound as a time cue.** Ambient music signals that something is in progress. It gains a twinkle layer in the final 10%. | `Sound.setTension()` |
@@ -46,13 +47,28 @@ css/app.css           visual language and every animation loop
 js/util.js            helpers, seeded RNG, shuffle bag
 js/animals.js         the 40 friends + photo "friend"
 js/egg.js             egg, crack stages, hatch choreography
+js/shellfx.js         hatch-style registry + the contract every style follows
+js/hatch/*.js         one file per hatch style (roll, boom, crumble)
 js/scenes.js          the 10 diorama worlds + ambient particles
 js/audio.js           Web Audio music, sfx, end tunes, speech
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
 tools/*.html          dev contact sheets for checking every animal / scene
+tools/hatch-lab.html  play any hatch style, in slow motion if needed
+tools/hatch-snap.js   node tools/hatch-snap.js <style> out.png: a 16-frame contact sheet of a hatch
 ```
+
+## Adding a hatch style
+
+Hatch styles are interchangeable plug-ins. Each file in `js/hatch/` calls `GC.ShellFX.register({ id, name, icon, run(ctx) })` and follows the contract documented at the top of `js/shellfx.js`:
+
+- build shell pieces with `ctx.piece(polygon)`
+- call `ctx.release()` when the friend should spring out
+- animate only through `ctx.animate` and wait only through `ctx.wait`, so slow motion works
+- keep pieces off the friend once it has landed
+
+Because no style touches shared code, several can be built in parallel. Add the new script tag to `index.html`, `tools/hatch-lab.html` and the `sw.js` file list, and it shows up in settings automatically.
 
 ## Not possible on the web (yet)
 

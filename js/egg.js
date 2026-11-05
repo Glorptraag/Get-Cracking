@@ -107,8 +107,9 @@
         `<polyline points="${zigStr}" pathLength="1" class="crack-main"/>${branchMarkup}` +
         `</g>` +
         `</g></g>` +
-        `<g class="egg-friend-clip" clip-path="url(#${id}t)"><g class="egg-friend-pos"></g></g>` +
-        `<g class="egg-friend-free"></g>` +
+        `<g class="shell-back"></g>` +
+        `<g class="egg-friend"></g>` +
+        `<g class="shell-front"></g>` +
         `<g class="egg-fx"></g>`;
 
       this.q = (sel) => root.querySelector(sel);
@@ -217,71 +218,123 @@
       }
     }
 
+    /** Build the context object handed to a shell effect (see js/shellfx.js). */
+    _shellCtx(release) {
+      const self = this;
+      const ts = () => GC.timeScale || 1;
+      const ctx = {
+        front: this.q('.shell-front'),
+        back: this.q('.shell-back'),
+        pal: this.pal,
+        pattern: this.pattern,
+        EGG_PATH, ZIG,
+        ground: 48,
+        bounds: { left: -330, right: 330, top: -480, bottom: 230 },
+        reduce: GC.prefersReducedMotion(),
+        release,
+        rand: GC.rand,
+        sfx: GC.Sound ? {
+          crack: () => GC.Sound.crack(), clink: (p) => GC.Sound.clink(p), thud: (p) => GC.Sound.thud(p), whoosh: () => GC.Sound.whoosh(),
+        } : { crack() {}, clink() {}, thud() {}, whoosh() {} },
+        wait: (ms) => new Promise((r) => setTimeout(r, ms * ts())),
+        animate(el, keyframes, opts = {}) {
+          const o = Object.assign({}, opts);
+          if (o.duration) o.duration *= ts();
+          if (o.delay) o.delay *= ts();
+          if (o.endDelay) o.endDelay *= ts();
+          return el.animate(keyframes, o).finished.catch(() => {});
+        },
+        /**
+         * A shell fragment: the egg's painted shell clipped to `points`
+         * (egg-local polygon, may extend past the egg silhouette). Returns
+         * { el, cx, cy } — `el` is a <g> whose local origin is the piece's
+         * centroid, so translate/rotate animations spin it about its middle.
+         */
+        piece(points, opts = {}) {
+          const layer = opts.layer || ctx.front;
+          let cx = 0, cy = 0;
+          for (const [x, y] of points) { cx += x; cy += y; }
+          cx /= points.length; cy /= points.length;
+          if (opts.cx != null) cx = opts.cx;
+          if (opts.cy != null) cy = opts.cy;
+          const pid = GC.uid('pc');
+          const pts = points.map((p) => p.join(',')).join(' ');
+          const wrap = GC.el('g', { transform: `translate(${cx.toFixed(1)} ${cy.toFixed(1)})`, class: 'shell-piece' }, layer);
+          const el = GC.el('g', {}, wrap);
+          el.innerHTML = `<g transform="translate(${(-cx).toFixed(1)} ${(-cy).toFixed(1)})">` +
+            `<clipPath id="${pid}"><polygon points="${pts}"/></clipPath>` +
+            `<g clip-path="url(#${pid})">${eggBody(self.id + 'c', self.pal, self.pattern)}` +
+            `<g clip-path="url(#${self.id}c)"><polygon points="${pts}" fill="none" stroke="${O}" stroke-width="${opts.edge || 4.5}" stroke-linejoin="round"/></g></g></g>`;
+          return { el, wrap, cx, cy };
+        },
+        /** a soft ground shadow at egg-local (x, y) */
+        shadow(x, y, rx = 20, layer) {
+          return GC.el('ellipse', { cx: x, cy: y, rx, ry: rx * 0.28, fill: O, opacity: 0.18 }, layer || ctx.back);
+        },
+        /** a cartoon dust puff */
+        puff(x, y, r = 18, layer) {
+          const g = GC.el('g', { transform: `translate(${x} ${y})` }, layer || ctx.front);
+          const c = GC.el('circle', { r, fill: '#fdf3e4', stroke: O, 'stroke-width': 3.5, opacity: 0.9 }, g);
+          ctx.animate(c, [{ transform: 'scale(.2)', opacity: 0.9 }, { transform: 'scale(1.3)', opacity: 0 }], { duration: 600, easing: 'ease-out' }).then(() => g.remove());
+          return g;
+        },
+      };
+      return ctx;
+    }
+
     /**
-     * The big moment. Squash → stretch → lid pops off → friend peeks up out
-     * of the shell → hops out in front and starts its happy loop.
+     * The big moment.
+     *   1. anticipation: squash → stretch (shared by every style)
+     *   2. the intact egg is swapped for loose shell pieces and the chosen
+     *      shell effect (roll / boom / crumble …) takes over
+     *   3. when the effect calls ctx.release() the friend springs up and
+     *      lands in front with a squash-and-settle bounce, then idles
      * @param {string} friendMarkup  SVG markup from GC.Animals.render / renderPhoto
-     * @param {{onPop?:Function}} hooks
+     * @param {{onPop?:Function, style?:string}} hooks
      */
     async hatch(friendMarkup, hooks = {}) {
       if (this.hatched) return;
       this.hatched = true;
       const reduce = GC.prefersReducedMotion();
+      const ts = () => GC.timeScale || 1;
+      const anim = (el, k, o) => el.animate(k, Object.assign({}, o, { duration: o.duration * ts() })).finished.catch(() => {});
       this.root.classList.remove('ready', 'paused');
       this.wobbleEl.dataset.level = 0;
-      const clipPos = this.q('.egg-friend-pos');
-      const free = this.q('.egg-friend-free');
-      clipPos.innerHTML = `<g class="friend-anim">${friendMarkup}</g>`;
-      const friend = clipPos.firstChild;
-      friend.style.opacity = '0';
+      const holder = this.q('.egg-friend');
+      holder.innerHTML = `<g class="friend-anim" style="opacity:0">${friendMarkup}</g>`;
+      const friend = holder.firstChild;
 
-      // 1. squash + stretch (anticipation)
-      await this.squashEl.animate([
+      // 1. anticipation
+      await anim(this.squashEl, [
         { transform: 'scale(1,1)' }, { transform: 'scale(1.14,.84)', offset: 0.6 }, { transform: 'scale(.9,1.12)' },
-      ], { duration: reduce ? 200 : 520, easing: 'cubic-bezier(.5,0,.5,1)', fill: 'forwards' }).finished;
+      ], { duration: reduce ? 200 : 520, easing: 'cubic-bezier(.5,0,.5,1)', fill: 'forwards' });
 
-      // 2. lid flies off
+      // 2. hand over to the shell effect
+      const fx = GC.ShellFX.pick(hooks.style || this.opt.style);
       this.root.classList.add('hatched');
-      const dir = Math.random() < 0.5 ? -1 : 1;
-      this.q('.egg-top-fly').animate([
-        { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
-        { transform: `translate(${dir * 120}px,-230px) rotate(${dir * 160}deg)`, opacity: 1, offset: 0.55 },
-        { transform: `translate(${dir * 210}px,40px) rotate(${dir * 320}deg)`, opacity: 0 },
-      ], { duration: reduce ? 400 : 1200, easing: 'cubic-bezier(.2,.6,.4,1)', fill: 'forwards' });
-      this.squashEl.animate([{ transform: 'scale(.9,1.12)' }, { transform: 'scale(1.05,.96)' }, { transform: 'scale(1,1)' }],
-        { duration: 360, easing: 'ease-out', fill: 'forwards' });
-      this.chips(10, true);
+      this.wobbleEl.style.visibility = 'hidden';
+      let release;
+      const released = new Promise((r) => (release = r));
+      let done = false;
+      const ctx = this._shellCtx(() => { if (!done) { done = true; release(); } });
+      Promise.resolve().then(() => fx.run(ctx)).catch((e) => { console.error('shell fx failed', e); }).then(() => ctx.release());
+      await Promise.race([released, new Promise((r) => setTimeout(r, 3500 * ts()))]);
+      this.style = fx.id;
+
+      // 3. friend springs out
       if (!reduce) this.confetti();
       if (hooks.onPop) hooks.onPop();
-
-      // 3. friend pops up, peeking from inside the bottom shell
       friend.style.opacity = '1';
-      await friend.animate([
-        { transform: 'translate(0px,90px) scale(.55,.55)' },
-        { transform: 'translate(0px,-62px) scale(.78,.98)', offset: 0.5 },
-        { transform: 'translate(0px,-40px) scale(.86,.74)', offset: 0.75 },
-        { transform: 'translate(0px,-46px) scale(.8,.8)' },
-      ], { duration: reduce ? 300 : 720, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' }).finished;
-      await wait(reduce ? 100 : 380);
-
-      // 4. hop out in front of the shell
-      const up = friend.animate([
-        { transform: 'translate(0px,-46px) scale(.8,.8)' },
-        { transform: 'translate(0px,-52px) scale(.9,.66)', offset: 0.3 },
-        { transform: 'translate(0px,-150px) scale(.86,.98)' },
-      ], { duration: reduce ? 150 : 380, easing: 'cubic-bezier(.3,.8,.5,1)', fill: 'forwards' });
-      await up.finished;
-      // reparent above the shell, unclipped
-      free.appendChild(friend);
-      up.cancel();
-      await friend.animate([
-        { transform: 'translate(0px,-150px) scale(.86,.98)' },
-        { transform: 'translate(0px,56px) scale(1.02,1.02)', offset: 0.7 },
-        { transform: 'translate(0px,56px) scale(1.18,.82)', offset: 0.82 },
-        { transform: 'translate(0px,56px) scale(.96,1.06)', offset: 0.92 },
-        { transform: 'translate(0px,56px) scale(1,1)' },
-      ], { duration: reduce ? 250 : 700, easing: 'cubic-bezier(.45,0,.6,1)', fill: 'forwards' }).finished;
-      friend.style.transform = 'translate(0px,56px)';
+      await anim(friend, [
+        { transform: 'translate(0px,-30px) scale(.25,.25)' },
+        { transform: 'translate(0px,-170px) scale(.86,1.12)', offset: 0.45 },
+        { transform: 'translate(0px,-190px) scale(1,1)', offset: 0.55 },
+        { transform: 'translate(0px,48px) scale(1,1.04)', offset: 0.82 },
+        { transform: 'translate(0px,48px) scale(1.2,.8)', offset: 0.9 },
+        { transform: 'translate(0px,48px) scale(.96,1.06)', offset: 0.96 },
+        { transform: 'translate(0px,48px) scale(1,1)' },
+      ], { duration: reduce ? 300 : 1150, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' });
+      friend.style.transform = 'translate(0px,48px)';
       friend.getAnimations().forEach((a) => a.cancel());
       friend.classList.add('idle');
       this.friend = friend;
@@ -306,5 +359,6 @@
   function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
   GC.Egg = Egg;
+  GC.EGG_SHAPE = { EGG_PATH, ZIG, eggBody };
   GC.EGG_PALETTES = PALETTES;
 })();

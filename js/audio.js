@@ -265,6 +265,32 @@
       [79, 84].forEach((n, i) => this.tone(midi(n), t + i * 0.09, 0.3, { gain: 0.1, bus: this.sfxBus, partials: [[1, 1], [2, 0.2]] }));
     }
 
+    /** shell piece hitting something hard; p = 0..1 pitch */
+    clink(p = 0.5) {
+      if (!this.ensure()) return;
+      const t = this.ctx.currentTime;
+      const f = 1800 + p * 2600;
+      this.tone(f, t, 0.12, { gain: 0.07, bus: this.sfxBus, partials: [[1, 1], [2.7, 0.3]] });
+      this.noiseBurst(t, 0.03, { freq: f * 1.5, q: 4, gain: 0.08 });
+    }
+    /** soft landing on the ground; p = 0..1 pitch */
+    thud(p = 0.5) {
+      if (!this.ensure()) return;
+      const t = this.ctx.currentTime;
+      this.tone(90 + p * 120, t, 0.16, { gain: 0.22, bus: this.sfxBus, slide: 0.6 });
+      this.noiseBurst(t, 0.08, { freq: 500, q: 0.8, gain: 0.08 });
+    }
+    whoosh() {
+      if (!this.ensure()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      const src = ctx.createBufferSource(); src.buffer = this._noise;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+      f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.35);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      src.connect(f); f.connect(g); g.connect(this.sfxBus); src.start(t, Math.random()); src.stop(t + 0.5);
+    }
+
     /** the celebration tune; returns its length in seconds */
     endTune(id) {
       if (!this.ensure()) return 0;

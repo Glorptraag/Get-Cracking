@@ -295,6 +295,7 @@
     r.friend = friend;
     r.egg.onCheer = () => Sound.cheer();
     await r.egg.hatch(friend.markup, {
+      style: S.hatchStyle,
       onPop: () => {
         Sound.pop();
         setTimeout(() => Sound.endTune(S.endSound), 120);
@@ -449,6 +450,7 @@
     if (kind === 'world' || kind === 'settings') body.appendChild(secWorld());
     if (kind === 'sound' || kind === 'settings') body.appendChild(secSound());
     if (kind === 'settings') {
+      body.appendChild(secStyle());
       body.appendChild(secHatch());
       body.appendChild(secScreen());
       body.appendChild(secNext());
@@ -532,6 +534,32 @@
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
       toggleRow('Say the friend\'s name', '“It\'s a Fox!” (uses the device voice)', () => S.sayName, (v) => (S.sayName = v)));
+  }
+
+  function secStyle() {
+    const svg = document.createElementNS(GC.SVGNS, 'svg');
+    svg.setAttribute('viewBox', '-200 -260 400 330');
+    svg.setAttribute('class', 'style-preview');
+    let busy = false;
+    const play = async (id) => {
+      if (busy) return;
+      busy = true;
+      Sound.ensure(); Sound.setVolume(S.volume);
+      svg.innerHTML = `<ellipse cx="0" cy="40" rx="190" ry="40" fill="#cfe3a8" stroke="${O}" stroke-width="5"/><g></g>`;
+      const egg = new GC.Egg(svg.lastChild, { x: 0, y: 10, scale: 0.9 });
+      egg.setStep(8, true);
+      const pool = GC.Animals.list;
+      try {
+        await egg.hatch(GC.Animals.render(GC.pick(pool)), { style: id === 'random' ? undefined : id, onPop: () => Sound.pop() });
+      } finally { busy = false; }
+    };
+    const opts = [{ v: 'random', label: '🎲 Surprise me' }, ...GC.ShellFX.list().map((f) => ({ v: f.id, label: `${f.icon} ${f.name}` }))];
+    const group = optGroup(opts, () => S.hatchStyle, (v) => (S.hatchStyle = v), (v) => play(v));
+    svg.addEventListener('click', () => play(S.hatchStyle));
+    svg.innerHTML = `<ellipse cx="0" cy="40" rx="190" ry="40" fill="#cfe3a8" stroke="${O}" stroke-width="5"/><g></g>`;
+    const e = new GC.Egg(svg.lastChild, { x: 0, y: 10, scale: 0.9 });
+    e.setStep(8, true);
+    return sec('Hatch style', 'What the shell does when the egg hatches. Tap a style to watch it, or tap the egg to replay.', group, svg);
   }
 
   function secHatch() {
