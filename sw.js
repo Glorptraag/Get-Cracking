@@ -1,5 +1,5 @@
-/* Get Cracking — offline cache. Bump VERSION when files change. */
-const VERSION = 'gc-v3';
+/* Get Cracking — offline cache. Bump VERSION when the file list changes. */
+const VERSION = 'gc-v4';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/util.js', 'js/animals.js', 'js/egg.js', 'js/shellfx.js',
@@ -17,16 +17,17 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 
-// cache-first: the app never needs the network after the first visit
+// network-first: always get the latest build when online (so a new deploy
+// shows up on the next load), fall back to the cache when offline.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request).then((res) => {
-      if (res.ok && new URL(e.request.url).origin === location.origin) {
+    fetch(e.request).then((res) => {
+      if (res.ok) {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(e.request, copy));
       }
       return res;
-    }).catch(() => caches.match('index.html')))
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || caches.match('index.html')))
   );
 });

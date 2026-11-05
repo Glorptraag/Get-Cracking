@@ -76,7 +76,36 @@
         this._noise = this._makeNoise();
       }
       if (this.ctx.state === 'suspended') this.ctx.resume();
+      this._mediaSession();
       return this.ctx;
+    }
+
+    /**
+     * iPhone/iPad: Web Audio is treated like a ringtone and is silenced by the
+     * ring/silent switch. Declaring a media-playback session (Safari 17+), and
+     * on older iOS keeping a silent <audio> loop playing, moves our sound onto
+     * the media channel so music, ticks and the hatch tune are heard.
+     * Must first run inside a tap (Start / a preview) to be allowed.
+     */
+    _mediaSession() {
+      try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) {}
+      if (!this._silent) {
+        const n = 4000, buf = new DataView(new ArrayBuffer(44 + n));
+        const w = (o, s) => [...s].forEach((c, i) => buf.setUint8(o + i, c.charCodeAt(0)));
+        w(0, 'RIFF'); buf.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); buf.setUint32(16, 16, true);
+        buf.setUint16(20, 1, true); buf.setUint16(22, 1, true); buf.setUint32(24, 8000, true); buf.setUint32(28, 8000, true);
+        buf.setUint16(32, 1, true); buf.setUint16(34, 8, true); w(36, 'data'); buf.setUint32(40, n, true);
+        for (let i = 0; i < n; i++) buf.setUint8(44 + i, 128);
+        const a = new Audio(URL.createObjectURL(new Blob([buf.buffer], { type: 'audio/wav' })));
+        a.loop = true; a.setAttribute('playsinline', ''); a.preload = 'auto';
+        this._silent = a;
+      }
+      if (this._silent.paused) this._silent.play().catch(() => {});
+    }
+
+    /** let the phone's audio session go when no timer is running */
+    releaseMedia() {
+      if (this._silent && !this._silent.paused) this._silent.pause();
     }
 
     setVolume(v) {

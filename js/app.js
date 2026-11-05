@@ -368,6 +368,7 @@
     clearInterval(run.knockT);
     run = null;
     Sound.stopMusic(0.3);
+    Sound.releaseMedia();
     keepAwake(false);
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
   }
