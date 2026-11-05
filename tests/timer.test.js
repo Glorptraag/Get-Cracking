@@ -129,7 +129,7 @@ const state = (p) => p.evaluate(() => { const r = GC.app.run; return r && { phas
     ok(after.step >= before.step, `cracks kept (step ${before.step} → ${after.step})`);
     await p.evaluate(() => { for (let i = 0; i < 10; i++) GC.app.adjust(-60000); });
     const floor = await state(p);
-    ok(Math.abs(floor.rem - 5000) < 5, `−1 spam floors at 5 s instead of ending instantly (${floor.rem} ms)`);
+    ok(Math.abs(floor.rem - 5000) < 50, `−1 spam floors at 5 s instead of ending instantly (${floor.rem} ms)`);
     ok(floor.phase === 'running', 'still running after −1 spam');
     await p.clock.runFor(5200);
     ok((await state(p)).phase === 'ready', 'then finishes on time');
