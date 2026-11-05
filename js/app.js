@@ -346,6 +346,7 @@
       Sound.resumeMusic();
     }
     $('kc-pause').textContent = run.phase === 'paused' ? '▶' : '❚❚';
+    tick(); // show the exact frozen time straight away, not on the next frame
     syncTray();
   }
 
