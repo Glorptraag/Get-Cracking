@@ -1,4 +1,4 @@
-# Get Cracking 🥚
+# Get Cracking
 
 A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and a cheerful tune plays instead of an alarm.
 
@@ -20,13 +20,14 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 
 ## How it behaves
 
-- **Cracking:** the egg cracks in 8 steps at fixed fractions of the timer (`STEP_AT` in `js/egg.js`). Cracks never heal when time is added.
+- **Cracking:** the egg cracks in 8 steps at fixed fractions of the timer (`STEP_AT` in `js/egg.js`). Each step runs the cracks further, branches new ones, and draws them all wider and deeper (`CRACK_W_BY_STEP`). Cracks never heal when time is added.
+- **Clock:** a big mm:ss clock sits centred at the top of the timer screen. It can be hidden in settings ("Show the clock").
 - **Ground ring:** the ring around the egg empties as time runs out, and its pebbles light up at each crack step (`buildRing` in `js/app.js`).
 - **Idle egg:** it breathes, and wobbles more at later steps. Tapping it squashes it and never changes the timer.
 - **Time's up:** a soft chime plays, never an alarm. With "Wait for a tap" (the default) the egg glows and knocks every 5 s for up to 5 minutes, and a tap anywhere hatches it (`timeUp()`).
 - **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again.
 - **Countdown music:** gains an extra twinkle in the last 10% of the timer (`Sound.setTension`).
-- **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the 🔒. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
+- **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the lock button. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
 - **Also:** an optional "Next up" card after the hatch, the screen kept awake during a run (Wake Lock), and a friend book that collects every animal hatched.
 
 ## Files
@@ -35,6 +36,7 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 index.html            setup screen + timer screen + sheets
 css/app.css           visual language and every animation loop
 js/util.js            helpers, seeded RNG, shuffle bag
+js/icons.js           every UI icon, drawn in SVG (no emoji)
 js/animals.js         the 40 friends + photo "friend"
 js/egg.js             egg, crack stages, hatch choreography
 js/shellfx.js         hatch-style registry + the contract every style follows
@@ -74,7 +76,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
 
 ## Adding a hatch style
 
-Hatch styles are interchangeable plug-ins. Each file in `js/hatch/` calls `GC.ShellFX.register({ id, name, icon, run(ctx) })` and follows the contract documented at the top of `js/shellfx.js`:
+Hatch styles are interchangeable plug-ins. Each file in `js/hatch/` calls `GC.ShellFX.register({ id, name, icon, run(ctx) })`, where `icon` names a drawing in `js/icons.js`, and follows the contract documented at the top of `js/shellfx.js`:
 
 - build shell pieces with `ctx.piece(polygon)`
 - call `ctx.release()` when the friend should spring out

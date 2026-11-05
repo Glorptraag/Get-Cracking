@@ -5,9 +5,8 @@
  *
  *   step 1  hairline crack near the top
  *   step 2-5 the main zig-zag crack runs across the shell
- *   step 6  a little hole opens — someone is peeking out!
- *   step 7  warm light leaks through the cracks
- *   step 8  extra cracks, the egg starts hopping
+ *   step 6-8 more cracks branch off, and every crack gets wider and
+ *            deeper at each step; by step 8 the egg is hopping
  *
  * Coordinates: base of the egg at (0,0), egg grows up to y = -170.
  */
@@ -25,12 +24,21 @@
     { step: 1, pts: [[-30, -140], [-22, -128], [-27, -117], [-17, -108]] },
     { step: 3, pts: [[14, -150], [20, -138], [12, -128], [18, -118]] },
     { step: 5, pts: [[34, -62], [40, -50], [31, -40]] },
+    { step: 6, pts: [[12, -94], [22, -106], [16, -116], [28, -128], [38, -122]] },
+    { step: 6, pts: [[-36, -72], [-30, -58], [-38, -48]] },
+    { step: 7, pts: [[-4, -74], [-12, -60], [-3, -50], [-10, -36]] },
+    { step: 7, pts: [[-20, -92], [-26, -104], [-17, -108]] },
     { step: 8, pts: [[-44, -66], [-50, -52], [-42, -42], [-47, -30]] },
+    { step: 8, pts: [[44, -90], [50, -104], [42, -114], [46, -126]] },
     { step: 8, pts: [[-6, -152], [-12, -160]] },
   ];
   /** fraction of the timer at which each crack step happens */
   const STEP_AT = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.8, 0.9];
   const MAIN_LEN_BY_STEP = [0, 0, 0.22, 0.46, 0.72, 1, 1, 1, 1];
+  /** crack line width at each step: the cracks deepen as time passes */
+  const CRACK_W_BY_STEP = [3, 3, 3.6, 4.2, 4.8, 5.4, 6.2, 7, 8];
+  const crackW = (n) => CRACK_W_BY_STEP[n];
+  const branchW = (n) => +(CRACK_W_BY_STEP[n] * 0.78).toFixed(2);
 
   const PALETTES = [
     { shell: '#fbf1dc', spot: '#a9cf8b' },
@@ -90,10 +98,7 @@
         `<circle class="egg-halo" cx="0" cy="-86" r="104" fill="#fff3b0" filter="url(#${id}glow)"/>` +
         `<g class="egg-wobble"><g class="egg-squash">` +
         `${eggBody(id + 'c', this.pal, this.pattern)}` +
-        `<g class="egg-hole"><path d="M14,-128 L22,-138 L34,-134 L40,-122 L34,-110 L22,-108 L14,-116 Z" fill="#2a1a1c" ${S}/>` +
-        `<g class="egg-peek-eyes"><ellipse cx="22" cy="-122" rx="2.6" ry="3.4" fill="#fff"/><ellipse cx="32" cy="-122" rx="2.6" ry="3.4" fill="#fff"/></g></g>` +
         `<g class="egg-cracks" clip-path="url(#${id}c)">` +
-        `<g class="crack-glow" filter="url(#${id}glow)"><polyline points="${zigStr}" pathLength="1" class="crack-main-glow"/>${branchMarkup}</g>` +
         `<polyline points="${zigStr}" pathLength="1" class="crack-main"/>${branchMarkup}` +
         `</g>` +
         `</g></g>` +
@@ -106,7 +111,7 @@
       this.wobbleEl = this.q('.egg-wobble');
       this.squashEl = this.q('.egg-squash');
       this.main = this.q('.crack-main');
-      this.mainGlow = this.q('.crack-main-glow');
+      this.cracksEl = this.q('.egg-cracks');
       this.fx = this.q('.egg-fx');
       this.setStep(0, true);
       this.root.addEventListener('pointerdown', () => this.boop());
@@ -134,14 +139,12 @@
       const changed = n !== this.step;
       this.step = n;
       const len = MAIN_LEN_BY_STEP[n];
-      for (const el of [this.main, this.mainGlow]) {
-        el.style.strokeDasharray = `${len} 2`;
-      }
+      this.main.style.strokeDasharray = `${len} 2`;
+      this.cracksEl.style.setProperty('--crack-w', crackW(n));
+      this.cracksEl.style.setProperty('--branch-w', branchW(n));
       this.root.querySelectorAll('.crack-branch').forEach((b) => {
         b.classList.toggle('on', n >= +b.dataset.step);
       });
-      this.root.classList.toggle('peek', n >= 6);
-      this.root.classList.toggle('glowing', n >= 7);
       this.wobbleEl.dataset.level = n >= 8 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0;
       if (changed && !silent) {
         this.shake();
@@ -207,15 +210,14 @@
       }
     }
 
-    /** The cracks (and peek hole) exactly as they look right now, as static markup for shell pieces. */
+    /** The cracks exactly as they look right now, as static markup for shell pieces. */
     _crackMarkup() {
       if (this._cracks != null) return this._cracks;
       const n = this.step, len = MAIN_LEN_BY_STEP[n];
       const st = `fill="none" stroke="${O}" stroke-linecap="round" stroke-linejoin="round"`;
       let m = `<g clip-path="url(#${this.id}c)">`;
-      if (len > 0) m += `<polyline points="${zigStr}" pathLength="1" stroke-dasharray="${len} 2" stroke-width="4.5" ${st}/>`;
-      for (const b of BRANCHES) if (n >= b.step) m += `<polyline points="${b.pts.map((p) => p.join(',')).join(' ')}" stroke-width="3.5" ${st}/>`;
-      if (n >= 6) m += `<path d="M14,-128 L22,-138 L34,-134 L40,-122 L34,-110 L22,-108 L14,-116 Z" fill="#2a1a1c" ${S}/>`;
+      if (len > 0) m += `<polyline points="${zigStr}" pathLength="1" stroke-dasharray="${len} 2" stroke-width="${crackW(n)}" ${st}/>`;
+      for (const b of BRANCHES) if (n >= b.step) m += `<polyline points="${b.pts.map((p) => p.join(',')).join(' ')}" stroke-width="${branchW(n)}" ${st}/>`;
       m += `</g>`;
       return (this._cracks = m);
     }
