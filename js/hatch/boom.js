@@ -232,7 +232,7 @@
   GC.ShellFX.register({
     id: 'boom',
     name: 'Kaboom',
-    icon: '💥',
+    icon: 'boom',
     async run(ctx) {
       const rand = ctx.rand;
       const egg = eggPolygon(ctx.EGG_PATH);

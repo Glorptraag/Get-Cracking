@@ -58,10 +58,10 @@
       </button>
 
       <nav class="quick-icons" aria-label="Options">
-        <button class="icon-btn" id="btn-world" aria-label="Choose world"><span class="ico">🌳</span><small>World</small></button>
-        <button class="icon-btn" id="btn-sound" aria-label="Choose music"><span class="ico">🎶</span><small>Music</small></button>
-        <button class="icon-btn" id="btn-book" aria-label="Friend book"><span class="ico">📖</span><small>Friends</small></button>
-        <button class="icon-btn" id="btn-settings" aria-label="Grown-up settings"><span class="ico">⚙️</span><small>Settings</small></button>
+        <button class="icon-btn" id="btn-world" aria-label="Choose world"><span class="ico" data-icon="tree"></span><small>World</small></button>
+        <button class="icon-btn" id="btn-sound" aria-label="Choose music"><span class="ico" data-icon="notes"></span><small>Music</small></button>
+        <button class="icon-btn" id="btn-book" aria-label="Friend book"><span class="ico" data-icon="book"></span><small>Friends</small></button>
+        <button class="icon-btn" id="btn-settings" aria-label="Grown-up settings"><span class="ico" data-icon="gear"></span><small>Settings</small></button>
       </nav>
     </div>
   </section>
@@ -72,54 +72,55 @@
 
     <div class="pill hatch-pill" id="hatch-pill" aria-live="polite"></div>
     <div class="pill time-pill" id="time-pill" aria-hidden="true">5:00</div>
-    <div class="tap-hint" id="tap-hint" aria-hidden="true">👆</div>
+    <div class="tap-hint" id="tap-hint" aria-hidden="true" data-icon="tap"></div>
 
     <div class="next-card" id="next-card" aria-live="polite">
-      <div class="next-icon" id="next-icon">🧸</div>
+      <div class="next-icon" id="next-icon" data-icon="teddy"></div>
       <div><small>Next up</small><strong id="next-text">Tidy-up time</strong></div>
     </div>
 
     <!-- grown-up lock: hold to open the parent tray -->
     <button class="lock-btn" id="lock-btn" aria-label="Grown-ups: hold to open controls">
       <svg viewBox="0 0 48 48" class="hold-ring" aria-hidden="true"><circle cx="24" cy="24" r="21" pathLength="1"/></svg>
-      <span>🔒</span>
+      <span class="lock-ico" data-icon="lock"></span>
     </button>
     <div class="lock-tip" id="lock-tip">Grown-ups: press &amp; hold</div>
 
     <div class="kid-controls" id="kid-controls">
       <button class="round-btn" id="kc-minus" aria-label="One minute less">−1</button>
       <button class="round-btn" id="kc-plus" aria-label="One minute more">+1</button>
-      <button class="round-btn" id="kc-pause" aria-label="Pause">❚❚</button>
+      <button class="round-btn" id="kc-pause" aria-label="Pause" data-icon="pause"></button>
     </div>
 
     <button class="hold-btn" id="again-btn" aria-label="Hold for a new egg">
-      <span>🥚</span><b>Hold for a new egg</b>
+      <span data-icon="egg"></span><b>Hold for a new egg</b>
     </button>
 
     <div class="tray" id="tray" role="dialog" aria-label="Grown-up controls">
       <div class="tray-title">Grown-up controls</div>
       <div class="tray-btns">
-        <button data-act="pause"><span>❚❚</span>Pause</button>
+        <button data-act="pause"><span data-icon="pause"></span>Pause</button>
         <button data-act="minus"><span>−1</span>Minute</button>
         <button data-act="plus"><span>+1</span>Minute</button>
-        <button data-act="hatch"><span>🐣</span>Hatch now</button>
-        <button data-act="again"><span>🔁</span>New egg</button>
-        <button data-act="stop" class="danger"><span>■</span>Stop</button>
+        <button data-act="hatch"><span data-icon="hatch"></span>Hatch now</button>
+        <button data-act="again"><span data-icon="again"></span>New egg</button>
+        <button data-act="stop" class="danger"><span data-icon="stop"></span>Stop</button>
       </div>
-      <button class="tray-close" data-act="close" aria-label="Close">✕</button>
+      <button class="tray-close" data-act="close" aria-label="Close" data-icon="close"></button>
     </div>
   </section>
 
   <!-- ============================================== SHEETS =========== -->
   <div class="sheet-backdrop" id="sheet-backdrop"></div>
   <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <header><h2 id="sheet-title">Settings</h2><button class="sheet-close" id="sheet-close" aria-label="Close">✕</button></header>
+    <header><h2 id="sheet-title">Settings</h2><button class="sheet-close" id="sheet-close" aria-label="Close" data-icon="close"></button></header>
     <div class="sheet-body" id="sheet-body"></div>
   </section>
 
   <noscript><p class="noscript">Get Cracking needs JavaScript to hatch eggs.</p></noscript>
 
   <script src="js/util.js"></script>
+  <script src="js/icons.js"></script>
   <script src="js/animals.js"></script>
   <script src="js/egg.js"></script>
   <script src="js/shellfx.js"></script>

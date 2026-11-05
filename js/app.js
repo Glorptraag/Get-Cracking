@@ -187,7 +187,7 @@
     $('kc-minus').classList.toggle('hidden', !S.showAdjust);
     $('kc-plus').classList.toggle('hidden', !S.showAdjust);
     $('kid-controls').style.display = '';
-    $('kc-pause').textContent = '❚❚';
+    $('kc-pause').innerHTML = GC.icon('pause');
     closeTray();
     showScreen('timer');
 
@@ -319,7 +319,7 @@
       setTimeout(() => {
         if (run !== r) return;
         $('next-text').textContent = S.nextUp.text || '';
-        $('next-icon').innerHTML = S.nextUp.photo ? `<img src="${S.nextUp.photo}" alt="">` : (S.nextUp.icon || '⭐');
+        $('next-icon').innerHTML = S.nextUp.photo ? `<img src="${S.nextUp.photo}" alt="">` : GC.icon(S.nextUp.icon);
         $('next-card').classList.add('show');
       }, 2200);
     }
@@ -345,7 +345,7 @@
       run.ring.prog.closest('.ring-layer').style.opacity = 1;
       Sound.resumeMusic();
     }
-    $('kc-pause').textContent = run.phase === 'paused' ? '▶' : '❚❚';
+    $('kc-pause').innerHTML = GC.icon(run.phase === 'paused' ? 'play' : 'pause');
     tick(); // show the exact frozen time straight away, not on the next frame
     syncTray();
   }
@@ -399,7 +399,7 @@
     const live = ph === 'running' || ph === 'paused';
     const q = (a) => document.querySelector(`.tray [data-act="${a}"]`);
     q('pause').hidden = !live;
-    q('pause').innerHTML = ph === 'paused' ? '<span>▶</span>Resume' : '<span>❚❚</span>Pause';
+    q('pause').innerHTML = ph === 'paused' ? `<span>${GC.icon('play')}</span>Resume` : `<span>${GC.icon('pause')}</span>Pause`;
     q('minus').hidden = !live;
     q('plus').hidden = !live;
     q('hatch').hidden = !(live || ph === 'ready');
@@ -487,14 +487,24 @@
     for (const c of kids) if (c != null) e.append(c);
     return e;
   }
+  /** text with {icon-name} tokens → a fragment with the drawn icons inline */
+  function rich(text) {
+    const frag = document.createDocumentFragment();
+    String(text).split(/\{([a-z]+)\}/).forEach((part, i) => {
+      if (i % 2) frag.append(GC.Icons.el(part, 'inline'));
+      else if (part) frag.append(part);
+    });
+    return frag;
+  }
   function sec(title, hint, ...kids) {
-    return h('div', { class: 'sec' }, h('h3', {}, title), hint ? h('p', { class: 'hint' }, hint) : null, ...kids);
+    return h('div', { class: 'sec' }, h('h3', {}, title), hint ? h('p', { class: 'hint' }, rich(hint)) : null, ...kids);
   }
   function optGroup(options, get, set, extra) {
     const wrap = h('div', { class: 'opts' });
     const paint = () => wrap.querySelectorAll('.opt').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
     for (const o of options) {
-      const b = h('button', { class: 'opt', 'data-v': o.v, onclick: () => { set(o.v); paint(); save(); if (extra) extra(o.v); } }, o.label);
+      const b = h('button', { class: 'opt', 'data-v': o.v, onclick: () => { set(o.v); paint(); save(); if (extra) extra(o.v); } },
+        o.icon ? GC.Icons.el(o.icon) : null, o.label);
       wrap.append(b);
     }
     paint();
@@ -505,7 +515,7 @@
     input.checked = !!get();
     input.addEventListener('change', () => { set(input.checked); save(); });
     return h('div', { class: 'row' },
-      h('label', {}, label, sub ? h('span', { class: 'sub' }, sub) : null),
+      h('label', {}, rich(label), sub ? h('span', { class: 'sub' }, sub) : null),
       h('label', { class: 'toggle-row' }, input, h('span', { class: 'switch' })));
   }
 
@@ -513,7 +523,7 @@
     const grid = h('div', { class: 'scene-grid' });
     const paint = () => grid.querySelectorAll('.scene-card').forEach((c) => c.classList.toggle('on', c.dataset.v === S.scene));
     const pickScene = (v) => { S.scene = v; save(); paint(); chooseScene(); fitSetup(); };
-    grid.append(h('button', { class: 'scene-card', 'data-v': 'random', onclick: () => pickScene('random') }, h('div', { class: 'rand' }, '🎲'), h('span', {}, 'Surprise me')));
+    grid.append(h('button', { class: 'scene-card', 'data-v': 'random', onclick: () => pickScene('random') }, h('div', { class: 'rand' }, GC.Icons.el('dice')), h('span', {}, 'Surprise me')));
     for (const sc of GC.Scenes.list) {
       const svg = document.createElementNS(GC.SVGNS, 'svg');
       GC.Scenes.build(svg, sc.id, { particles: false });
@@ -534,11 +544,11 @@
     vol.addEventListener('input', () => { S.volume = +vol.value; vol.style.setProperty('--p', `${S.volume * 100}%`); Sound.setVolume(S.volume); save(); });
     vol.addEventListener('change', () => Sound.boop());
     return sec('Countdown music', 'Plays quietly while the timer runs. Tap one to hear a sample.',
-      optGroup(GC.MUSIC.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.music, (v) => (S.music = v),
+      optGroup(GC.MUSIC.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
       h('p', { class: 'hint' }, 'Plays when the egg hatches. Tap one to hear it.'),
-      optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.endSound, (v) => (S.endSound = v),
+      optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
       toggleRow('Say the friend\'s name', '“It\'s a Fox!” (uses the device voice)', () => S.sayName, (v) => (S.sayName = v)));
@@ -561,7 +571,7 @@
         await egg.hatch(GC.Animals.render(GC.pick(pool)), { style: id === 'random' ? undefined : id, onPop: () => Sound.pop() });
       } finally { busy = false; }
     };
-    const opts = [{ v: 'random', label: '🎲 Surprise me' }, ...GC.ShellFX.list().map((f) => ({ v: f.id, label: `${f.icon} ${f.name}` }))];
+    const opts = [{ v: 'random', icon: 'dice', label: 'Surprise me' }, ...GC.ShellFX.list().map((f) => ({ v: f.id, icon: f.icon, label: f.name }))];
     const group = optGroup(opts, () => S.hatchStyle, (v) => (S.hatchStyle = v), (v) => play(v));
     svg.addEventListener('click', () => play(S.hatchStyle));
     svg.innerHTML = `<ellipse cx="0" cy="40" rx="190" ry="40" fill="#cfe3a8" stroke="${O}" stroke-width="5"/><g></g>`;
@@ -578,9 +588,9 @@
       photoGrid.innerHTML = '';
       for (const p of photos) {
         photoGrid.append(h('div', { class: 'photo' }, h('img', { src: p.url, alt: '' }),
-          h('button', { 'aria-label': 'Remove photo', onclick: async () => { await Store.removePhoto(p.id); refresh(); } }, '✕')));
+          h('button', { 'aria-label': 'Remove photo', onclick: async () => { await Store.removePhoto(p.id); refresh(); } }, GC.Icons.el('close'))));
       }
-      photoGrid.append(h('button', { class: 'photo-add', 'aria-label': 'Add photos', onclick: () => file.click() }, '＋'));
+      photoGrid.append(h('button', { class: 'photo-add', 'aria-label': 'Add photos', onclick: () => file.click() }, GC.Icons.el('plus')));
     };
     file.addEventListener('change', async () => {
       for (const f of file.files) {
@@ -591,7 +601,7 @@
       refresh();
     });
     const mkWho = () => optGroup([
-      { v: 'animals', label: '🐾 Animals' }, { v: 'photos', label: '📷 My photos' }, { v: 'both', label: '🎁 Both' },
+      { v: 'animals', icon: 'paw', label: 'Animals' }, { v: 'photos', icon: 'camera', label: 'My photos' }, { v: 'both', icon: 'gift', label: 'Both' },
     ], () => S.hatchWho, (v) => (S.hatchWho = v));
     let whoGroup = mkWho();
     refresh();
@@ -599,35 +609,39 @@
       whoGroup, h('div', { style: 'height:12px' }), photoGrid, file,
       h('h3', { style: 'margin-top:18px' }, 'When time is up'),
       h('p', { class: 'hint' }, 'Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.'),
-      optGroup([{ v: 'tap', label: '👆 Wait for a tap' }, { v: 'auto', label: '🐣 Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
+      optGroup([{ v: 'tap', icon: 'tap', label: 'Wait for a tap' }, { v: 'auto', icon: 'hatch', label: 'Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
   }
 
   function secScreen() {
     const holdOpts = optGroup([1, 1.5, 2, 3].map((v) => ({ v, label: `${v}s` })), () => S.holdSeconds, (v) => {
       S.holdSeconds = v; document.documentElement.style.setProperty('--hold', `${v}s`);
     });
-    return sec('Timer screen', 'Pause, ±1 minute and Stop are always available behind the 🔒 in the bottom corner. The options below put extra buttons on screen.',
-      toggleRow('Long-press 🔒 for grown-up controls', 'A quick tap does nothing, so little fingers can\'t stop the timer', () => S.longPressStop, (v) => (S.longPressStop = v)),
+    return sec('Timer screen', 'Pause, ±1 minute and Stop are always available behind the {lock} in the bottom corner. The options below put extra buttons on screen.',
+      toggleRow('Long-press {lock} for grown-up controls', 'A quick tap does nothing, so little fingers can\'t stop the timer', () => S.longPressStop, (v) => (S.longPressStop = v)),
       h('div', { class: 'row' }, h('label', {}, 'Hold for'), holdOpts),
       toggleRow('Show pause button', 'Always on screen (one tap)', () => S.showPause, (v) => (S.showPause = v)),
       toggleRow('Show −1 / +1 minute buttons', 'Always on screen (one tap)', () => S.showAdjust, (v) => (S.showAdjust = v)),
-      toggleRow('Show numbers', 'Small clock in the corner for grown-ups', () => S.showNumbers, (v) => (S.showNumbers = v)),
+      toggleRow('Show the clock', 'Big minutes and seconds at the top of the screen', () => S.showNumbers, (v) => (S.showNumbers = v)),
       toggleRow('Go full screen', 'Hides browser bars while the timer runs', () => S.fullscreen, (v) => (S.fullscreen = v)));
   }
 
   function secNext() {
-    const icons = ['🧸', '🛁', '🥣', '🧦', '🦷', '📚', '🛏️', '🚗', '🧩', '🎨', '🍎', '🧥', '🖍️', '🚽', '🏃', '⭐'];
+    const icons = ['teddy', 'bath', 'bowl', 'sock', 'tooth', 'books', 'bed', 'car', 'puzzle', 'paint', 'apple', 'coat', 'crayon', 'toilet', 'shoe', 'star'];
     const text = h('input', { type: 'text', value: S.nextUp.text, maxlength: 40, placeholder: 'e.g. Bath time' });
     text.addEventListener('input', () => { S.nextUp.text = text.value; save(); });
-    const row = h('div', { class: 'emoji-row' });
-    const paint = () => row.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !S.nextUp.photo && b.textContent === S.nextUp.icon));
-    for (const ic of icons) row.append(h('button', { onclick: () => { S.nextUp.icon = ic; S.nextUp.photo = null; save(); paint(); photoBtn.textContent = '📷'; } }, ic));
+    const row = h('div', { class: 'icon-row' });
+    const paint = () => row.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !S.nextUp.photo && b.dataset.icon === S.nextUp.icon));
+    const setPhotoBtn = () => photoBtn.replaceChildren(GC.Icons.el(S.nextUp.photo ? 'picture' : 'camera'));
+    for (const ic of icons) {
+      row.append(h('button', { 'data-icon': ic, 'aria-label': ic, onclick: () => { S.nextUp.icon = ic; S.nextUp.photo = null; save(); paint(); setPhotoBtn(); } }, GC.Icons.el(ic)));
+    }
     const file = h('input', { type: 'file', accept: 'image/*', style: 'display:none' });
-    const photoBtn = h('button', { 'aria-label': 'Use a photo', onclick: () => file.click() }, S.nextUp.photo ? '🖼️' : '📷');
+    const photoBtn = h('button', { 'aria-label': 'Use a photo', onclick: () => file.click() });
+    setPhotoBtn();
     row.append(photoBtn);
     file.addEventListener('change', async () => {
       if (!file.files[0]) return;
-      try { S.nextUp.photo = await Store.fileToSquareDataUrl(file.files[0], 240); save(); photoBtn.textContent = '🖼️'; paint(); } catch (e) {}
+      try { S.nextUp.photo = await Store.fileToSquareDataUrl(file.files[0], 240); save(); setPhotoBtn(); paint(); } catch (e) {}
     });
     paint();
     return sec('Next up card', 'Shown after the hatch: what happens next, with an icon or your own photo.',
@@ -637,8 +651,8 @@
   function secAbout() {
     return sec('About', 'Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.',
       h('div', { class: 'opts' },
-        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); } } }, '🧹 Reset friend book'),
-        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); closeSheet(); chooseScene(); } } }, '↺ Reset settings')));
+        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); } } }, GC.Icons.el('broom'), 'Reset friend book'),
+        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); closeSheet(); chooseScene(); } } }, GC.Icons.el('reset'), 'Reset settings')));
   }
 
   function secBook() {

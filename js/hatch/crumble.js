@@ -144,7 +144,7 @@
   GC.ShellFX.register({
     id: 'crumble',
     name: 'Crumble',
-    icon: '🧱',
+    icon: 'bricks',
     async run(ctx) {
       const R = ctx.rand;
       const { tiles: grid, cracks } = buildGrid(R);

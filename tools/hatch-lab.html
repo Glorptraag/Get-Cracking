@@ -31,7 +31,7 @@
   const q = new URLSearchParams(location.search);
   if (q.get('snap')) document.body.classList.add('snap');
   const fxSel = document.getElementById('fx'), slowSel = document.getElementById('slow');
-  for (const f of [...GC.ShellFX.list(), GC.ShellFX.get('classic')]) fxSel.add(new Option(`${f.icon} ${f.name}`, f.id));
+  for (const f of [...GC.ShellFX.list(), GC.ShellFX.get('classic')]) fxSel.add(new Option(f.name, f.id));
   fxSel.value = q.get('fx') || fxSel.options[0].value;
   slowSel.value = q.get('slow') || '1';
   let egg;

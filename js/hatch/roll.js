@@ -159,7 +159,7 @@
   GC.ShellFX.register({
     id: 'roll',
     name: 'Roll away',
-    icon: '🛞',
+    icon: 'roll',
 
     async run(ctx) {
       const ZIG = ctx.ZIG;

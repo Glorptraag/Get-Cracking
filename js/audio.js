@@ -13,18 +13,18 @@
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
   const MUSIC = [
-    { id: 'musicbox', name: 'Music box', icon: '🎶' },
-    { id: 'marimba', name: 'Marimba walk', icon: '🎵' },
-    { id: 'forest', name: 'Forest birds', icon: '🐦' },
-    { id: 'rain', name: 'Soft rain', icon: '🌧️' },
-    { id: 'ticktock', name: 'Gentle tick-tock', icon: '🕰️' },
-    { id: 'off', name: 'Quiet', icon: '🔇' },
+    { id: 'musicbox', name: 'Music box', icon: 'notes' },
+    { id: 'marimba', name: 'Marimba walk', icon: 'note' },
+    { id: 'forest', name: 'Forest birds', icon: 'bird' },
+    { id: 'rain', name: 'Soft rain', icon: 'rain' },
+    { id: 'ticktock', name: 'Gentle tick-tock', icon: 'clock' },
+    { id: 'off', name: 'Quiet', icon: 'quiet' },
   ];
   const ENDS = [
-    { id: 'tada', name: 'Ta-da parade', icon: '🎉' },
-    { id: 'chimes', name: 'Happy chimes', icon: '🔔' },
-    { id: 'birds', name: 'Birdsong hello', icon: '🐤' },
-    { id: 'bubbles', name: 'Bubble pops', icon: '🫧' },
+    { id: 'tada', name: 'Ta-da parade', icon: 'tada' },
+    { id: 'chimes', name: 'Happy chimes', icon: 'bell' },
+    { id: 'birds', name: 'Birdsong hello', icon: 'chick' },
+    { id: 'bubbles', name: 'Bubble pops', icon: 'bubbles' },
   ];
 
   // original melodies (MIDI note numbers, null = rest)

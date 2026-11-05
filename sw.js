@@ -1,8 +1,8 @@
 /* Get Cracking — offline cache. Bump VERSION when the file list changes. */
-const VERSION = 'gc-v4';
+const VERSION = 'gc-v5';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/util.js', 'js/animals.js', 'js/egg.js', 'js/shellfx.js',
+  'js/util.js', 'js/icons.js', 'js/animals.js', 'js/egg.js', 'js/shellfx.js',
   'js/hatch/roll.js', 'js/hatch/boom.js', 'js/hatch/crumble.js', 'js/scenes.js', 'js/audio.js', 'js/store.js', 'js/app.js',
   'fonts/fredoka.woff2', 'fonts/patrick-hand-sc.woff2',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon-maskable-512.png',
