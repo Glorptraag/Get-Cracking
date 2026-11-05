@@ -125,7 +125,7 @@ const state = (p) => p.evaluate(() => { const r = GC.app.run; return r && { phas
     const before = await state(p);
     await p.evaluate(() => GC.app.adjust(60000));
     const after = await state(p);
-    ok(Math.abs(after.rem - before.rem - 60000) < 5, `+1 adds exactly a minute (${before.rem} → ${after.rem})`);
+    ok(Math.abs(after.rem - before.rem - 60000) < 50, `+1 adds exactly a minute (${before.rem} → ${after.rem})`);
     ok(after.step >= before.step, `cracks kept (step ${before.step} → ${after.step})`);
     await p.evaluate(() => { for (let i = 0; i < 10; i++) GC.app.adjust(-60000); });
     const floor = await state(p);

@@ -59,6 +59,29 @@ tools/hatch-lab.html  play any hatch style, in slow motion if needed
 tools/hatch-snap.js   node tools/hatch-snap.js <style> out.png: a 16-frame contact sheet of a hatch
 ```
 
+## Tests
+
+These use the Playwright and Chromium that come with the dev environment. No install step is needed.
+
+```sh
+node tests/timer.test.js            # fake-clock timer stress test (~10 min)
+node tests/audio.test.js out/       # renders every tune + track to WAV and checks them
+node tests/hatch.test.js out/       # every hatch style in the real app, CPU throttled 4×
+```
+
+- **Timer:** finishes within 50 ms on a 5-minute timer. Every crack lands within 8 ms of its landmark. Also covers a 60-minute run, pause and resume, ±1 minute with a 5-second floor, the tap-to-hatch wait, a throttled hidden tab, and start/stop abuse.
+- **Audio:**
+  - the tunes don't clip, they fully decay (no stuck notes), and there are no silent gaps in the music
+  - the final-stretch twinkle is there
+  - notes land exactly on the beat, and a 700 ms stall doesn't produce a burst of missed notes
+  - double-starting the music never doubles the notes
+  - pause and stop are silent
+- **Hatch:**
+  - 5 rapid taps give exactly 1 hatch, 1 pop and 1 tune, and no shell covers the friend after it lands
+  - frame pacing holds on a slow CPU
+  - stopping mid-hatch is clean, and the DOM doesn't grow over 15 back-to-back hatches
+  - the reduced-motion versions finish in under 1.5 s
+
 ## Adding a hatch style
 
 Hatch styles are interchangeable plug-ins. Each file in `js/hatch/` calls `GC.ShellFX.register({ id, name, icon, run(ctx) })` and follows the contract documented at the top of `js/shellfx.js`:
