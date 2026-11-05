@@ -1,9 +1,0 @@
-<!doctype html><meta charset="utf-8"><title>Animal sheet</title>
-<style>body{margin:0;background:#d8d0c4;font:14px sans-serif}#g{display:grid;grid-template-columns:repeat(8,160px);gap:6px;padding:10px}
-.c{background:#ece6dc;border-radius:12px;text-align:center}svg{width:160px;height:170px}</style>
-<div id="g"></div>
-<script src="../js/util.js"></script><script src="../js/animals.js"></script>
-<script>
-for (const a of GC.Animals.list){const d=document.createElement('div');d.className='c';
-d.innerHTML=`<svg viewBox="-110 -215 220 230">${GC.Animals.render(a)}</svg><div>${a.name}</div>`;g.appendChild(d)}
-</script>
