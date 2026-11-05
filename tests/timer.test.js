@@ -29,6 +29,8 @@ async function fresh(browser, settings) {
   }, settings);
   await p.goto('http://localhost:8766/index.html');
   await p.clock.runFor(300);
+  // freeze natural time so only the test moves the clock (fully deterministic)
+  await p.clock.pauseAt(await p.evaluate(() => Date.now() + 1));
   // instrument: record every crack step with the (fake) elapsed time
   await p.evaluate(() => {
     window.log = { steps: [], cracks: 0, knocks: 0, ready: 0, tunes: [] };
@@ -125,11 +127,11 @@ const state = (p) => p.evaluate(() => { const r = GC.app.run; return r && { phas
     const before = await state(p);
     await p.evaluate(() => GC.app.adjust(60000));
     const after = await state(p);
-    ok(Math.abs(after.rem - before.rem - 60000) < 50, `+1 adds exactly a minute (${before.rem} → ${after.rem})`);
+    ok(Math.abs(after.rem - before.rem - 60000) < 5, `+1 adds exactly a minute (${before.rem} → ${after.rem})`);
     ok(after.step >= before.step, `cracks kept (step ${before.step} → ${after.step})`);
     await p.evaluate(() => { for (let i = 0; i < 10; i++) GC.app.adjust(-60000); });
     const floor = await state(p);
-    ok(Math.abs(floor.rem - 5000) < 50, `−1 spam floors at 5 s instead of ending instantly (${floor.rem} ms)`);
+    ok(Math.abs(floor.rem - 5000) < 5, `−1 spam floors at 5 s instead of ending instantly (${floor.rem} ms)`);
     ok(floor.phase === 'running', 'still running after −1 spam');
     await p.clock.runFor(5200);
     ok((await state(p)).phase === 'ready', 'then finishes on time');
