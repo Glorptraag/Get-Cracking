@@ -44,7 +44,7 @@
     window.labDone = false;
   }
   window.labHatch = async function () {
-    reset();
+    if (!egg || egg.hatched) reset();
     GC.timeScale = +slowSel.value || +q.get("slow") || 1;
     const a = GC.Animals.byId[q.get('animal') || 'fox'] || GC.Animals.list[0];
     window.labStart = performance.now();

@@ -183,7 +183,19 @@
 
     _schedule() {
       const ctx = this.ctx;
-      const ahead = ctx.currentTime + 0.25;
+      const now = ctx.currentTime;
+      // look further ahead when the tab is hidden (timers are throttled to ~1/s)
+      const ahead = now + (document.hidden ? 1.6 : 0.25);
+      // after a stall, skip the missed notes instead of firing them all at once
+      if (this._next < now - 0.02) {
+        const song = this.music === 'marimba' ? MARIMBA : MUSICBOX;
+        const stepDur = this.music === 'ticktock' ? (this.tension > 0 ? 0.5 : 1) : 60 / song.bpm / song.steps;
+        const missed = Math.ceil((now - this._next) / stepDur);
+        this._next += missed * stepDur;
+        this._step += missed;
+        this.dropped = (this.dropped || 0) + missed;
+      }
+      if (this._ambientAt < now - 0.02) this._ambientAt = now + 0.05;
       const id = this.music;
       if (id === 'musicbox' || id === 'marimba') {
         const song = id === 'musicbox' ? MUSICBOX : MARIMBA;

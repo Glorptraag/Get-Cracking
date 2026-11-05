@@ -222,7 +222,7 @@
   function loop() {
     cancelAnimationFrame(run && run.raf);
     const step = () => {
-      if (!run) return;
+      if (!run || run.phase === 'hatching' || run.phase === 'hatched') return;
       tick();
       run.raf = requestAnimationFrame(step);
     };

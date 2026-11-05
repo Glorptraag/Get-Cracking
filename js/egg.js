@@ -218,6 +218,19 @@
       }
     }
 
+    /** The cracks (and peek hole) exactly as they look right now, as static markup for shell pieces. */
+    _crackMarkup() {
+      if (this._cracks != null) return this._cracks;
+      const n = this.step, len = MAIN_LEN_BY_STEP[n];
+      const st = `fill="none" stroke="${O}" stroke-linecap="round" stroke-linejoin="round"`;
+      let m = `<g clip-path="url(#${this.id}c)">`;
+      if (len > 0) m += `<polyline points="${zigStr}" pathLength="1" stroke-dasharray="${len} 2" stroke-width="4.5" ${st}/>`;
+      for (const b of BRANCHES) if (n >= b.step) m += `<polyline points="${b.pts.map((p) => p.join(',')).join(' ')}" stroke-width="3.5" ${st}/>`;
+      if (n >= 6) m += `<path d="M14,-128 L22,-138 L34,-134 L40,-122 L34,-110 L22,-108 L14,-116 Z" fill="#2a1a1c" ${S}/>`;
+      m += `</g>`;
+      return (this._cracks = m);
+    }
+
     /** Build the context object handed to a shell effect (see js/shellfx.js). */
     _shellCtx(release) {
       const self = this;
@@ -263,7 +276,7 @@
           const el = GC.el('g', {}, wrap);
           el.innerHTML = `<g transform="translate(${(-cx).toFixed(1)} ${(-cy).toFixed(1)})">` +
             `<clipPath id="${pid}"><polygon points="${pts}"/></clipPath>` +
-            `<g clip-path="url(#${pid})">${eggBody(self.id + 'c', self.pal, self.pattern)}` +
+            `<g clip-path="url(#${pid})">${eggBody(self.id + 'c', self.pal, self.pattern)}${self._crackMarkup()}` +
             `<g clip-path="url(#${self.id}c)"><polygon points="${pts}" fill="none" stroke="${O}" stroke-width="${opts.edge || 4.5}" stroke-linejoin="round"/></g></g></g>`;
           return { el, wrap, cx, cy };
         },
