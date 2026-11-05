@@ -3,11 +3,6 @@
  * Phases of one run:
  *   running → (paused ↔ running) → ready (time's up, waiting for a tap)
  *           → hatching → hatched
- *
- * Design rules carried through the code:
- *   - progress is physical and wordless (egg cracks + ground ring)
- *   - friction for the child, convenience for the adult (hold-to-act)
- *   - the payoff can't be missed (hatch waits for a tap by default)
  */
 (function () {
   'use strict';
@@ -261,6 +256,7 @@
     Sound.ready();
     $('hatch-pill').textContent = 'Tap the egg!';
     $('hatch-pill').classList.add('show');
+    placeTapHint();
     $('tap-hint').classList.add('show');
     let knocks = 0;
     run.knockT = setInterval(() => {
@@ -268,6 +264,16 @@
       if (knocks++ < 60) Sound.knock();
     }, 5000);
   }
+
+  /** point the finger at the egg's lower right, wherever the egg ends up on screen */
+  function placeTapHint() {
+    if (!run) return;
+    const r = run.egg.squashEl.getBoundingClientRect();
+    const hint = $('tap-hint');
+    hint.style.left = `${Math.round(r.left + r.width * 0.62)}px`;
+    hint.style.top = `${Math.round(r.top + r.height * 0.72)}px`;
+  }
+  window.addEventListener('resize', () => { if (run && run.phase === 'ready') placeTapHint(); });
 
   function pickFriend() {
     const photos = run.photos || [];
@@ -525,11 +531,11 @@
     vol.style.setProperty('--p', `${S.volume * 100}%`);
     vol.addEventListener('input', () => { S.volume = +vol.value; vol.style.setProperty('--p', `${S.volume * 100}%`); Sound.setVolume(S.volume); save(); });
     vol.addEventListener('change', () => Sound.boop());
-    return sec('Countdown music', 'A soft sound while the egg cracks, so little ones can hear time passing even when they look away. Tap to hear a sample.',
+    return sec('Countdown music', 'Plays quietly while the timer runs. Tap one to hear a sample.',
       optGroup(GC.MUSIC.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
-      h('p', { class: 'hint' }, 'A happy tune instead of an alarm. Time is up = a win!'),
+      h('p', { class: 'hint' }, 'Plays when the egg hatches. Tap one to hear it.'),
       optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
@@ -587,10 +593,10 @@
     ], () => S.hatchWho, (v) => (S.hatchWho = v));
     let whoGroup = mkWho();
     refresh();
-    return sec('Who hatches?', '40 animal friends arrive in a shuffled order — every one shows up before any repeats. Add photos of family, pets or toys and they can hatch too. Photos stay on this device.',
+    return sec('Who hatches?', 'Animals come in a shuffled order: no repeats until all 40 have hatched. Photos you add can hatch too and never leave this device.',
       whoGroup, h('div', { style: 'height:12px' }), photoGrid, file,
       h('h3', { style: 'margin-top:18px' }, 'When time is up'),
-      h('p', { class: 'hint' }, 'If a child wanders off, “Wait for a tap” keeps the egg wiggling until they come back, so they never miss the hatch.'),
+      h('p', { class: 'hint' }, 'Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.'),
       optGroup([{ v: 'tap', label: '👆 Wait for a tap' }, { v: 'auto', label: '🐣 Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
   }
 
@@ -598,7 +604,7 @@
     const holdOpts = optGroup([1, 1.5, 2, 3].map((v) => ({ v, label: `${v}s` })), () => S.holdSeconds, (v) => {
       S.holdSeconds = v; document.documentElement.style.setProperty('--hold', `${v}s`);
     });
-    return sec('Timer screen', 'Fewer buttons = fewer tempting things to tap. Grown-up controls live behind the 🔒 in the corner.',
+    return sec('Timer screen', 'Pause, ±1 minute and Stop are always available behind the 🔒 in the bottom corner. The options below put extra buttons on screen.',
       toggleRow('Long-press 🔒 for grown-up controls', 'A quick tap does nothing, so little fingers can\'t stop the timer', () => S.longPressStop, (v) => (S.longPressStop = v)),
       h('div', { class: 'row' }, h('label', {}, 'Hold for'), holdOpts),
       toggleRow('Show pause button', 'Always on screen (one tap)', () => S.showPause, (v) => (S.showPause = v)),
@@ -622,7 +628,7 @@
       try { S.nextUp.photo = await Store.fileToSquareDataUrl(file.files[0], 240); save(); photoBtn.textContent = '🖼️'; paint(); } catch (e) {}
     });
     paint();
-    return sec('Next up card', 'After the hatch, show what happens next — a photo of the reading corner, the bath, shoes by the door. It turns the reward into a gentle transition cue.',
+    return sec('Next up card', 'Shown after the hatch: what happens next, with an icon or your own photo.',
       toggleRow('Show a “Next up” card', null, () => S.nextUp.on, (v) => (S.nextUp.on = v)), text, row, file);
   }
 

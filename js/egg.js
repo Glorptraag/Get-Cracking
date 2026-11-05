@@ -20,8 +20,6 @@
   const EGG_PATH = 'M0,-170 C40,-170 64,-96 64,-58 C64,-20 36,0 0,0 C-36,0 -64,-20 -64,-58 C-64,-96 -40,-170 0,-170 Z';
   const ZIG = [[-68, -74], [-50, -88], [-36, -72], [-20, -92], [-4, -74], [12, -94], [28, -74], [44, -90], [68, -76]];
   const zigStr = ZIG.map((p) => p.join(',')).join(' ');
-  const TOP_POLY = `${zigStr} 80,-220 -80,-220`;
-  const BOTTOM_POLY = `${zigStr} 80,20 -80,20`;
 
   const BRANCHES = [
     { step: 1, pts: [[-30, -140], [-22, -128], [-27, -117], [-17, -108]] },
@@ -85,23 +83,15 @@
       root.innerHTML =
         `<defs>` +
         `<clipPath id="${id}c"><path d="${EGG_PATH}"/></clipPath>` +
-        `<clipPath id="${id}t"><polygon points="${TOP_POLY}"/></clipPath>` +
-        `<clipPath id="${id}b"><polygon points="${BOTTOM_POLY}"/></clipPath>` +
         `<filter id="${id}glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>` +
         `</defs>` +
         `<g class="egg-rays">${this._rays()}</g>` +
         `<ellipse class="egg-shadow" cx="0" cy="2" rx="70" ry="13" fill="${O}" opacity=".2"/>` +
         `<circle class="egg-halo" cx="0" cy="-86" r="104" fill="#fff3b0" filter="url(#${id}glow)"/>` +
         `<g class="egg-wobble"><g class="egg-squash">` +
-        `<g class="egg-bottom" clip-path="url(#${id}b)">${eggBody(id + 'c', this.pal, this.pattern)}</g>` +
-        `<g transform="translate(0 -118)"><g class="egg-top-fly"><g transform="translate(0 118)">` +
-        `<g class="egg-top" clip-path="url(#${id}t)">${eggBody(id + 'c', this.pal, this.pattern)}` +
+        `${eggBody(id + 'c', this.pal, this.pattern)}` +
         `<g class="egg-hole"><path d="M14,-128 L22,-138 L34,-134 L40,-122 L34,-110 L22,-108 L14,-116 Z" fill="#2a1a1c" ${S}/>` +
         `<g class="egg-peek-eyes"><ellipse cx="22" cy="-122" rx="2.6" ry="3.4" fill="#fff"/><ellipse cx="32" cy="-122" rx="2.6" ry="3.4" fill="#fff"/></g></g>` +
-        `</g>` +
-        `<polyline class="egg-edge" points="${zigStr}" fill="none" ${S}/>` +
-        `</g></g></g>` +
-        `<polyline class="egg-edge" points="${zigStr}" fill="none" ${S}/>` +
         `<g class="egg-cracks" clip-path="url(#${id}c)">` +
         `<g class="crack-glow" filter="url(#${id}glow)"><polyline points="${zigStr}" pathLength="1" class="crack-main-glow"/>${branchMarkup}</g>` +
         `<polyline points="${zigStr}" pathLength="1" class="crack-main"/>${branchMarkup}` +
@@ -178,23 +168,22 @@
     setReady(on) { this.root.classList.toggle('ready', !!on); }
     setPaused(on) { this.root.classList.toggle('paused', !!on); }
 
-    /** little shell chips that pop off the egg */
-    chips(n, big) {
-      if (GC.prefersReducedMotion() && !big) return;
+    /** a few little shell chips that pop off when the egg cracks a step */
+    chips(n) {
+      if (GC.prefersReducedMotion()) return;
       for (let i = 0; i < n; i++) {
-        const x = GC.rand(-40, 40), y = GC.rand(-130, -70);
-        const g = GC.el('g', { transform: `translate(${x} ${y})` }, this.fx);
-        const s = big ? GC.rand(10, 18) : GC.rand(5, 9);
+        const g = GC.el('g', { transform: `translate(${GC.rand(-40, 40)} ${GC.rand(-130, -70)})` }, this.fx);
+        const s = GC.rand(5, 9);
         const p = GC.el('path', {
           d: `M0,${-s} L${s},${s * 0.6} L${-s * 0.8},${s * 0.4} Z`, fill: this.pal.shell,
-          stroke: O, 'stroke-width': big ? 4 : 3, 'stroke-linejoin': 'round',
+          stroke: O, 'stroke-width': 3, 'stroke-linejoin': 'round',
         }, g);
-        const dx = GC.rand(-1, 1) * (big ? 240 : 90), dy = big ? GC.rand(-260, -120) : GC.rand(-90, -40);
+        const dx = GC.rand(-90, 90), dy = GC.rand(-90, -40);
         p.animate([
           { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
           { transform: `translate(${dx * 0.6}px,${dy}px) rotate(${GC.rand(-300, 300)}deg)`, opacity: 1, offset: 0.5 },
           { transform: `translate(${dx}px,${dy * 0.2 + 160}px) rotate(${GC.rand(-500, 500)}deg)`, opacity: 0 },
-        ], { duration: big ? 1300 : 800, easing: 'cubic-bezier(.2,.7,.4,1)' }).finished.then(() => g.remove());
+        ], { duration: 800, easing: 'cubic-bezier(.2,.7,.4,1)' }).finished.then(() => g.remove());
       }
     }
 
@@ -369,9 +358,5 @@
     }
   }
 
-  function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
-
   GC.Egg = Egg;
-  GC.EGG_SHAPE = { EGG_PATH, ZIG, eggBody };
-  GC.EGG_PALETTES = PALETTES;
 })();

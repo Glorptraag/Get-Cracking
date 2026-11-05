@@ -18,26 +18,16 @@ python3 -m http.server 8000   # then open http://localhost:8000
 
 On a phone or tablet, use **Add to Home Screen**. The service worker caches everything on the first visit.
 
-## How the design decisions map to code
+## How it behaves
 
-| Idea | Where |
-| --- | --- |
-| **The egg is the progress bar.** It cracks in 8 stepped landmarks: a hairline crack, then the main zig-zag crack in 4 steps, then a peek-hole with eyes, then light leaking out, then extra cracks while the egg hops. Cracks never heal, even if time is added. | `js/egg.js` (`STEP_AT`, `setStep`) |
-| **A continuous cue as well.** A ground ring on the diorama empties as time runs out. Its pebbles light up at each crack step, so the ring and the egg tell the same story. | `buildRing` in `js/app.js` |
-| **The idle egg is alive.** It breathes, and its wobbles get bigger at each stage. Tapping it gives a harmless "boop" and never changes the timer. | CSS `egg-breathe / egg-wobble / egg-hop` |
-| **The hatch.** Squash for anticipation, stretch, the lid flies off, the friend peeks out of the shell (clipped to the shell rim), then hops out in front with a squash-and-settle bounce. | `Egg.hatch()` |
-| **Shells that do something physical.** After a shared squash-and-stretch, the intact egg is swapped for loose shell pieces and a *hatch style* takes over: **Roll away**, **Kaboom** or **Crumble** (the Looney Tunes falling-teeth gag). Grown-ups can pick one or let it be a surprise, and preview each one in settings. | `js/shellfx.js`, `js/hatch/*.js` |
-| **The reward lingers.** After hatching, the friend loops hops, blinks, waves and wags. Tapping it makes it jump again. | CSS `.idle …` |
-| **Ending on a celebration.** Time's up plays a soft sparkle, never an alarm. The full tune plays on the hatch. | `Sound.ready()`, `Sound.endTune()` |
-| **Sound as a time cue.** Ambient music signals that something is in progress. It gains a twinkle layer in the final 10%. | `Sound.setTension()` |
-| **The hatch waits for you.** By default the egg glows, wiggles and gently knocks until the child taps it, so nobody misses the payoff. A tap anywhere on the screen counts. | `timeUp()` |
-| **Touch safety.** No tempting buttons on the timer screen. Grown-up controls sit behind a dim 🔒 that needs a press-and-hold (1–3 s, configurable). A quick tap only shows a "Grown-ups: press & hold" tip, so the gesture teaches itself. Pause and ±1 minute buttons can be shown if a family wants them. | `holdable()`, the tray |
-| **A parent exit is always there.** The 🔒 tray has Pause, ±1 min, Hatch now, New egg and Stop. Escape opens it on a keyboard. | `wireTimer()` |
-| **Next up card.** After the hatch, an optional card shows what comes next (an emoji or a photo of the bath, the reading corner and so on), which turns the reward into a transition cue. | `secNext()` |
-| **Screen stays on** during a run (Wake Lock), with optional fullscreen. | `keepAwake()` |
-| **Friend book.** A sticker-book collection of everyone who has hatched. | `secBook()` |
-
-`prefers-reduced-motion` turns off the ambient loops and shortens the hatch.
+- **Cracking:** the egg cracks in 8 steps at fixed fractions of the timer (`STEP_AT` in `js/egg.js`). Cracks never heal when time is added.
+- **Ground ring:** the ring around the egg empties as time runs out, and its pebbles light up at each crack step (`buildRing` in `js/app.js`).
+- **Idle egg:** it breathes, and wobbles more at later steps. Tapping it squashes it and never changes the timer.
+- **Time's up:** a soft chime plays, never an alarm. With "Wait for a tap" (the default) the egg glows and knocks every 5 s for up to 5 minutes, and a tap anywhere hatches it (`timeUp()`).
+- **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again.
+- **Countdown music:** gains an extra twinkle in the last 10% of the timer (`Sound.setTension`).
+- **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the 🔒. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
+- **Also:** an optional "Next up" card after the hatch, the screen kept awake during a run (Wake Lock), and a friend book that collects every animal hatched.
 
 ## Files
 

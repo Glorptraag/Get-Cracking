@@ -443,6 +443,11 @@
         case 'fleeceTuft':
           out += [-16, 0, 16].map((x) => `<circle cx="${x}" cy="${f(-h * 0.97 - (x ? 0 : 6))}" r="14" fill="${d.fleeceColor}" ${S4}/>`).join('');
           break;
+        case 'curl': {
+          const t = -h * 0.95;
+          out += tube(`M0,${f(t + 4)} C-2,${f(t - 14)} 14,${f(t - 22)} 16,${f(t - 10)} C17,${f(t - 2)} 7,${f(t - 2)} 9,${f(t - 10)}`, d.tuftColor || sh(d.body, -0.08), 6);
+          break;
+        }
         case 'leaf':
           out += `<path d="M0,${f(-h * 0.97)} L0,${f(-h * 1.12)}" stroke="${O}" stroke-width="5" stroke-linecap="round"/>` +
             `<path d="M0,${f(-h * 1.1)} C-6,${f(-h * 1.3)} -26,${f(-h * 1.28)} -28,${f(-h * 1.2)} C-20,${f(-h * 1.12)} -6,${f(-h * 1.1)} 0,${f(-h * 1.1)} Z" fill="#a9d36b" ${S4}/>` +
@@ -493,7 +498,7 @@
   const CREAM = '#fdf3e4', WHITE = '#fdfaf3', PINK = '#f6b3bf', BEAK = '#f7a531';
   const LIST = [
     { id: 'chick', name: 'Chick', body: '#ffd84d', belly: '#ffe98c', front: ['tuft'], arms: 'wing', feet: 'bird', muzzle: 'beak', muzzleColor: BEAK, nose: 'none', mouth: 'none', armColor: '#ffcb2e' },
-    { id: 'duckling', name: 'Duckling', body: '#ffe066', belly: '#fff2b0', front: ['tuft'], tuftColor: '#ffd23b', arms: 'wing', feet: 'bird', muzzle: 'bill', muzzleColor: BEAK, nose: 'none', mouth: 'none', armColor: '#ffd23b' },
+    { id: 'duckling', name: 'Duckling', shape: 'wide', body: '#f9e27a', belly: '#fff4c2', front: ['curl'], tuftColor: '#f0c94a', arms: 'wing', feet: 'bird', feetColor: '#f08a3c', muzzle: 'bill', muzzleColor: '#f08a3c', nose: 'none', mouth: 'none', armColor: '#f0cf5a', eyes: 'happy', cheekColor: '#f7a07a' },
     { id: 'penguin', name: 'Penguin', shape: 'tall', body: '#3d4e6e', belly: WHITE, marks: ['faceMask'], faceColor: WHITE, arms: 'flipper', feet: 'bird', muzzle: 'beak', muzzleColor: BEAK, nose: 'none', mouth: 'none' },
     { id: 'owl', name: 'Owl', body: '#a8754f', belly: '#e8c9a0', ears: 'tufts', marks: ['faceMask', 'owlBelly'], faceColor: '#f3e2c2', markColor: '#b98a62', eyes: 'big', arms: 'wing', feet: 'bird', muzzle: 'beak', muzzleColor: BEAK, nose: 'none', mouth: 'none' },
     { id: 'hamster', name: 'Hamster', shape: 'wide', body: '#eaa865', ears: 'round', earInner: PINK, marks: ['lowerFace'], faceColor: CREAM, mouth: 'w' },

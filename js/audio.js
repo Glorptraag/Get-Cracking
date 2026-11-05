@@ -14,7 +14,7 @@
 
   const MUSIC = [
     { id: 'musicbox', name: 'Music box', icon: '🎶' },
-    { id: 'marimba', name: 'Marimba walk', icon: '🪘' },
+    { id: 'marimba', name: 'Marimba walk', icon: '🎵' },
     { id: 'forest', name: 'Forest birds', icon: '🐦' },
     { id: 'rain', name: 'Soft rain', icon: '🌧️' },
     { id: 'ticktock', name: 'Gentle tick-tock', icon: '🕰️' },

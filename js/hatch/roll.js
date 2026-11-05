@@ -31,8 +31,8 @@
     if (OUTLINE) return OUTLINE;
     OUTLINE = [];
     for (const [a, b, c, d] of EGG_SEGS) {
-      for (let i = 0; i < 48; i++) {
-        const u = i / 48, v = 1 - u;
+      for (let i = 0; i < 20; i++) {
+        const u = i / 20, v = 1 - u;
         const k0 = v * v * v, k1 = 3 * v * v * u, k2 = 3 * v * u * u, k3 = u * u * u;
         OUTLINE.push([k0 * a[0] + k1 * b[0] + k2 * c[0] + k3 * d[0], k0 * a[1] + k1 * b[1] + k2 * c[1] + k3 * d[1]]);
       }
@@ -55,7 +55,7 @@
     const pts = egg.filter(([x, y]) => inside(poly, x, y));
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i], b = poly[(i + 1) % poly.length];
-      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 3));
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 5));
       for (let k = 0; k <= n; k++) {
         const x = a[0] + ((b[0] - a[0]) * k) / n, y = a[1] + ((b[1] - a[1]) * k) / n;
         if (inside(egg, x, y)) pts.push([x, y]);
@@ -64,7 +64,8 @@
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     let sx = 0, sy = 0, n = 0;
-    for (let y = y0; y <= y1; y += 3) for (let x = x0; x <= x1; x += 3) {
+    // a 6 px grid is plenty for a centroid and keeps the break frame cheap on phones
+    for (let y = y0; y <= y1; y += 6) for (let x = x0; x <= x1; x += 6) {
       if (inside(egg, x, y) && inside(poly, x, y)) { sx += x; sy += y; n++; }
     }
     return { pts, cx: n ? sx / n : (x0 + x1) / 2, cy: n ? sy / n : (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };

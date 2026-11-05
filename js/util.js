@@ -11,7 +11,6 @@
   GC.uid = (p = 'u') => `${p}${++uidCounter}${Math.random().toString(36).slice(2, 6)}`;
 
   GC.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  GC.lerp = (a, b, t) => a + (b - a) * t;
   GC.rand = (a, b) => a + Math.random() * (b - a);
   GC.pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -40,15 +39,6 @@
     for (const k in attrs) e.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(e);
     return e;
-  };
-
-  /** Build an <svg> fragment from markup and return the first element. */
-  GC.svgFrag = function (markup) {
-    const wrap = document.createElementNS(GC.SVGNS, 'svg');
-    wrap.innerHTML = markup;
-    const g = document.createElementNS(GC.SVGNS, 'g');
-    while (wrap.firstChild) g.appendChild(wrap.firstChild);
-    return g;
   };
 
   GC.fmtTime = function (ms) {

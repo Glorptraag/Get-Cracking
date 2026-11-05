@@ -176,9 +176,13 @@
         `<circle cx="${x - 4}" cy="${y - 11}" r="1.8" fill="${O}"/><circle cx="${x + 4}" cy="${y - 11}" r="1.8" fill="${O}"/></g>`;
     },
     butterfly(x, y, c = '#f7a8c8') {
-      return `<g class="flutter" style="--fx:${x}px;--fy:${y}px"><g class="flap">` +
-        `<ellipse cx="-6" cy="-3" rx="7" ry="9" fill="${c}" ${S(2.5)}/><ellipse cx="6" cy="-3" rx="7" ry="9" fill="${c}" ${S(2.5)}/>` +
-        `<rect x="-1.5" y="-10" width="3" height="14" rx="1.5" fill="${O}"/></g></g>`;
+      const wing = (k) => `<g transform="scale(${k} 1)">` +
+        `<path d="M0,-1 C-5,-17 -21,-19 -20,-7 C-19,1 -8,2 0,-1 Z" fill="${c}" ${S(2.5)}/>` +
+        `<path d="M0,1 C-4,12 -15,14 -14,6 C-13,1 -6,0 0,1 Z" fill="${sh(c, -0.12)}" ${S(2.5)}/>` +
+        `<circle cx="-12" cy="-8" r="2.6" fill="#fdfaf3"/></g>`;
+      return `<g class="flutter" style="--fx:${x}px;--fy:${y}px"><g class="flap">${wing(1)}${wing(-1)}</g>` +
+        `<rect x="-2" y="-9" width="4" height="17" rx="2" fill="${O}"/>` +
+        `<path d="M-1,-9 Q-4,-16 -7,-17 M1,-9 Q4,-16 7,-17" stroke="${O}" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
     },
     cloud(x, y, s = 1, c = '#fdfaf3') {
       return `<g class="drift" style="--dd:${GC.rand(50, 80).toFixed(0)}s"><path d="M${f(x - 40 * s)},${y} Q${f(x - 44 * s)},${f(y - 20 * s)} ${f(x - 20 * s)},${f(y - 20 * s)} Q${f(x - 14 * s)},${f(y - 40 * s)} ${f(x + 8 * s)},${f(y - 34 * s)} Q${f(x + 28 * s)},${f(y - 40 * s)} ${f(x + 32 * s)},${f(y - 20 * s)} Q${f(x + 50 * s)},${f(y - 18 * s)} ${f(x + 44 * s)},${y} Z" fill="${c}" ${S(4)}/></g>`;
@@ -303,7 +307,7 @@
     {
       id: 'meadow', name: 'Sunny Meadow', bg: '#f1e2bd', ring: '#e8604f', particles: 'petals',
       top: '#9fcf66', left: '#b5835a', right: '#946644', lip: '#86b84f',
-      sky: () => `<g class="sun-spin"><circle cx="500" cy="90" r="36" fill="#ffd86b" ${S()}/></g>` + P.cloud(110, 110, 1) + P.cloud(420, 170, 0.8),
+      sky: () => `<g class="sun-pulse"><circle cx="500" cy="90" r="36" fill="#ffd86b" ${S()}/></g>` + P.cloud(110, 110, 1) + P.cloud(420, 170, 0.8),
       ground: () => `<path d="M0,150 Q60,130 120,140 T240,120" stroke="#b4dc7a" stroke-width="20" fill="none" ${NS}/>` +
         `<ellipse cx="50" cy="50" rx="24" ry="16" fill="#b4dc7a"/>`,
       leftSide: (r, c) => tunnels() + roots(r, '#7d5034', 3) + pebbles(r, '#9a6c48', 10) + worm(),
@@ -330,7 +334,7 @@
     {
       id: 'desert', name: 'Desert Oasis', bg: '#f6d8ae', ring: '#4f9fb4', particles: 'motes',
       top: '#ecc78c', left: '#d79a62', right: '#bf7f4c', lip: '#e0b475',
-      sky: () => `<g class="sun-spin"><circle cx="110" cy="100" r="42" fill="#ffc94a" ${S()}/></g>` + P.cloud(470, 140, 0.7, '#fff6e6'),
+      sky: () => `<g class="sun-pulse"><circle cx="110" cy="100" r="42" fill="#ffc94a" ${S()}/></g>` + P.cloud(470, 140, 0.7, '#fff6e6'),
       ground: () => `<ellipse cx="190" cy="60" rx="38" ry="26" fill="#6cc0d4" ${S(3.5)} ${NS}/>` +
         `<path d="M10,180 Q60,160 110,180 T230,170" stroke="#e0b475" stroke-width="8" fill="none" ${NS}/>` +
         `<path d="M20,90 Q60,80 100,92" stroke="#e0b475" stroke-width="6" fill="none" ${NS}/>`,
@@ -530,5 +534,5 @@
     };
   }
 
-  GC.Scenes = { list: SCENES, build, EGG, RING, topPt };
+  GC.Scenes = { list: SCENES, build, EGG, RING };
 })();
