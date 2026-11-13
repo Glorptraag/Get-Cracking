@@ -31,40 +31,165 @@
     document.querySelector('.setup-bg').setAttribute('preserveAspectRatio', 'xMidYMid slice');
   }
 
-  let perchEgg = null;
-  function buildPerch() {
-    const svg = document.querySelector('.perch-egg');
-    svg.innerHTML = `<g class="nest">` +
-      `<ellipse cx="0" cy="-2" rx="86" ry="20" fill="#b98652" stroke="${O}" stroke-width="6"/>` +
-      `<path d="M-74,-6 Q-30,8 10,-4 T76,-6 M-60,6 Q-10,-8 40,6 T80,0" stroke="#8a5a3b" stroke-width="4" fill="none" stroke-linecap="round"/></g>` +
-      `<g class="perch-egg-layer"></g>` +
-      `<path d="M-84,-2 Q-40,22 0,18 Q40,22 84,-2 Q60,20 0,22 Q-60,20 -84,-2 Z" fill="#b98652" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>` +
-      `<path d="M-70,6 L-50,0 M-30,12 L-8,6 M20,12 L44,6 M56,6 L74,0" stroke="#8a5a3b" stroke-width="4" stroke-linecap="round"/>`;
-    perchEgg = new GC.Egg(svg.querySelector('.perch-egg-layer'), { x: 0, y: 4, scale: 0.92 });
-    perchEgg.onBoop = () => Sound.boop();
+  /* ---- the egg-timer dial -------------------------------------------
+   * One full turn of the ring is 60 minutes. Dragging (or tapping) the
+   * ring sets whole minutes; the − / + buttons step 15 s below 3 minutes
+   * and 1 minute above, so short timers can still be fine-tuned. */
+  const MIN_SECS = 15, MAX_SECS = 3600;
+  const DIAL_R = 136;
+  let dial = null;
+
+  const totalSecs = () => S.minutes * 60 + S.seconds;
+  function setTotal(secs, quiet) {
+    const t = GC.clamp(Math.round(secs), MIN_SECS, MAX_SECS);
+    if (t === totalSecs()) return false;
+    S.minutes = Math.floor(t / 60);
+    S.seconds = t % 60;
+    renderDials();
+    save();
+    if (!quiet) { Sound.tick(); if (navigator.vibrate) navigator.vibrate(4); }
+    return true;
+  }
+  function stepTime(dir) {
+    const t = totalSecs();
+    const fine = dir > 0 ? t < 180 : t <= 180;
+    const unit = fine ? 15 : 60;
+    // snap to the step grid first, so 0:10 + goes to 0:15 and 4:30 − goes to 4:00
+    const next = dir > 0 ? Math.floor(t / unit) * unit + unit : Math.ceil(t / unit) * unit - unit;
+    return setTotal(next);
+  }
+
+  function buildDial() {
+    const svg = $('dial');
+    const R = DIAL_R;
+    let ticks = '';
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2, big = i % 5 === 0;
+      const x = Math.sin(a) * R, y = -Math.cos(a) * R;
+      ticks += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big ? 3.6 : 1.7}" fill="${O}" opacity="${big ? 0.5 : 0.28}"/>`;
+    }
+    const circ = `M0,${-R} A${R},${R} 0 1 1 0,${R} A${R},${R} 0 1 1 0,${-R}`;
+    svg.innerHTML =
+      `<circle r="${R}" fill="none" stroke="${O}" stroke-width="42"/>` +
+      `<circle r="${R}" fill="none" stroke="#fdf3e4" stroke-width="30"/>` +
+      `<path class="dial-fill" d="${circ}" pathLength="1" fill="none" stroke="#e0a43c" stroke-width="30" stroke-linecap="round"/>` +
+      `<g class="dial-ticks">${ticks}</g>` +
+      `<circle r="${R - 21}" fill="#fdf3e4"/>` +
+      `<ellipse cx="0" cy="-4" rx="46" ry="9" fill="${O}" opacity=".13"/>` +
+      `<g class="dial-egg"></g>` +
+      `<text class="dial-time" x="0" y="80" text-anchor="middle">5:00</text>` +
+      `<g class="dial-knob"><circle r="24" fill="${O}"/><circle r="18" fill="#fdf3e4"/><circle r="8" fill="#e0a43c" stroke="${O}" stroke-width="3.5"/></g>`;
+    const egg = new GC.Egg(svg.querySelector('.dial-egg'), { x: 0, y: -4, scale: 0.6 });
+    egg.onBoop = () => Sound.boop();
+    dial = { svg, fill: svg.querySelector('.dial-fill'), knob: svg.querySelector('.dial-knob'), time: svg.querySelector('.dial-time'), egg };
   }
 
   function renderDials() {
-    $('dial-min').firstElementChild.textContent = String(S.minutes).padStart(2, '0');
-    $('dial-sec').firstElementChild.textContent = String(S.seconds).padStart(2, '0');
-    const sl = $('min-slider');
-    sl.value = S.minutes;
-    sl.style.setProperty('--p', `${(S.minutes / 60) * 100}%`);
-    $('min-label').textContent = S.minutes === 1 ? 'minute' : 'minutes';
-    document.querySelectorAll('.presets button').forEach((b) => b.classList.toggle('on', +b.dataset.min === S.minutes && S.seconds === 0));
+    const t = totalSecs();
+    if (dial) {
+      const f = GC.clamp(t / MAX_SECS, 0, 1);
+      const a = f * Math.PI * 2;
+      dial.fill.style.strokeDasharray = `${f} 2`;
+      dial.knob.setAttribute('transform', `translate(${(Math.sin(a) * DIAL_R).toFixed(1)} ${(-Math.cos(a) * DIAL_R).toFixed(1)})`);
+      dial.time.textContent = GC.fmtTime(t * 1000);
+      const m = Math.floor(t / 60), sec = t % 60;
+      dial.svg.setAttribute('aria-valuenow', t);
+      dial.svg.setAttribute('aria-valuetext',
+        [m ? `${m} minute${m === 1 ? '' : 's'}` : '', sec ? `${sec} seconds` : ''].filter(Boolean).join(' '));
+    }
+    document.querySelectorAll('.presets button').forEach((b) => {
+      const on = +b.dataset.min * 60 === t;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+    });
+    $('step-minus').disabled = t <= MIN_SECS;
+    $('step-plus').disabled = t >= MAX_SECS;
     $('quick-tap').checked = S.hatchMode === 'tap';
+    $('quick-tap-text').textContent = S.hatchMode === 'tap' ? 'Hatch waits for a tap' : 'Hatches by itself';
   }
 
   function bump(el) {
-    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 220 });
+    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 200 });
+  }
+
+  /** a button that repeats while held: slow at first, then fast */
+  function repeatable(el, fn) {
+    let t = null;
+    const stop = () => { clearTimeout(t); t = null; };
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      Sound.ensure();
+      fn();
+      let delay = 420;
+      const again = () => { if (fn() === false) return stop(); delay = Math.max(70, delay * 0.8); t = setTimeout(again, delay); };
+      t = setTimeout(again, delay);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.addEventListener(ev, stop));
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+    // keyboard and assistive tech fire a click (detail 0) without a pointerdown
+    el.addEventListener('click', (e) => { if (e.detail === 0) fn(); });
+  }
+
+  function wireDial() {
+    const svg = dial.svg;
+    let dragging = false;
+    const minutesAt = (e) => {
+      const r = svg.getBoundingClientRect();
+      const x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+      const dist = Math.hypot(x, y) / (r.width / 340);
+      let a = Math.atan2(x, -y);
+      if (a < 0) a += Math.PI * 2;
+      return { dist, min: Math.round((a / (Math.PI * 2)) * 60) };
+    };
+    const apply = (min, first) => {
+      const cur = totalSecs() / 60;
+      // 0 and 60 share the top of the ring: stay on whichever side we came from
+      if (min === 0) min = cur > 30 ? 60 : 1;
+      if (!first) {
+        if (cur >= 45 && min <= 15) min = 60;   // no wrapping past the top
+        if (cur <= 15 && min >= 45) min = 1;
+      }
+      setTotal(min * 60);
+    };
+    svg.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      const p = minutesAt(e);
+      if (p.dist < DIAL_R - 26 || p.dist > DIAL_R + 40) return;  // only the ring itself; the egg stays tappable
+      e.preventDefault();
+      Sound.ensure();
+      dragging = true;
+      svg.classList.add('dragging');
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      apply(p.min, true);
+    });
+    svg.addEventListener('pointermove', (e) => { if (dragging) apply(minutesAt(e).min, false); });
+    const end = () => { dragging = false; svg.classList.remove('dragging'); };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    svg.addEventListener('keydown', (e) => {
+      const k = e.key;
+      let done = true;
+      if (k === 'ArrowRight' || k === 'ArrowUp') stepTime(1);
+      else if (k === 'ArrowLeft' || k === 'ArrowDown') stepTime(-1);
+      else if (k === 'PageUp') setTotal(totalSecs() + 300);
+      else if (k === 'PageDown') setTotal(totalSecs() - 300);
+      else if (k === 'Home') setTotal(MIN_SECS);
+      else if (k === 'End') setTotal(MAX_SECS);
+      else if (k === 'Enter') startRun();
+      else done = false;
+      if (done) e.preventDefault();
+    });
   }
 
   function wireSetup() {
-    $('min-slider').addEventListener('input', (e) => { S.minutes = +e.target.value; if (!S.minutes && !S.seconds) S.seconds = 30; renderDials(); save(); });
-    $('dial-min').addEventListener('click', () => { S.minutes = (S.minutes + 1) % 61; if (!S.minutes && !S.seconds) S.seconds = 30; renderDials(); bump($('dial-min')); save(); });
-    $('dial-sec').addEventListener('click', () => { S.seconds = (S.seconds + 15) % 60; if (!S.minutes && !S.seconds) S.seconds = 15; renderDials(); bump($('dial-sec')); save(); });
-    document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => { S.minutes = +b.dataset.min; S.seconds = 0; renderDials(); save(); }));
-    $('quick-tap').addEventListener('change', (e) => { S.hatchMode = e.target.checked ? 'tap' : 'auto'; save(); });
+    wireDial();
+    repeatable($('step-minus'), () => stepTime(-1));
+    repeatable($('step-plus'), () => stepTime(1));
+    document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => {
+      Sound.ensure();
+      if (setTotal(+b.dataset.min * 60)) bump(dial.time);
+    }));
+    $('quick-tap').addEventListener('change', (e) => { S.hatchMode = e.target.checked ? 'tap' : 'auto'; save(); renderDials(); });
     $('start-btn').addEventListener('click', startRun);
     $('btn-world').addEventListener('click', () => openSheet('world'));
     $('btn-sound').addEventListener('click', () => openSheet('sound'));
@@ -131,8 +256,7 @@
       `<path d="${d}" fill="none" stroke="#fdf3e4" stroke-width="18"/>` +
       `<path class="ring-prog" d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round"/>` +
       `<g class="ring-pebbles"></g>` +
-      `<g class="ring-hand"><circle r="13" fill="#fdf3e4" stroke="${O}" stroke-width="5"/>` +
-      `<path d="M0,-4 C-2,-16 -14,-18 -16,-12 C-12,-6 -4,-4 0,-4 Z M0,-4 C2,-16 14,-18 16,-12 C12,-6 4,-4 0,-4 Z" fill="#a9d36b" stroke="${O}" stroke-width="3" stroke-linejoin="round"/></g>`;
+      `<g class="ring-hand"><circle r="14" fill="#fdf3e4" stroke="${O}" stroke-width="5"/><circle r="5" fill="${color}"/></g>`;
     const ref = layer.querySelector('.ring-ref');
     const total = ref.getTotalLength();
     const pebbles = layer.querySelector('.ring-pebbles');
@@ -183,11 +307,13 @@
     $('next-card').classList.remove('show');
     $('again-btn').classList.remove('show');
     $('time-pill').classList.toggle('hide', !S.showNumbers);
+    $('time-pill').classList.remove('paused');
     $('kc-pause').classList.toggle('hidden', !S.showPause);
     $('kc-minus').classList.toggle('hidden', !S.showAdjust);
     $('kc-plus').classList.toggle('hidden', !S.showAdjust);
     $('kid-controls').style.display = '';
-    $('kc-pause').textContent = '❚❚';
+    $('kc-pause').innerHTML = GC.icon('pause');
+    $('kc-pause').setAttribute('aria-label', 'Pause');
     closeTray();
     showScreen('timer');
 
@@ -319,7 +445,7 @@
       setTimeout(() => {
         if (run !== r) return;
         $('next-text').textContent = S.nextUp.text || '';
-        $('next-icon').innerHTML = S.nextUp.photo ? `<img src="${S.nextUp.photo}" alt="">` : (S.nextUp.icon || '⭐');
+        $('next-icon').innerHTML = S.nextUp.photo ? `<img src="${S.nextUp.photo}" alt="">` : GC.icon(S.nextUp.icon);
         $('next-card').classList.add('show');
       }, 2200);
     }
@@ -345,7 +471,10 @@
       run.ring.prog.closest('.ring-layer').style.opacity = 1;
       Sound.resumeMusic();
     }
-    $('kc-pause').textContent = run.phase === 'paused' ? '▶' : '❚❚';
+    const paused = run.phase === 'paused';
+    $('kc-pause').innerHTML = GC.icon(paused ? 'play' : 'pause');
+    $('kc-pause').setAttribute('aria-label', paused ? 'Resume' : 'Pause');
+    $('time-pill').classList.toggle('paused', paused);
     tick(); // show the exact frozen time straight away, not on the next frame
     syncTray();
   }
@@ -378,7 +507,8 @@
     endRun();
     closeTray();
     chooseScene();
-    buildPerch();
+    buildDial();
+    renderDials();
     showScreen('setup');
     fitSetup();
   }
@@ -399,7 +529,7 @@
     const live = ph === 'running' || ph === 'paused';
     const q = (a) => document.querySelector(`.tray [data-act="${a}"]`);
     q('pause').hidden = !live;
-    q('pause').innerHTML = ph === 'paused' ? '<span>▶</span>Resume' : '<span>❚❚</span>Pause';
+    q('pause').innerHTML = ph === 'paused' ? `<span>${GC.icon('play')}</span>Resume` : `<span>${GC.icon('pause')}</span>Pause`;
     q('minus').hidden = !live;
     q('plus').hidden = !live;
     q('hatch').hidden = !(live || ph === 'ready');
@@ -415,7 +545,9 @@
     holdable($('lock-btn'),
       () => openTray(),
       () => { if (S.longPressStop) showLockTip(); else openTray(); });
-    holdable($('again-btn'), () => stopToSetup());
+    holdable($('again-btn'), () => stopToSetup(), () => {
+      $('again-btn').animate([{ rotate: '0deg' }, { rotate: '-3deg' }, { rotate: '3deg' }, { rotate: '-2deg' }, { rotate: '0deg' }], { duration: 320 });
+    });
 
     $('tray').addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -440,6 +572,7 @@
     $('stage').addEventListener('pointerdown', () => { if (run && run.phase === 'ready') hatch(); });
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $('sheet').classList.contains('show')) { closeSheet(); return; }
       if (!$('timer').classList.contains('active')) return;
       if (e.key === 'Escape') { $('tray').classList.contains('show') ? closeTray() : openTray(); }
     });
@@ -450,6 +583,7 @@
   }
 
   /* ============================================================ sheets */
+  let sheetOpener = null;
   function openSheet(kind) {
     const body = $('sheet-body');
     body.innerHTML = '';
@@ -465,15 +599,19 @@
       body.appendChild(secAbout());
     }
     if (kind === 'book') body.appendChild(secBook());
+    sheetOpener = document.activeElement;
     $('sheet').classList.add('show');
     $('sheet-backdrop').classList.add('show');
     body.scrollTop = 0;
+    $('sheet-close').focus({ preventScroll: true });
   }
   function closeSheet() {
     $('sheet').classList.remove('show');
     $('sheet-backdrop').classList.remove('show');
     Sound.stopMusic(0.3);
     renderDials();
+    if (sheetOpener && sheetOpener.focus) sheetOpener.focus({ preventScroll: true });
+    sheetOpener = null;
   }
 
   function h(tag, attrs = {}, ...kids) {
@@ -487,14 +625,24 @@
     for (const c of kids) if (c != null) e.append(c);
     return e;
   }
+  /** text with {icon-name} tokens → a fragment with the drawn icons inline */
+  function rich(text) {
+    const frag = document.createDocumentFragment();
+    String(text).split(/\{([a-z]+)\}/).forEach((part, i) => {
+      if (i % 2) frag.append(GC.Icons.el(part, 'inline'));
+      else if (part) frag.append(part);
+    });
+    return frag;
+  }
   function sec(title, hint, ...kids) {
-    return h('div', { class: 'sec' }, h('h3', {}, title), hint ? h('p', { class: 'hint' }, hint) : null, ...kids);
+    return h('div', { class: 'sec' }, h('h3', {}, title), hint ? h('p', { class: 'hint' }, rich(hint)) : null, ...kids);
   }
   function optGroup(options, get, set, extra) {
     const wrap = h('div', { class: 'opts' });
     const paint = () => wrap.querySelectorAll('.opt').forEach((b) => b.classList.toggle('on', b.dataset.v === String(get())));
     for (const o of options) {
-      const b = h('button', { class: 'opt', 'data-v': o.v, onclick: () => { set(o.v); paint(); save(); if (extra) extra(o.v); } }, o.label);
+      const b = h('button', { class: 'opt', 'data-v': o.v, onclick: () => { set(o.v); paint(); save(); if (extra) extra(o.v); } },
+        o.icon ? GC.Icons.el(o.icon) : null, o.label);
       wrap.append(b);
     }
     paint();
@@ -505,7 +653,7 @@
     input.checked = !!get();
     input.addEventListener('change', () => { set(input.checked); save(); });
     return h('div', { class: 'row' },
-      h('label', {}, label, sub ? h('span', { class: 'sub' }, sub) : null),
+      h('label', {}, rich(label), sub ? h('span', { class: 'sub' }, sub) : null),
       h('label', { class: 'toggle-row' }, input, h('span', { class: 'switch' })));
   }
 
@@ -513,7 +661,7 @@
     const grid = h('div', { class: 'scene-grid' });
     const paint = () => grid.querySelectorAll('.scene-card').forEach((c) => c.classList.toggle('on', c.dataset.v === S.scene));
     const pickScene = (v) => { S.scene = v; save(); paint(); chooseScene(); fitSetup(); };
-    grid.append(h('button', { class: 'scene-card', 'data-v': 'random', onclick: () => pickScene('random') }, h('div', { class: 'rand' }, '🎲'), h('span', {}, 'Surprise me')));
+    grid.append(h('button', { class: 'scene-card', 'data-v': 'random', onclick: () => pickScene('random') }, h('div', { class: 'rand' }, GC.Icons.el('dice')), h('span', {}, 'Surprise me')));
     for (const sc of GC.Scenes.list) {
       const svg = document.createElementNS(GC.SVGNS, 'svg');
       GC.Scenes.build(svg, sc.id, { particles: false });
@@ -534,11 +682,11 @@
     vol.addEventListener('input', () => { S.volume = +vol.value; vol.style.setProperty('--p', `${S.volume * 100}%`); Sound.setVolume(S.volume); save(); });
     vol.addEventListener('change', () => Sound.boop());
     return sec('Countdown music', 'Plays quietly while the timer runs. Tap one to hear a sample.',
-      optGroup(GC.MUSIC.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.music, (v) => (S.music = v),
+      optGroup(GC.MUSIC.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
       h('p', { class: 'hint' }, 'Plays when the egg hatches. Tap one to hear it.'),
-      optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, label: `${m.icon} ${m.name}` })), () => S.endSound, (v) => (S.endSound = v),
+      optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
       toggleRow('Say the friend\'s name', '“It\'s a Fox!” (uses the device voice)', () => S.sayName, (v) => (S.sayName = v)));
@@ -561,7 +709,7 @@
         await egg.hatch(GC.Animals.render(GC.pick(pool)), { style: id === 'random' ? undefined : id, onPop: () => Sound.pop() });
       } finally { busy = false; }
     };
-    const opts = [{ v: 'random', label: '🎲 Surprise me' }, ...GC.ShellFX.list().map((f) => ({ v: f.id, label: `${f.icon} ${f.name}` }))];
+    const opts = [{ v: 'random', icon: 'dice', label: 'Surprise me' }, ...GC.ShellFX.list().map((f) => ({ v: f.id, icon: f.icon, label: f.name }))];
     const group = optGroup(opts, () => S.hatchStyle, (v) => (S.hatchStyle = v), (v) => play(v));
     svg.addEventListener('click', () => play(S.hatchStyle));
     svg.innerHTML = `<ellipse cx="0" cy="40" rx="190" ry="40" fill="#cfe3a8" stroke="${O}" stroke-width="5"/><g></g>`;
@@ -578,9 +726,9 @@
       photoGrid.innerHTML = '';
       for (const p of photos) {
         photoGrid.append(h('div', { class: 'photo' }, h('img', { src: p.url, alt: '' }),
-          h('button', { 'aria-label': 'Remove photo', onclick: async () => { await Store.removePhoto(p.id); refresh(); } }, '✕')));
+          h('button', { 'aria-label': 'Remove photo', onclick: async () => { await Store.removePhoto(p.id); refresh(); } }, GC.Icons.el('close'))));
       }
-      photoGrid.append(h('button', { class: 'photo-add', 'aria-label': 'Add photos', onclick: () => file.click() }, '＋'));
+      photoGrid.append(h('button', { class: 'photo-add', 'aria-label': 'Add photos', onclick: () => file.click() }, GC.Icons.el('plus')));
     };
     file.addEventListener('change', async () => {
       for (const f of file.files) {
@@ -591,7 +739,7 @@
       refresh();
     });
     const mkWho = () => optGroup([
-      { v: 'animals', label: '🐾 Animals' }, { v: 'photos', label: '📷 My photos' }, { v: 'both', label: '🎁 Both' },
+      { v: 'animals', icon: 'paw', label: 'Animals' }, { v: 'photos', icon: 'camera', label: 'My photos' }, { v: 'both', icon: 'gift', label: 'Both' },
     ], () => S.hatchWho, (v) => (S.hatchWho = v));
     let whoGroup = mkWho();
     refresh();
@@ -599,35 +747,39 @@
       whoGroup, h('div', { style: 'height:12px' }), photoGrid, file,
       h('h3', { style: 'margin-top:18px' }, 'When time is up'),
       h('p', { class: 'hint' }, 'Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.'),
-      optGroup([{ v: 'tap', label: '👆 Wait for a tap' }, { v: 'auto', label: '🐣 Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
+      optGroup([{ v: 'tap', icon: 'tap', label: 'Wait for a tap' }, { v: 'auto', icon: 'hatch', label: 'Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
   }
 
   function secScreen() {
     const holdOpts = optGroup([1, 1.5, 2, 3].map((v) => ({ v, label: `${v}s` })), () => S.holdSeconds, (v) => {
       S.holdSeconds = v; document.documentElement.style.setProperty('--hold', `${v}s`);
     });
-    return sec('Timer screen', 'Pause, ±1 minute and Stop are always available behind the 🔒 in the bottom corner. The options below put extra buttons on screen.',
-      toggleRow('Long-press 🔒 for grown-up controls', 'A quick tap does nothing, so little fingers can\'t stop the timer', () => S.longPressStop, (v) => (S.longPressStop = v)),
+    return sec('Timer screen', 'Pause, ±1 minute and Stop are always available behind the {lock} in the bottom corner. The options below put extra buttons on screen.',
+      toggleRow('Long-press {lock} for grown-up controls', 'A quick tap does nothing, so little fingers can\'t stop the timer', () => S.longPressStop, (v) => (S.longPressStop = v)),
       h('div', { class: 'row' }, h('label', {}, 'Hold for'), holdOpts),
       toggleRow('Show pause button', 'Always on screen (one tap)', () => S.showPause, (v) => (S.showPause = v)),
       toggleRow('Show −1 / +1 minute buttons', 'Always on screen (one tap)', () => S.showAdjust, (v) => (S.showAdjust = v)),
-      toggleRow('Show numbers', 'Small clock in the corner for grown-ups', () => S.showNumbers, (v) => (S.showNumbers = v)),
+      toggleRow('Show the clock', 'Big minutes and seconds at the top of the screen', () => S.showNumbers, (v) => (S.showNumbers = v)),
       toggleRow('Go full screen', 'Hides browser bars while the timer runs', () => S.fullscreen, (v) => (S.fullscreen = v)));
   }
 
   function secNext() {
-    const icons = ['🧸', '🛁', '🥣', '🧦', '🦷', '📚', '🛏️', '🚗', '🧩', '🎨', '🍎', '🧥', '🖍️', '🚽', '🏃', '⭐'];
+    const icons = ['teddy', 'bath', 'bowl', 'sock', 'tooth', 'books', 'bed', 'car', 'puzzle', 'paint', 'apple', 'coat', 'crayon', 'toilet', 'shoe', 'star'];
     const text = h('input', { type: 'text', value: S.nextUp.text, maxlength: 40, placeholder: 'e.g. Bath time' });
     text.addEventListener('input', () => { S.nextUp.text = text.value; save(); });
-    const row = h('div', { class: 'emoji-row' });
-    const paint = () => row.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !S.nextUp.photo && b.textContent === S.nextUp.icon));
-    for (const ic of icons) row.append(h('button', { onclick: () => { S.nextUp.icon = ic; S.nextUp.photo = null; save(); paint(); photoBtn.textContent = '📷'; } }, ic));
+    const row = h('div', { class: 'icon-row' });
+    const paint = () => row.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !S.nextUp.photo && b.dataset.icon === S.nextUp.icon));
+    const setPhotoBtn = () => photoBtn.replaceChildren(GC.Icons.el(S.nextUp.photo ? 'picture' : 'camera'));
+    for (const ic of icons) {
+      row.append(h('button', { 'data-icon': ic, 'aria-label': ic, onclick: () => { S.nextUp.icon = ic; S.nextUp.photo = null; save(); paint(); setPhotoBtn(); } }, GC.Icons.el(ic)));
+    }
     const file = h('input', { type: 'file', accept: 'image/*', style: 'display:none' });
-    const photoBtn = h('button', { 'aria-label': 'Use a photo', onclick: () => file.click() }, S.nextUp.photo ? '🖼️' : '📷');
+    const photoBtn = h('button', { 'aria-label': 'Use a photo', onclick: () => file.click() });
+    setPhotoBtn();
     row.append(photoBtn);
     file.addEventListener('change', async () => {
       if (!file.files[0]) return;
-      try { S.nextUp.photo = await Store.fileToSquareDataUrl(file.files[0], 240); save(); photoBtn.textContent = '🖼️'; paint(); } catch (e) {}
+      try { S.nextUp.photo = await Store.fileToSquareDataUrl(file.files[0], 240); save(); setPhotoBtn(); paint(); } catch (e) {}
     });
     paint();
     return sec('Next up card', 'Shown after the hatch: what happens next, with an icon or your own photo.',
@@ -637,8 +789,8 @@
   function secAbout() {
     return sec('About', 'Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.',
       h('div', { class: 'opts' },
-        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); } } }, '🧹 Reset friend book'),
-        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); closeSheet(); chooseScene(); } } }, '↺ Reset settings')));
+        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); closeSheet(); } } }, GC.Icons.el('broom'), 'Reset friend book'),
+        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); document.documentElement.style.setProperty('--hold', `${S.holdSeconds}s`); closeSheet(); chooseScene(); fitSetup(); } } }, GC.Icons.el('reset'), 'Reset settings')));
   }
 
   function secBook() {
@@ -657,7 +809,7 @@
   /* ============================================================ boot */
   function boot() {
     chooseScene();
-    buildPerch();
+    buildDial();
     renderDials();
     wireSetup();
     wireTimer();

@@ -13,18 +13,18 @@
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
 
   const MUSIC = [
-    { id: 'musicbox', name: 'Music box', icon: '🎶' },
-    { id: 'marimba', name: 'Marimba walk', icon: '🎵' },
-    { id: 'forest', name: 'Forest birds', icon: '🐦' },
-    { id: 'rain', name: 'Soft rain', icon: '🌧️' },
-    { id: 'ticktock', name: 'Gentle tick-tock', icon: '🕰️' },
-    { id: 'off', name: 'Quiet', icon: '🔇' },
+    { id: 'musicbox', name: 'Music box', icon: 'notes' },
+    { id: 'marimba', name: 'Marimba walk', icon: 'note' },
+    { id: 'forest', name: 'Forest birds', icon: 'bird' },
+    { id: 'rain', name: 'Soft rain', icon: 'rain' },
+    { id: 'ticktock', name: 'Gentle tick-tock', icon: 'clock' },
+    { id: 'off', name: 'Quiet', icon: 'quiet' },
   ];
   const ENDS = [
-    { id: 'tada', name: 'Ta-da parade', icon: '🎉' },
-    { id: 'chimes', name: 'Happy chimes', icon: '🔔' },
-    { id: 'birds', name: 'Birdsong hello', icon: '🐤' },
-    { id: 'bubbles', name: 'Bubble pops', icon: '🫧' },
+    { id: 'tada', name: 'Ta-da parade', icon: 'tada' },
+    { id: 'chimes', name: 'Happy chimes', icon: 'bell' },
+    { id: 'birds', name: 'Birdsong hello', icon: 'chick' },
+    { id: 'bubbles', name: 'Bubble pops', icon: 'bubbles' },
   ];
 
   // original melodies (MIDI note numbers, null = rest)
@@ -276,6 +276,11 @@
       const t = this.ctx.currentTime + 0.01;
       for (let i = 0; i < 3; i++) this.noiseBurst(t + i * 0.045 + Math.random() * 0.02, 0.06, { freq: GC.rand(2500, 4200), q: 2, gain: 0.25, filter: 'bandpass' });
       this.tone(220, t, 0.08, { gain: 0.1, bus: this.sfxBus, slide: 0.6 });
+    }
+    /** one click of the setup dial */
+    tick() {
+      if (!this.ctx) return;
+      this.tone(1500, this.ctx.currentTime, 0.035, { gain: 0.06, bus: this.sfxBus, slide: 0.7 });
     }
     boop() {
       if (!this.ensure()) return;

@@ -9,7 +9,7 @@
  *   GC.ShellFX.register({
  *     id:   'roll',              // unique, lowercase
  *     name: 'Roll away',         // shown in settings
- *     icon: '🛞',                // one emoji for the settings chip
+ *     icon: 'roll',              // an icon name from js/icons.js, for the settings chip
  *     async run(ctx) { ... },    // see below
  *   });
  *
@@ -87,7 +87,7 @@
   /* Fallback / reference effect: the halves just split and slide apart.
      Real effects live in js/hatch/*.js. */
   GC.ShellFX.register({
-    id: 'classic', name: 'Split', icon: '🥚', hidden: true,
+    id: 'classic', name: 'Split', icon: 'egg', hidden: true,
     async run(ctx) {
       const top = ctx.piece([[-90, -230], [90, -230], ...ctx.ZIG.slice().reverse()]);
       const bot = ctx.piece([...ctx.ZIG, [90, 20], [-90, 20]], { layer: ctx.back });

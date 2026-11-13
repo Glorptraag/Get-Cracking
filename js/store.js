@@ -20,16 +20,19 @@
     showAdjust: false,      // −/+ time buttons visible on timer screen
     longPressStop: true,    // grown-up controls need a long press
     holdSeconds: 1.5,
-    showNumbers: true,      // small mm:ss for grown-ups
+    showNumbers: true,      // big mm:ss clock at the top of the timer screen
     fullscreen: true,
-    nextUp: { on: false, text: 'Tidy-up time', icon: '🧸', photo: null },
+    nextUp: { on: false, text: 'Tidy-up time', icon: 'teddy', photo: null },
     seenHint: false,
   };
 
   function load() {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
-      return Object.assign({}, DEFAULTS, raw, { nextUp: Object.assign({}, DEFAULTS.nextUp, raw.nextUp || {}) });
+      const s = Object.assign({}, DEFAULTS, raw, { nextUp: Object.assign({}, DEFAULTS.nextUp, raw.nextUp || {}) });
+      // older builds saved an emoji here; it is now the name of a drawn icon
+      if (!GC.Icons.has(s.nextUp.icon)) s.nextUp.icon = GC.Icons.fromEmoji(s.nextUp.icon) || 'star';
+      return s;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULTS));
     }
