@@ -20,6 +20,7 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 
 ## How it behaves
 
+- **Setting the time:** the setup screen is an egg-timer dial. Twist (or tap) the ring to set whole minutes; one full turn is 60. The − / + buttons step 15 s below 3 minutes and 1 minute above, and repeat while held. Arrow keys work on the dial too (`buildDial`, `wireDial`, `stepTime` in `js/app.js`).
 - **Cracking:** the egg cracks in 8 steps at fixed fractions of the timer (`STEP_AT` in `js/egg.js`). Each step runs the cracks further, branches new ones, and draws them all wider and deeper (`CRACK_W_BY_STEP`). Cracks never heal when time is added.
 - **Clock:** a big mm:ss clock sits centred at the top of the timer screen. It can be hidden in settings ("Show the clock").
 - **Ground ring:** the ring around the egg empties as time runs out, and its pebbles light up at each crack step (`buildRing` in `js/app.js`).

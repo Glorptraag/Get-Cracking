@@ -31,40 +31,165 @@
     document.querySelector('.setup-bg').setAttribute('preserveAspectRatio', 'xMidYMid slice');
   }
 
-  let perchEgg = null;
-  function buildPerch() {
-    const svg = document.querySelector('.perch-egg');
-    svg.innerHTML = `<g class="nest">` +
-      `<ellipse cx="0" cy="-2" rx="86" ry="20" fill="#b98652" stroke="${O}" stroke-width="6"/>` +
-      `<path d="M-74,-6 Q-30,8 10,-4 T76,-6 M-60,6 Q-10,-8 40,6 T80,0" stroke="#8a5a3b" stroke-width="4" fill="none" stroke-linecap="round"/></g>` +
-      `<g class="perch-egg-layer"></g>` +
-      `<path d="M-84,-2 Q-40,22 0,18 Q40,22 84,-2 Q60,20 0,22 Q-60,20 -84,-2 Z" fill="#b98652" stroke="${O}" stroke-width="5" stroke-linejoin="round"/>` +
-      `<path d="M-70,6 L-50,0 M-30,12 L-8,6 M20,12 L44,6 M56,6 L74,0" stroke="#8a5a3b" stroke-width="4" stroke-linecap="round"/>`;
-    perchEgg = new GC.Egg(svg.querySelector('.perch-egg-layer'), { x: 0, y: 4, scale: 0.92 });
-    perchEgg.onBoop = () => Sound.boop();
+  /* ---- the egg-timer dial -------------------------------------------
+   * One full turn of the ring is 60 minutes. Dragging (or tapping) the
+   * ring sets whole minutes; the − / + buttons step 15 s below 3 minutes
+   * and 1 minute above, so short timers can still be fine-tuned. */
+  const MIN_SECS = 15, MAX_SECS = 3600;
+  const DIAL_R = 136;
+  let dial = null;
+
+  const totalSecs = () => S.minutes * 60 + S.seconds;
+  function setTotal(secs, quiet) {
+    const t = GC.clamp(Math.round(secs), MIN_SECS, MAX_SECS);
+    if (t === totalSecs()) return false;
+    S.minutes = Math.floor(t / 60);
+    S.seconds = t % 60;
+    renderDials();
+    save();
+    if (!quiet) { Sound.tick(); if (navigator.vibrate) navigator.vibrate(4); }
+    return true;
+  }
+  function stepTime(dir) {
+    const t = totalSecs();
+    const fine = dir > 0 ? t < 180 : t <= 180;
+    const unit = fine ? 15 : 60;
+    // snap to the step grid first, so 0:10 + goes to 0:15 and 4:30 − goes to 4:00
+    const next = dir > 0 ? Math.floor(t / unit) * unit + unit : Math.ceil(t / unit) * unit - unit;
+    return setTotal(next);
+  }
+
+  function buildDial() {
+    const svg = $('dial');
+    const R = DIAL_R;
+    let ticks = '';
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2, big = i % 5 === 0;
+      const x = Math.sin(a) * R, y = -Math.cos(a) * R;
+      ticks += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big ? 3.6 : 1.7}" fill="${O}" opacity="${big ? 0.5 : 0.28}"/>`;
+    }
+    const circ = `M0,${-R} A${R},${R} 0 1 1 0,${R} A${R},${R} 0 1 1 0,${-R}`;
+    svg.innerHTML =
+      `<circle r="${R}" fill="none" stroke="${O}" stroke-width="42"/>` +
+      `<circle r="${R}" fill="none" stroke="#fdf3e4" stroke-width="30"/>` +
+      `<path class="dial-fill" d="${circ}" pathLength="1" fill="none" stroke="#e0a43c" stroke-width="30" stroke-linecap="round"/>` +
+      `<g class="dial-ticks">${ticks}</g>` +
+      `<circle r="${R - 21}" fill="#fdf3e4"/>` +
+      `<ellipse cx="0" cy="-4" rx="46" ry="9" fill="${O}" opacity=".13"/>` +
+      `<g class="dial-egg"></g>` +
+      `<text class="dial-time" x="0" y="80" text-anchor="middle">5:00</text>` +
+      `<g class="dial-knob"><circle r="24" fill="${O}"/><circle r="18" fill="#fdf3e4"/><circle r="8" fill="#e0a43c" stroke="${O}" stroke-width="3.5"/></g>`;
+    const egg = new GC.Egg(svg.querySelector('.dial-egg'), { x: 0, y: -4, scale: 0.6 });
+    egg.onBoop = () => Sound.boop();
+    dial = { svg, fill: svg.querySelector('.dial-fill'), knob: svg.querySelector('.dial-knob'), time: svg.querySelector('.dial-time'), egg };
   }
 
   function renderDials() {
-    $('dial-min').firstElementChild.textContent = String(S.minutes).padStart(2, '0');
-    $('dial-sec').firstElementChild.textContent = String(S.seconds).padStart(2, '0');
-    const sl = $('min-slider');
-    sl.value = S.minutes;
-    sl.style.setProperty('--p', `${(S.minutes / 60) * 100}%`);
-    $('min-label').textContent = S.minutes === 1 ? 'minute' : 'minutes';
-    document.querySelectorAll('.presets button').forEach((b) => b.classList.toggle('on', +b.dataset.min === S.minutes && S.seconds === 0));
+    const t = totalSecs();
+    if (dial) {
+      const f = GC.clamp(t / MAX_SECS, 0, 1);
+      const a = f * Math.PI * 2;
+      dial.fill.style.strokeDasharray = `${f} 2`;
+      dial.knob.setAttribute('transform', `translate(${(Math.sin(a) * DIAL_R).toFixed(1)} ${(-Math.cos(a) * DIAL_R).toFixed(1)})`);
+      dial.time.textContent = GC.fmtTime(t * 1000);
+      const m = Math.floor(t / 60), sec = t % 60;
+      dial.svg.setAttribute('aria-valuenow', t);
+      dial.svg.setAttribute('aria-valuetext',
+        [m ? `${m} minute${m === 1 ? '' : 's'}` : '', sec ? `${sec} seconds` : ''].filter(Boolean).join(' '));
+    }
+    document.querySelectorAll('.presets button').forEach((b) => {
+      const on = +b.dataset.min * 60 === t;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+    });
+    $('step-minus').disabled = t <= MIN_SECS;
+    $('step-plus').disabled = t >= MAX_SECS;
     $('quick-tap').checked = S.hatchMode === 'tap';
+    $('quick-tap-text').textContent = S.hatchMode === 'tap' ? 'Hatch waits for a tap' : 'Hatches by itself';
   }
 
   function bump(el) {
-    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.08)' }, { transform: 'scale(1)' }], { duration: 220 });
+    el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }], { duration: 200 });
+  }
+
+  /** a button that repeats while held: slow at first, then fast */
+  function repeatable(el, fn) {
+    let t = null;
+    const stop = () => { clearTimeout(t); t = null; };
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      Sound.ensure();
+      fn();
+      let delay = 420;
+      const again = () => { if (fn() === false) return stop(); delay = Math.max(70, delay * 0.8); t = setTimeout(again, delay); };
+      t = setTimeout(again, delay);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.addEventListener(ev, stop));
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+    // keyboard and assistive tech fire a click (detail 0) without a pointerdown
+    el.addEventListener('click', (e) => { if (e.detail === 0) fn(); });
+  }
+
+  function wireDial() {
+    const svg = dial.svg;
+    let dragging = false;
+    const minutesAt = (e) => {
+      const r = svg.getBoundingClientRect();
+      const x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+      const dist = Math.hypot(x, y) / (r.width / 340);
+      let a = Math.atan2(x, -y);
+      if (a < 0) a += Math.PI * 2;
+      return { dist, min: Math.round((a / (Math.PI * 2)) * 60) };
+    };
+    const apply = (min, first) => {
+      const cur = totalSecs() / 60;
+      // 0 and 60 share the top of the ring: stay on whichever side we came from
+      if (min === 0) min = cur > 30 ? 60 : 1;
+      if (!first) {
+        if (cur >= 45 && min <= 15) min = 60;   // no wrapping past the top
+        if (cur <= 15 && min >= 45) min = 1;
+      }
+      setTotal(min * 60);
+    };
+    svg.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      const p = minutesAt(e);
+      if (p.dist < DIAL_R - 26 || p.dist > DIAL_R + 40) return;  // only the ring itself; the egg stays tappable
+      e.preventDefault();
+      Sound.ensure();
+      dragging = true;
+      svg.classList.add('dragging');
+      try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+      apply(p.min, true);
+    });
+    svg.addEventListener('pointermove', (e) => { if (dragging) apply(minutesAt(e).min, false); });
+    const end = () => { dragging = false; svg.classList.remove('dragging'); };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    svg.addEventListener('keydown', (e) => {
+      const k = e.key;
+      let done = true;
+      if (k === 'ArrowRight' || k === 'ArrowUp') stepTime(1);
+      else if (k === 'ArrowLeft' || k === 'ArrowDown') stepTime(-1);
+      else if (k === 'PageUp') setTotal(totalSecs() + 300);
+      else if (k === 'PageDown') setTotal(totalSecs() - 300);
+      else if (k === 'Home') setTotal(MIN_SECS);
+      else if (k === 'End') setTotal(MAX_SECS);
+      else if (k === 'Enter') startRun();
+      else done = false;
+      if (done) e.preventDefault();
+    });
   }
 
   function wireSetup() {
-    $('min-slider').addEventListener('input', (e) => { S.minutes = +e.target.value; if (!S.minutes && !S.seconds) S.seconds = 30; renderDials(); save(); });
-    $('dial-min').addEventListener('click', () => { S.minutes = (S.minutes + 1) % 61; if (!S.minutes && !S.seconds) S.seconds = 30; renderDials(); bump($('dial-min')); save(); });
-    $('dial-sec').addEventListener('click', () => { S.seconds = (S.seconds + 15) % 60; if (!S.minutes && !S.seconds) S.seconds = 15; renderDials(); bump($('dial-sec')); save(); });
-    document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => { S.minutes = +b.dataset.min; S.seconds = 0; renderDials(); save(); }));
-    $('quick-tap').addEventListener('change', (e) => { S.hatchMode = e.target.checked ? 'tap' : 'auto'; save(); });
+    wireDial();
+    repeatable($('step-minus'), () => stepTime(-1));
+    repeatable($('step-plus'), () => stepTime(1));
+    document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => {
+      Sound.ensure();
+      if (setTotal(+b.dataset.min * 60)) bump(dial.time);
+    }));
+    $('quick-tap').addEventListener('change', (e) => { S.hatchMode = e.target.checked ? 'tap' : 'auto'; save(); renderDials(); });
     $('start-btn').addEventListener('click', startRun);
     $('btn-world').addEventListener('click', () => openSheet('world'));
     $('btn-sound').addEventListener('click', () => openSheet('sound'));
@@ -131,8 +256,7 @@
       `<path d="${d}" fill="none" stroke="#fdf3e4" stroke-width="18"/>` +
       `<path class="ring-prog" d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round"/>` +
       `<g class="ring-pebbles"></g>` +
-      `<g class="ring-hand"><circle r="13" fill="#fdf3e4" stroke="${O}" stroke-width="5"/>` +
-      `<path d="M0,-4 C-2,-16 -14,-18 -16,-12 C-12,-6 -4,-4 0,-4 Z M0,-4 C2,-16 14,-18 16,-12 C12,-6 4,-4 0,-4 Z" fill="#a9d36b" stroke="${O}" stroke-width="3" stroke-linejoin="round"/></g>`;
+      `<g class="ring-hand"><circle r="14" fill="#fdf3e4" stroke="${O}" stroke-width="5"/><circle r="5" fill="${color}"/></g>`;
     const ref = layer.querySelector('.ring-ref');
     const total = ref.getTotalLength();
     const pebbles = layer.querySelector('.ring-pebbles');
@@ -183,11 +307,13 @@
     $('next-card').classList.remove('show');
     $('again-btn').classList.remove('show');
     $('time-pill').classList.toggle('hide', !S.showNumbers);
+    $('time-pill').classList.remove('paused');
     $('kc-pause').classList.toggle('hidden', !S.showPause);
     $('kc-minus').classList.toggle('hidden', !S.showAdjust);
     $('kc-plus').classList.toggle('hidden', !S.showAdjust);
     $('kid-controls').style.display = '';
     $('kc-pause').innerHTML = GC.icon('pause');
+    $('kc-pause').setAttribute('aria-label', 'Pause');
     closeTray();
     showScreen('timer');
 
@@ -345,7 +471,10 @@
       run.ring.prog.closest('.ring-layer').style.opacity = 1;
       Sound.resumeMusic();
     }
-    $('kc-pause').innerHTML = GC.icon(run.phase === 'paused' ? 'play' : 'pause');
+    const paused = run.phase === 'paused';
+    $('kc-pause').innerHTML = GC.icon(paused ? 'play' : 'pause');
+    $('kc-pause').setAttribute('aria-label', paused ? 'Resume' : 'Pause');
+    $('time-pill').classList.toggle('paused', paused);
     tick(); // show the exact frozen time straight away, not on the next frame
     syncTray();
   }
@@ -378,7 +507,8 @@
     endRun();
     closeTray();
     chooseScene();
-    buildPerch();
+    buildDial();
+    renderDials();
     showScreen('setup');
     fitSetup();
   }
@@ -415,7 +545,9 @@
     holdable($('lock-btn'),
       () => openTray(),
       () => { if (S.longPressStop) showLockTip(); else openTray(); });
-    holdable($('again-btn'), () => stopToSetup());
+    holdable($('again-btn'), () => stopToSetup(), () => {
+      $('again-btn').animate([{ rotate: '0deg' }, { rotate: '-3deg' }, { rotate: '3deg' }, { rotate: '-2deg' }, { rotate: '0deg' }], { duration: 320 });
+    });
 
     $('tray').addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -440,6 +572,7 @@
     $('stage').addEventListener('pointerdown', () => { if (run && run.phase === 'ready') hatch(); });
 
     document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $('sheet').classList.contains('show')) { closeSheet(); return; }
       if (!$('timer').classList.contains('active')) return;
       if (e.key === 'Escape') { $('tray').classList.contains('show') ? closeTray() : openTray(); }
     });
@@ -450,6 +583,7 @@
   }
 
   /* ============================================================ sheets */
+  let sheetOpener = null;
   function openSheet(kind) {
     const body = $('sheet-body');
     body.innerHTML = '';
@@ -465,15 +599,19 @@
       body.appendChild(secAbout());
     }
     if (kind === 'book') body.appendChild(secBook());
+    sheetOpener = document.activeElement;
     $('sheet').classList.add('show');
     $('sheet-backdrop').classList.add('show');
     body.scrollTop = 0;
+    $('sheet-close').focus({ preventScroll: true });
   }
   function closeSheet() {
     $('sheet').classList.remove('show');
     $('sheet-backdrop').classList.remove('show');
     Sound.stopMusic(0.3);
     renderDials();
+    if (sheetOpener && sheetOpener.focus) sheetOpener.focus({ preventScroll: true });
+    sheetOpener = null;
   }
 
   function h(tag, attrs = {}, ...kids) {
@@ -651,8 +789,8 @@
   function secAbout() {
     return sec('About', 'Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.',
       h('div', { class: 'opts' },
-        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); } } }, GC.Icons.el('broom'), 'Reset friend book'),
-        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); closeSheet(); chooseScene(); } } }, GC.Icons.el('reset'), 'Reset settings')));
+        h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); closeSheet(); } } }, GC.Icons.el('broom'), 'Reset friend book'),
+        h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); document.documentElement.style.setProperty('--hold', `${S.holdSeconds}s`); closeSheet(); chooseScene(); fitSetup(); } } }, GC.Icons.el('reset'), 'Reset settings')));
   }
 
   function secBook() {
@@ -671,7 +809,7 @@
   /* ============================================================ boot */
   function boot() {
     chooseScene();
-    buildPerch();
+    buildDial();
     renderDials();
     wireSetup();
     wireTimer();

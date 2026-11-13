@@ -25,37 +25,29 @@
       <h1 class="pill title-pill">Who's in the egg?</h1>
 
       <div class="timer-box">
-        <div class="perch" aria-hidden="true">
-          <svg class="perch-egg" viewBox="-110 -205 220 225"></svg>
+        <!-- the egg-timer dial: twist the ring to set minutes -->
+        <div class="dial-wrap">
+          <svg class="dial" id="dial" viewBox="-170 -170 340 340" role="slider" tabindex="0"
+               aria-label="Timer length" aria-valuemin="15" aria-valuemax="3600" aria-valuenow="300" aria-valuetext="5 minutes"></svg>
+          <button class="step-btn step-minus" id="step-minus" aria-label="Less time" data-icon="minus"></button>
+          <button class="step-btn step-plus" id="step-plus" aria-label="More time" data-icon="plus"></button>
         </div>
-        <div class="sprout sprout-tl" aria-hidden="true"></div>
-        <div class="sprout sprout-tr" aria-hidden="true"></div>
-        <div class="sprout sprout-br" aria-hidden="true"></div>
-
-        <div class="dials">
-          <button class="dial" id="dial-min" aria-label="Minutes"><span>05</span></button>
-          <div class="colon" aria-hidden="true"><i></i><i></i></div>
-          <button class="dial" id="dial-sec" aria-label="Seconds — tap to change"><span>00</span></button>
-        </div>
-        <div class="label-tag" id="min-label">minutes</div>
-        <input type="range" id="min-slider" min="0" max="60" step="1" value="5" aria-label="Minutes">
-        <div class="presets" role="group" aria-label="Quick times">
+        <div class="presets" role="group" aria-label="Quick times, in minutes">
           <button data-min="1">1</button><button data-min="2">2</button><button data-min="5">5</button>
-          <button data-min="10">10</button><button data-min="15">15</button><button data-min="20">20</button><button data-min="30">30</button>
+          <button data-min="10">10</button><button data-min="15">15</button><button data-min="30">30</button>
         </div>
-        <div class="box-feet" aria-hidden="true"><i></i><i></i></div>
       </div>
 
-      <label class="toggle-row">
+      <button class="start-btn" id="start-btn">
+        <svg class="start-ico" viewBox="0 0 48 48" aria-hidden="true"><path d="M15 9.5 C15 7.5 17 6.5 18.7 7.5 L39 21.5 C40.6 22.6 40.6 25.4 39 26.5 L18.7 40.5 C17 41.5 15 40.5 15 38.5 Z"/></svg>
+        <span class="start-label">Start</span>
+      </button>
+
+      <label class="toggle-row setup-toggle">
         <input type="checkbox" id="quick-tap">
         <span class="switch" aria-hidden="true"></span>
         <span class="toggle-text" id="quick-tap-text">Hatch waits for a tap</span>
       </label>
-
-      <button class="planter" id="start-btn">
-        <span class="planter-sprouts" aria-hidden="true"><i></i><i></i></span>
-        <span class="planter-label">Start</span>
-      </button>
 
       <nav class="quick-icons" aria-label="Options">
         <button class="icon-btn" id="btn-world" aria-label="Choose world"><span class="ico" data-icon="tree"></span><small>World</small></button>

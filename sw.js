@@ -1,5 +1,5 @@
 /* Get Cracking — offline cache. Bump VERSION when the file list changes. */
-const VERSION = 'gc-v5';
+const VERSION = 'gc-v6';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/util.js', 'js/icons.js', 'js/animals.js', 'js/egg.js', 'js/shellfx.js',

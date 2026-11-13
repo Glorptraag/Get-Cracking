@@ -95,6 +95,7 @@
     again: arcArrow(24, 24, 14, 200, 340, C.leafDk) + arcArrow(24, 24, 14, 20, 160, C.teal),
     reset: arcArrow(24, 25, 13.5, -40, 230, C.teal),
     close: `<path d="M14 14 L34 34 M34 14 L14 34" fill="none" stroke="${O}" stroke-width="6" stroke-linecap="round"/>`,
+    minus: `<path d="M11 24 H37" fill="none" stroke="${O}" stroke-width="6" stroke-linecap="round"/>`,
     plus: `<path d="M24 11 V37 M11 24 H37" fill="none" stroke="${O}" stroke-width="6" stroke-linecap="round"/>`,
 
     /* ---------- settings choices */

@@ -277,6 +277,11 @@
       for (let i = 0; i < 3; i++) this.noiseBurst(t + i * 0.045 + Math.random() * 0.02, 0.06, { freq: GC.rand(2500, 4200), q: 2, gain: 0.25, filter: 'bandpass' });
       this.tone(220, t, 0.08, { gain: 0.1, bus: this.sfxBus, slide: 0.6 });
     }
+    /** one click of the setup dial */
+    tick() {
+      if (!this.ctx) return;
+      this.tone(1500, this.ctx.currentTime, 0.035, { gain: 0.06, bus: this.sfxBus, slide: 0.7 });
+    }
     boop() {
       if (!this.ensure()) return;
       this.tone(GC.rand(520, 640), this.ctx.currentTime, 0.18, { gain: 0.08, bus: this.sfxBus, slide: 1.5 });
