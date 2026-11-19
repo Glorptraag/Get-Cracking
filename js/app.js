@@ -425,6 +425,7 @@
     r.ring.prog.closest('.ring-layer').animate([{ opacity: 1 }, { opacity: 0.25 }], { duration: 800, fill: 'forwards' });
     const friend = pickFriend();
     r.friend = friend;
+    if (S.sayName) Sound.preloadFriend(friend);
     // tapping the friend: it says hello in its own voice
     r.egg.onCheer = () => (friend.kind === 'animal' && Sound.friendCall(friend.id)) || Sound.cheer();
     await r.egg.hatch(friend.markup, {
@@ -436,12 +437,12 @@
     });
     if (run !== r) return;
     r.phase = 'hatched';
-    $('hatch-pill').textContent = friend.kind === 'animal' ? `It's a ${friend.name}!` : friend.name;
+    $('hatch-pill').textContent = friend.kind === 'animal' ? `It's ${GC.aName(friend.name)}!` : friend.name;
     $('hatch-pill').classList.add('show');
     if (friend.kind === 'animal') {
       Store.addToBook(friend.id);
-      if (S.sayName) setTimeout(() => Sound.say(`It's a ${friend.name}!`), 500);
     }
+    if (S.sayName) setTimeout(() => { if (run === r) Sound.sayFriend(friend); }, 500);
     if (S.nextUp.on && (S.nextUp.text || S.nextUp.photo)) {
       setTimeout(() => {
         if (run !== r) return;
@@ -692,7 +693,7 @@
       optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
-      toggleRow('Say the friend\'s name', '“It\'s a Fox!” (uses the device voice)', () => S.sayName, (v) => (S.sayName = v)));
+      toggleRow('Say the friend\'s name', '“It\'s a Fox!” when a friend hatches', () => S.sayName, (v) => (S.sayName = v)));
   }
 
   function secStyle() {

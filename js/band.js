@@ -136,6 +136,7 @@
     const noise = (t, d, o) => s.noiseBurst(t, d, o);
     const D = ch.drums;
     const k = {
+      s,
       /* ---- drums & percussion */
       kick(t, g = 0.5) {
         tone(150, t, 0.3, { gain: g, bus: D, slide: 0.32 });
@@ -374,6 +375,21 @@
     capybara: 'wheek', redpanda: 'squeak', sloth: 'sloth', ladybug: 'buzz', snail: 'bloop', goat: 'goat',
   };
 
+  /**
+   * An animal's call: the real recording (js/samples.js) when it has loaded,
+   * otherwise the synthesised one above. A few get a little magic on top.
+   */
+  const AFTER = {
+    dragon: (k, t) => [84, 88, 91, 96].forEach((n, i) => k.glock(n, t + i * 0.07, 0.6, 0.05)),
+  };
+  function playCall(k, name, t, out, gain = 1) {
+    const d = k.s.sample(name, t, out, { gain });
+    if (d) { if (AFTER[name]) AFTER[name](k, t + d * 0.8); return d; }
+    CALLS[name].play(k, t, out);
+    return CALLS[name].len;
+  }
+  const lenOf = (name) => { const b = GC.Samples && GC.Samples.get(name); return b ? b.duration : CALLS[name].len; };
+
   /** singers: each animal's comfortable range (Hz); notes are folded into it by octaves */
   const RANGE = { meow: [440, 820], baa: [250, 460], quack: [260, 440], woof: [220, 400], oink: [150, 270], hoot: [300, 540], trumpet: [380, 720], cheep: [1800, 3600], kazoo: [300, 700] };
   function sing(k, who, t, n, d, o) {
@@ -491,7 +507,7 @@
       ],
       end: { chord: Fj, root: 41, top: [65, 69, 72, 77], fan: [[0, 72, 1 / 3], [1 / 3, 77, 1 / 3], [2 / 3, 81, 1 / 3], [1, 84, 1]] },
       intro(k, at) {
-        at(0, (t) => CALLS.monkey.play(k, t, k.ch.aL));
+        at(0, (t) => playCall(k, 'monkey', t, k.ch.aL));
         [[1.5, 1], [2, 0], [2.25, 1], [2.5, 0], [2.75, 0]].forEach(([b, hi]) => at(b, (t) => k.bongo(t, !!hi, 0.1 + b * 0.025)));
         for (let x = 0; x < 6; x++) at(1.5 + x / 4, (t) => k.shaker(t, 0.02 + x * 0.006));
       },
@@ -523,7 +539,7 @@
         k.uke(e.top.map((n) => n + 12), t, 0.06); k.bass(e.root, t, 1.4, 0.26);
         k.kick(t, 0.5); k.crash(t, 0.14); k.bongo(t, true, 0.16); k.bongo(t + 0.09, false, 0.16);
         k.harp([77, 81, 84, 89, 93, 96], t + 0.05, 0.05, 0.045);
-        CALLS.tweet.play(k, t + 0.4, k.ch.aR);
+        playCall(k, 'tweet', t + 0.4, k.ch.aR);
       },
     },
 
@@ -543,7 +559,7 @@
       ],
       end: { chord: Gf, root: 43, top: [67, 71, 74, 79], fan: [[0, 67, 1 / 3], [1 / 3, 71, 1 / 3], [2 / 3, 74, 1 / 3], [1, 79, 1]] },
       intro(k, at) {
-        at(0, (t) => CALLS.rooster.play(k, t, k.ch.aL));
+        at(0, (t) => playCall(k, 'rooster', t, k.ch.aL));
         at(3, (t) => k.washboard(t, 0.08)); at(3.5, (t) => k.washboard(t, 0.1));
         at(3, (t, B) => k.fiddle(62, t, B(3.45) - t, 0.05)); at(3.5, (t, B) => k.fiddle(64, t, B(3.95) - t, 0.05));
       },
@@ -595,7 +611,7 @@
       song.comp(k, at, b, bar.chord, 'A');
       for (const [x, n, d] of bar.mel) at(b + x, (t) => song.lead(k, t, n, d * spb, i, spb, bar.chord));
       const who = others[i % others.length];
-      at(b + 2, (t) => CALLS[who].play(k, t, pans[i]));
+      at(b + 2, (t) => playCall(k, who, t, pans[i]));
       b += 4;
     });
 
@@ -621,12 +637,12 @@
     at(b, (t) => { k.crash(t, 0.12); k.kick(t, 0.5); });
     for (const [x, n, d] of e.fan) at(b + x, (t) => song.lead(k, t, n, d * spb, 3, spb, e.chord));
     song.bass(k, at, b, e.root, e.root + 7, 2);
-    others.slice(4, 7).concat(others.slice(0, 1)).forEach((who, i) => at(b + 1 + i * 0.25, (t) => CALLS[who].play(k, t, i % 2 ? k.ch.aL : k.ch.aR)));
+    others.slice(4, 7).concat(others.slice(0, 1)).forEach((who, i) => at(b + 1 + i * 0.25, (t) => playCall(k, who, t, i % 2 ? k.ch.aL : k.ch.aR, 0.8)));
     const soloAt = b + 3;
-    const call = CALLS[friendCall];
+    const callLen = lenOf(friendCall);
     at(soloAt - 0.5, (t) => k.timpRoll(t, t + 0.5, e.root + 12, 0.02, 0.12));
-    at(soloAt, (t) => { call.play(k, t, k.ch.solo); (song.pad || ((kk, ...a) => kk.strings(...a)))(k, e.top, t, call.len + spb, 0.012); });
-    const endBeat = Math.ceil((soloAt + (call.len + 0.15) / spb) * 2) / 2;
+    at(soloAt, (t) => { playCall(k, friendCall, t, k.ch.solo); (song.pad || ((kk, ...a) => kk.strings(...a)))(k, e.top, t, callLen + spb, 0.012); });
+    const endBeat = Math.ceil((soloAt + (callLen + 0.15) / spb) * 2) / 2;
     at(endBeat, (t) => song.finish(k, t, e, spb));
     return { ev, beats: endBeat, tail: song.tail || 2.6 };
   }
@@ -731,8 +747,7 @@
     const ch = { drums: b, bass: b, comp: b, lead: b, sparkle: b, aL: b, aR: b, solo: b };
     const k = makeKit(this, ch);
     k.ch = ch;
-    call.play(k, this.ctx.currentTime + 0.02, b);
-    return call.len;
+    return playCall(k, name, this.ctx.currentTime + 0.02, b);
   };
   P.friendCall = function (friendId) { return this.animalCall(FRIEND_CALL[friendId]); };
 
