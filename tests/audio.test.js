@@ -71,7 +71,7 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
   });
 
   console.log('\nA1. Hatching tunes (offline render)');
-  for (const e of await p.evaluate(() => GC.END_SOUNDS.map((x) => x.id))) {
+  for (const e of await p.evaluate(() => GC.END_SOUNDS.filter((x) => !x.band).map((x) => x.id))) {
     const r = await p.evaluate((id) => renderWith(6, (s) => s.endTune(id)), e);
     fs.writeFileSync(path.join(OUT, `tune-${e}.wav`), Buffer.from(r.wav, 'base64'));
     const loud = Math.max(...r.rms);
@@ -81,6 +81,37 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
     ok(r.clip === 0, `${e}: no clipping`);
     ok(tail < loud * 0.03, `${e}: fully decays after its ${r.declared}s (tail ${db(tail)} dB vs ${db(loud)} dB) — no stuck notes`);
     ok(r.declared >= 2.5 && r.declared <= 4.5, `${e}: celebratory length ${r.declared}s`);
+  }
+
+  console.log('\nA1b. Animal bands (offline render, every song × a few friends)');
+  const bands = await p.evaluate(() => GC.END_SOUNDS.filter((x) => x.band).map((x) => x.id));
+  const friends = ['elephant', 'kitten', 'unicorn', 'snail', null];
+  for (const e of bands) {
+    for (const fr of friends) {
+      const r = await p.evaluate(([id, fr]) => renderWith(22, (s, setT) => {
+        const len = s.endTune(id, fr);
+        const c = s._celeb;
+        clearInterval(c.timer); clearTimeout(c.doneT);
+        for (let t = 0; t < len; t += 0.05) { setT(t); s._celebPump(); }
+        window._lastBand = { solo: c.friendCall, events: c.ev.length, done: c.i };
+        return len;
+      }), [e, fr]);
+      const meta = await p.evaluate(() => window._lastBand);
+      const tag = `${e}${fr ? '-' + fr : ''}`;
+      fs.writeFileSync(path.join(OUT, `band-${tag}.wav`), Buffer.from(r.wav, 'base64'));
+      const loud = Math.max(...r.rms);
+      const endIdx = Math.ceil((r.declared + 0.5) * 4);
+      const tail = Math.max(0, ...r.rms.slice(endIdx));
+      const body = r.rms.slice(2, Math.floor((r.declared - 2.6) * 4));
+      const gaps = body.filter((x) => x < loud * 0.02).length;
+      ok(r.nan === 0 && r.peak > 0.1, `${tag}: plays (peak ${db(r.peak)} dBFS, ${meta.events} events, solo: ${meta.solo})`);
+      ok(r.clip === 0, `${tag}: no clipping`);
+      ok(meta.done === meta.events, `${tag}: every scheduled note played (${meta.done}/${meta.events})`);
+      ok(gaps <= 2, `${tag}: no dead air in the song (${gaps} silent ¼ s)`);
+      ok(tail < loud * 0.03, `${tag}: rings out and stops after ${r.declared.toFixed(1)}s (tail ${db(tail)} dB vs ${db(loud)} dB)`);
+      ok(r.declared >= 9 && r.declared <= 20, `${tag}: a proper song, not too long (${r.declared.toFixed(1)}s)`);
+      if (fr) ok(meta.solo === (await p.evaluate((f) => GC.Band.FRIEND_CALL[f], fr)), `${tag}: the ${fr} takes the solo`);
+    }
   }
 
   console.log('\nA2. Countdown music (offline render, 16 s, final-stretch twinkle from 10 s)');
@@ -158,6 +189,50 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
   ok(live.whilePaused === 0, `paused = silent (${live.whilePaused} notes)`);
   ok(live.afterResume > 0, 'resume brings the music back');
   ok(live.afterStop === 0 && !live.timerLeft, 'stop = silent, scheduler cleared');
+
+  console.log('\nC. Animal band live (real AudioContext)');
+  const band = await p.evaluate(async () => {
+    const S = GC.Sound;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const out = {};
+    const len = S.endTune('farm', 'piglet');
+    out.len = len;
+    out.solo = S._celeb.friendCall;
+    await sleep(1200);
+    const c1 = S._celeb, played1 = c1.i;
+    out.pumping = played1 > 0 && played1 < c1.ev.length; // scheduled a little at a time, not all at once
+    // a 700 ms main-thread stall: the notes it made us miss are skipped, not fired in a burst
+    const dropped0 = S.dropped || 0;
+    const t0 = performance.now(); while (performance.now() - t0 < 700) {}
+    await sleep(300);
+    out.skipped = (S.dropped || 0) - dropped0;
+    out.stillGoing = c1.i > played1 && !!c1.timer;
+    // starting another song replaces the first
+    S.endTune('band', 'kitten');
+    out.replaced = S._celeb !== c1 && !c1.timer;
+    // a short jingle stops a band that is playing
+    S.endTune('chimes');
+    out.jingleStops = !S._celeb;
+    // countdown music starting (a new egg) stops it too
+    S.endTune('jungle'); S.startMusic('musicbox'); out.musicStops = !S._celeb; S.stopMusic(0.05);
+    // stop mid-song: nothing more is scheduled
+    S.endTune('band');
+    await sleep(500);
+    const c = S._celeb; S.stopCelebration(0.05);
+    const at = c.i; await sleep(800);
+    out.stopHolds = c.i === at && !c.timer;
+    out.tapCall = S.friendCall('elephant') > 0 && S.friendCall('nobody') === 0;
+    return out;
+  });
+  ok(band.len > 9 && band.len < 20, `farm song length ${band.len.toFixed(1)}s`);
+  ok(band.solo === 'oink', `the piglet takes the solo (${band.solo})`);
+  ok(band.pumping, 'song is scheduled a little ahead at a time, not all at once');
+  ok(band.stillGoing, `700 ms stall: the song carries on (${band.skipped} missed notes skipped, not burst)`);
+  ok(band.replaced, 'starting another song replaces the first (never two bands at once)');
+  ok(band.jingleStops, 'picking a short jingle stops a band that is playing');
+  ok(band.musicStops, 'a new egg (countdown music) stops the band');
+  ok(band.stopHolds, 'stop mid-song: nothing more is scheduled');
+  ok(band.tapCall, 'tapping a friend plays its own call');
   ok(errs.filter((e) => !/resume|InvalidState/.test(e)).length === 0, 'no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
 
   console.log(`\n${pass} passed, ${fail} failed — WAVs in ${OUT}`);

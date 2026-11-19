@@ -5,7 +5,9 @@
  *   1. countdown music — an ambient "something is happening" cue that keeps
  *      working when the child looks away from the screen
  *   2. small sound effects — crack, pop, boop, knock
- *   3. the end tune — a cheerful celebration instead of an alarm
+ *   3. the end tune — a cheerful celebration instead of an alarm. The three
+ *      animal bands (full band + animal voices + a solo for the friend who
+ *      hatched) live in band.js; the short jingles are here.
  */
 (function () {
   'use strict';
@@ -21,6 +23,9 @@
     { id: 'off', name: 'Quiet', icon: 'quiet' },
   ];
   const ENDS = [
+    { id: 'band', name: 'Animal band', icon: 'drum', band: true },
+    { id: 'jungle', name: 'Jungle jam', icon: 'maracas', band: true },
+    { id: 'farm', name: 'Farmyard hoedown', icon: 'barn', band: true },
     { id: 'tada', name: 'Ta-da parade', icon: 'tada' },
     { id: 'chimes', name: 'Happy chimes', icon: 'bell' },
     { id: 'birds', name: 'Birdsong hello', icon: 'chick' },
@@ -159,6 +164,7 @@
     /* ------------------------------------------------------- music */
     startMusic(id) {
       this.stopMusic();
+      if (this.stopCelebration) this.stopCelebration(0.3);
       this.music = id;
       if (!this.ensure() || id === 'off') return;
       this.musicBus.gain.cancelScheduledValues(this.ctx.currentTime);
@@ -337,9 +343,12 @@
       src.connect(f); f.connect(g); g.connect(this.sfxBus); src.start(t, Math.random()); src.stop(t + 0.5);
     }
 
-    /** the celebration tune; returns its length in seconds */
-    endTune(id) {
+    /** the celebration tune; returns its length in seconds.
+     *  friendId (optional) = the animal that hatched; it gets a solo in the bands */
+    endTune(id, friendId) {
       if (!this.ensure()) return 0;
+      if (this.bandTune && GC.Band && GC.Band.SONGS[id]) return this.bandTune(id, friendId);
+      if (this.stopCelebration) this.stopCelebration(0.2);
       const t0 = this.ctx.currentTime + 0.05;
       const bus = this.sfxBus;
       const bell = (n, t, d = 1.6, g = 0.14) => this.tone(midi(n), t, d, { gain: g, bus, partials: [[1, 1], [2.76, 0.18], [5.4, 0.06]] });
@@ -377,6 +386,7 @@
     preview(kind, id) {
       this.ensure();
       if (kind === 'end') { this.stopMusic(0.2); return this.endTune(id); }
+      if (this.stopCelebration) this.stopCelebration(0.2);
       this.startMusic(id);
       clearTimeout(this._previewT);
       this._previewT = setTimeout(() => this.stopMusic(), 5000);
@@ -386,6 +396,7 @@
       try {
         if (!('speechSynthesis' in window)) return;
         speechSynthesis.cancel();
+        if (this.duckCelebration) this.duckCelebration(1.4 + text.length * 0.06);
         const u = new SpeechSynthesisUtterance(text);
         u.rate = 0.9; u.pitch = 1.25; u.volume = Math.min(1, this.volume + 0.2);
         speechSynthesis.speak(u);

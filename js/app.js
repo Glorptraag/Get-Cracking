@@ -425,12 +425,13 @@
     r.ring.prog.closest('.ring-layer').animate([{ opacity: 1 }, { opacity: 0.25 }], { duration: 800, fill: 'forwards' });
     const friend = pickFriend();
     r.friend = friend;
-    r.egg.onCheer = () => Sound.cheer();
+    // tapping the friend: it says hello in its own voice
+    r.egg.onCheer = () => (friend.kind === 'animal' && Sound.friendCall(friend.id)) || Sound.cheer();
     await r.egg.hatch(friend.markup, {
       style: S.hatchStyle,
       onPop: () => {
         Sound.pop();
-        setTimeout(() => Sound.endTune(S.endSound), 120);
+        setTimeout(() => Sound.endTune(S.endSound, friend.kind === 'animal' ? friend.id : null), 120);
       },
     });
     if (run !== r) return;
@@ -498,6 +499,7 @@
     clearInterval(run.knockT);
     run = null;
     Sound.stopMusic(0.3);
+    Sound.stopCelebration(0.3);
     Sound.releaseMedia();
     keepAwake(false);
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
@@ -609,6 +611,7 @@
     $('sheet').classList.remove('show');
     $('sheet-backdrop').classList.remove('show');
     Sound.stopMusic(0.3);
+    if (!run || run.phase !== 'hatched') Sound.stopCelebration(0.3);
     renderDials();
     if (sheetOpener && sheetOpener.focus) sheetOpener.focus({ preventScroll: true });
     sheetOpener = null;
@@ -685,7 +688,7 @@
       optGroup(GC.MUSIC.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
-      h('p', { class: 'hint' }, 'Plays when the egg hatches. Tap one to hear it.'),
+      h('p', { class: 'hint' }, 'Plays when the egg hatches. In the three animal bands the friend who hatched gets a solo. Tap one to hear it.'),
       optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),

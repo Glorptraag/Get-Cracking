@@ -13,6 +13,12 @@
   GC.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   GC.rand = (a, b) => a + Math.random() * (b - a);
   GC.pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  /** a shuffled copy */
+  GC.shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  };
 
   /** Deterministic PRNG so scenes/animals draw the same every time. */
   GC.seeded = function (seed) {

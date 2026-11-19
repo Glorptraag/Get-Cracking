@@ -1,11 +1,12 @@
 # Get Cracking
 
-A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and a cheerful tune plays instead of an alarm.
+A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and an animal band strikes up instead of an alarm.
 
 - **40 hatchable friends**, all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
 - **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
-- **Countdown music** (6 choices) and **hatching tunes** (4 choices). All of it is synthesised live with Web Audio, and the melodies are original.
+- **Animal bands** for the hatch: three ~15-second celebration songs, each a full band plus a chorus of animal voices (moo, quack, baa, woof, meow, oink, ribbit, hoot, elephant trumpet, roar, neigh, rooster and more). The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
+- **Countdown music** (6 choices) and **hatching tunes** (3 animal bands + 4 short jingles). All of it is synthesised live with Web Audio (no audio files), and the melodies are original.
 - **Runs fully offline.** No login, no account, no network requests, and nothing leaves the device.
 
 ## Run it
@@ -26,7 +27,13 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 - **Ground ring:** the ring around the egg empties as time runs out, and its pebbles light up at each crack step (`buildRing` in `js/app.js`).
 - **Idle egg:** it breathes, and wobbles more at later steps. Tapping it squashes it and never changes the timer.
 - **Time's up:** a soft chime plays, never an alarm. With "Wait for a tap" (the default) the egg glows and knocks every 5 s for up to 5 minutes, and a tap anywhere hatches it (`timeUp()`).
-- **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again.
+- **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again and say hello in its own voice (`Sound.friendCall`).
+- **Animal bands** (`js/band.js`): every song has the same shape so children learn it: intro, four bars where the band plays a line and an animal answers, two bars where the animals sing the tune, everyone cheers, the hatched friend's solo, then a big ta-da chord. The answering animals are shuffled each time.
+  - *Animal band*: marching drums, tuba, trumpets, piano, strings, glockenspiel, flute, timpani, slide whistle, plus a kazoo in the animal choir
+  - *Jungle jam*: steel drum, marimba, ukulele, bongos, shaker, claves, bass, pan flute; monkeys, elephants, parrots, frogs, lions
+  - *Farmyard hoedown*: fiddle, banjo, harmonica, jug, washboard, cowbell, hand claps, slide whistle; cows, sheep, pigs, ducks, dogs, horses, goats and a rooster to start
+  - Each of the 40 friends has a call (`FRIEND_CALL`). The voices are one small synth (`_voice`: oscillators → vowel formant filters → tremolo/vibrato), so the same moo can be a cow or a calf, and the animals can sing pitched notes.
+  - Songs are scheduled a little ahead at a time, like the countdown music, so the hatch animation stays smooth and the song stops at once on New egg / Stop. The band ducks while the device voice says the friend's name.
 - **Countdown music:** gains an extra twinkle in the last 10% of the timer (`Sound.setTension`).
 - **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the lock button. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
 - **Also:** an optional "Next up" card after the hatch, the screen kept awake during a run (Wake Lock), and a friend book that collects every animal hatched.
@@ -43,7 +50,8 @@ js/egg.js             egg, crack stages, hatch choreography
 js/shellfx.js         hatch-style registry + the contract every style follows
 js/hatch/*.js         one file per hatch style (roll, boom, crumble)
 js/scenes.js          the 10 diorama worlds + ambient particles
-js/audio.js           Web Audio music, sfx, end tunes, speech
+js/audio.js           Web Audio music, sfx, short end jingles, speech
+js/band.js            the three animal bands: instruments, animal voices, songs
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
@@ -65,6 +73,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
 - **Timer:** finishes within 50 ms on a 5-minute timer. Every crack lands within 8 ms of its landmark. Also covers a 60-minute run, pause and resume, ±1 minute with a 5-second floor, the tap-to-hatch wait, a throttled hidden tab, and start/stop abuse.
 - **Audio:**
   - the tunes don't clip, they fully decay (no stuck notes), and there are no silent gaps in the music
+  - every animal band renders with 5 different friends: no clipping, no dead air, every note plays, the right friend takes the solo; live, a stall skips notes instead of bursting, a new song/jingle/egg stops the old one, and Stop is silent at once
   - the final-stretch twinkle is there
   - notes land exactly on the beat, and a 700 ms stall doesn't produce a burst of missed notes
   - double-starting the music never doubles the notes
