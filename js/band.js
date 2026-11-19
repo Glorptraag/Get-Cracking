@@ -142,9 +142,23 @@
         tone(80, t, 0.22, { gain: g * 0.5, bus: D, type: 'triangle', slide: 0.7 });
         noise(t, 0.02, { freq: 3500, q: 0.8, gain: g * 0.18, bus: D });
       },
-      snare(t, g = 0.22) {
-        noise(t, 0.17, { filter: 'highpass', freq: 1400, q: 0.5, gain: g, bus: D });
-        tone(205, t, 0.09, { gain: g * 0.6, type: 'triangle', slide: 0.8, bus: D });
+      snare(t, g = 0.22) { // a crisp marching snare: wires + a tight drum head
+        noise(t, 0.13, { freq: 3800, q: 0.7, gain: g * 0.8, bus: D });
+        noise(t, 0.17, { filter: 'highpass', freq: 1400, q: 0.5, gain: g * 0.6, bus: D });
+        tone(225, t, 0.07, { gain: g * 0.6, type: 'triangle', slide: 0.8, bus: D });
+      },
+      flam(t, g = 0.22) { k.snare(t - 0.028, g * 0.35); k.snare(t, g); },
+      bassDrum(t, g = 0.5) { // big felt-beater marching bass drum
+        tone(72, t, 0.55, { gain: g, slide: 0.72, bus: D });
+        tone(118, t, 0.2, { gain: g * 0.45, type: 'triangle', slide: 0.7, bus: D });
+        noise(t, 0.07, { filter: 'lowpass', freq: 600, q: 0.7, gain: g * 0.35, bus: D });
+      },
+      clash(t, g = 0.08) { // hand cymbals
+        noise(t, 0.75, { filter: 'highpass', freq: 3200, q: 0.5, gain: g, bus: D });
+        noise(t, 0.4, { freq: 6200, q: 1.2, gain: g * 0.7, bus: D });
+      },
+      peaWhistle(t, d, g = 0.1) { // the drum major's whistle: the pea makes it trill
+        V(t, { type: 'sine', f: [[0, 2650], [0.04, 2900], [d, 2850]], dur: d, attack: 0.01, release: 0.03, gain: g, trem: [46, 0.75], vib: [46, 45, 0], noise: 0.08, noiseF: 2900 }, ch.sparkle);
       },
       roll(t0, t1, g0, g1) {
         const n = Math.max(2, Math.round((t1 - t0) / 0.05));
@@ -183,7 +197,7 @@
 
       /* ---- bass */
       tuba(n, t, d, g = 0.2) {
-        V(t, { f: midi(n), dur: d, attack: 0.035, release: 0.09, sus: 0.7, gain: g, filter: { type: 'lowpass', f: [[0, 260], [0.05, 950], [d, 480]], q: 1.1 } }, ch.bass);
+        V(t, { f: [[0, midi(n) * 0.97], [0.04, midi(n)]], dur: d, attack: 0.035, release: 0.09, sus: 0.7, gain: g, filter: { type: 'lowpass', f: [[0, 260], [0.05, 950], [d, 480]], q: 1.1 } }, ch.bass);
       },
       bass(n, t, d, g = 0.24) { tone(midi(n), t, d, { gain: g, partials: [[1, 1], [2, 0.55], [3, 0.22], [4, 0.08]], bus: ch.bass }); },
       jug(n, t, d, g = 0.22) {
@@ -210,8 +224,14 @@
       },
 
       /* ---- melody */
-      brass(n, t, d, g = 0.075, out = ch.lead) {
-        V(t, { f: midi(n), detune: [-7, 0, 6], dur: d, attack: 0.035, release: 0.09, sus: 0.8, gain: g, vib: [5.5, 10, 0.18], filter: { type: 'lowpass', f: [[0, 450], [0.045, 3400], [0.25, 2100]], q: 1.3 } }, out);
+      brass(n, t, d, g = 0.075, out = ch.lead) { // trumpets: a little scoop up into each note
+        V(t, { f: [[0, midi(n) * 0.975], [0.035, midi(n)]], detune: [-7, 0, 6], dur: d, attack: 0.035, release: 0.09, sus: 0.8, gain: g, vib: [5.5, 10, 0.18], filter: { type: 'lowpass', f: [[0, 450], [0.045, 3400], [0.25, 2100]], q: 1.3 } }, out);
+      },
+      horns(notes, t, d, g = 0.022) { // French horns: round, mellow sustained chords
+        for (const n of notes) V(t, { f: midi(n), detune: [-5, 5], dur: d, attack: Math.min(0.09, d * 0.3), release: 0.12, sus: 0.85, gain: g, vib: [4.8, 6, 0.25], filter: { type: 'lowpass', f: 1050, q: 0.6 } }, ch.comp);
+      },
+      bones(notes, t, d, g = 0.04) { // trombones: the "pah" in oom-pah
+        for (const n of notes) V(t, { f: [[0, midi(n) * 0.98], [0.03, midi(n)]], detune: [-6, 6], dur: d, attack: 0.02, release: 0.06, sus: 0.6, gain: g, filter: { type: 'lowpass', f: [[0, 400], [0.04, 2200], [d, 900]], q: 1.2 } }, ch.comp);
       },
       glock(n, t, d = 1.1, g = 0.045) { tone(midi(n), t, d, { gain: g, partials: [[1, 1], [2.76, 0.2], [5.4, 0.06]], bus: ch.sparkle }); },
       xylo(n, t, g = 0.08) { tone(midi(n), t, 0.35, { gain: g, partials: [[1, 1], [3.93, 0.25], [9.4, 0.05]], bus: ch.sparkle }); },
@@ -370,55 +390,88 @@
    * mel: [beat, note, beats]. Chords are MIDI note lists.
    */
   const C = [60, 64, 67], F = [60, 65, 69], G = [59, 62, 67], Am = [57, 60, 64];
+  const A7 = [57, 61, 64, 67], D = [62, 66, 69];
+  /** the nearest chord tone a bit below a melody note: a simple harmony line */
+  const below = (n, chord) => {
+    let best = n - 12;
+    for (const c of chord) for (let o = -24; o <= 12; o += 12) { const h = c + o; if (h <= n - 3 && h > best) best = h; }
+    return best;
+  };
   const Fj = [60, 65, 69], Bb = [62, 65, 70], Cj = [60, 64, 67], Dm = [62, 65, 69];
   const Gf = [59, 62, 67], Cf = [60, 64, 67], Df = [62, 66, 69], Em = [59, 64, 67];
 
   const SONGS = {
     band: {
-      bpm: 136, introBeats: 2,
+      bpm: 136, introBeats: 4,
       pool: ['moo', 'quack', 'baa', 'woof', 'meow', 'oink', 'trumpet', 'roar', 'hoot', 'neigh'],
-      singers: ['meow', 'baa', 'kazoo', 'quack', 'hoot', 'woof', 'kazoo'],
+      singers: ['meow', 'baa', 'kazoo', 'quack', 'hoot', 'woof'],
+      // a dotted march line, then a gap for the animal; bars 1-2 share a rhythm so it is easy to follow
       A: [
-        { chord: C, root: 36, fifth: 43, mel: [[0, 72, 0.5], [0.5, 76, 0.5], [1, 79, 1]] },
-        { chord: F, root: 41, fifth: 36, mel: [[0, 72, 0.5], [0.5, 77, 0.5], [1, 81, 1]] },
-        { chord: G, root: 43, fifth: 38, mel: [[0, 79, 0.5], [0.5, 77, 0.5], [1, 76, 0.5], [1.5, 74, 0.5]] },
-        { chord: C, root: 36, fifth: 43, mel: [[0, 76, 0.5], [0.5, 74, 0.5], [1, 72, 1]] },
+        { chord: C, root: 36, fifth: 43, mel: [[0, 67, 0.75], [0.75, 72, 0.25], [1, 76, 0.5], [1.5, 79, 0.5]] },
+        { chord: F, root: 41, fifth: 36, mel: [[0, 69, 0.75], [0.75, 72, 0.25], [1, 77, 0.5], [1.5, 81, 0.5]] },
+        { chord: G, root: 43, fifth: 38, mel: [[0, 79, 0.75], [0.75, 77, 0.25], [1, 76, 0.5], [1.5, 74, 0.5]] },
+        { chord: C, root: 36, fifth: 43, mel: [[0, 76, 0.75], [0.75, 74, 0.25], [1, 72, 1]] },
       ],
+      // the animals sing; the last two beats pivot on A7 so the finale can step up a key
       B: [
         { chords: [[0, Am, 33], [2, F, 41]], notes: [[0, 69, 1], [1, 72, 1], [2, 77, 1], [3, 76, 1]] },
-        { chords: [[0, G, 43], [2, C, 36]], notes: [[0, 74, 1], [1, 71, 1], [2, 72, 2]] },
+        { chords: [[0, G, 43], [2, A7, 45]], notes: [[0, 74, 1], [1, 71, 1], [2, 73, 1], [3, 76, 1]] },
       ],
-      end: { chord: C, root: 36, top: [60, 64, 67, 72], fan: [[0, 67, 1 / 3], [1 / 3, 72, 1 / 3], [2 / 3, 76, 1 / 3], [1, 79, 1]] },
+      // finale in D: one step higher than the rest of the song, for a lift
+      end: { chord: D, root: 38, top: [62, 66, 69, 74], fan: [[0, 69, 1 / 3], [1 / 3, 74, 1 / 3], [2 / 3, 78, 1 / 3], [1, 81, 1]] },
+      tail: 4.2,
       intro(k, at) {
-        at(0, (t, B) => { k.roll(t, B(2), 0.03, 0.2); k.slideWhistle(t, 64, 88, B(1.9) - t, 0.07); });
+        // drum major's whistle ("tweet, tweeeet!"), then a snare roll with a slide whistle into the downbeat
+        at(0, (t) => k.peaWhistle(t, 0.16));
+        at(0.5, (t, B) => k.peaWhistle(t, B(1.6) - t));
+        at(2, (t, B) => { k.roll(t, B(4) - 0.03, 0.03, 0.2); k.slideWhistle(t, 64, 88, B(3.9) - t, 0.06); });
       },
       groove(k, at, b, kind, i) {
-        if (kind === 'A' && i === 0) at(b, (t) => k.crash(t));
-        if (kind === 'B' && i === 0) at(b, (t) => k.crash(t, 0.09));
-        for (let x = 0; x < 4; x++) at(b + x, (t) => (x % 2 ? (kind === 'A' ? k.snare(t) : k.clap(t)) : k.kick(t)));
-        for (let x = 0; x < 8; x++) at(b + x / 2, (t) => k.hat(t, x % 2 ? 0.035 : 0.06));
-        if (kind === 'A') { at(b + 3.5, (t) => k.snare(t, 0.08)); at(b + 1, (t) => k.tamb(t)); at(b + 3, (t) => k.tamb(t)); }
+        const hum = (g) => g * (0.88 + Math.random() * 0.24); // nobody in a real band hits exactly the same every time
+        if (i === 0) at(b, (t) => { k.crash(t, kind === 'A' ? 0.12 : 0.08); });
+        // oom-pah: bass drum on 1 and 3, snare + cymbals on 2 and 4
+        for (const x of [0, 2]) at(b + x, (t) => k.bassDrum(t, hum(x ? 0.4 : 0.5)));
+        for (const x of [1, 3]) at(b + x, (t) => { if (kind === 'A') k.flam(t, hum(0.2)); else k.clap(t, hum(0.15)); k.clash(t, hum(0.045)); });
+        if (kind === 'A') {
+          for (const x of [0.5, 1.75, 2.5, 3.25]) at(b + x, (t) => k.snare(t, hum(0.06))); // ghost notes keep it marching
+          if (i === 3) [3.5, 3.625, 3.75, 3.875].forEach((x, j) => at(b + x, (t) => k.snare(t, 0.08 + j * 0.035))); // fill into the choir
+          else at(b + 3.5, (t) => k.snare(t, hum(0.1)));
+        } else {
+          for (let x = 0; x < 8; x++) at(b + x / 2, (t) => k.hat(t, hum(x % 2 ? 0.03 : 0.05)));
+          if (i === 1) at(b + 2, (t, B) => k.roll(t, B(b + 4) - 0.03, 0.02, 0.22)); // roll into the key change
+        }
       },
       bass(k, at, b, root, fifth, beats = 4) {
         at(b, (t, B) => k.tuba(root, t, B(b + 0.9) - t));
         if (beats > 2) at(b + 2, (t, B) => k.tuba(fifth, t, B(b + 2.9) - t));
       },
       comp(k, at, b, chord, kind, beats = 4) {
-        for (let x = 1; x < beats; x += 2) at(b + x, (t) => k.chord(chord, t, 0.45, kind === 'A' ? 0.055 : 0.04, k.piano));
-        at(b, (t, B) => k.strings(chord.map((n) => n + 12), t, B(b + beats) - t, kind === 'A' ? 0.012 : 0.02));
+        // trombones on the "pah", horns hold the harmony underneath
+        for (let x = 1; x < beats; x += 2) at(b + x, (t, B) => k.bones(chord, t, B(b + x + 0.45) - t, kind === 'A' ? 0.045 : 0.032));
+        at(b, (t, B) => k.horns(chord.map((n) => n + 12).slice(0, 3), t, B(b + beats) - t - 0.03, kind === 'A' ? 0.012 : 0.02));
       },
-      lead(k, t, n, d, i) {
-        k.brass(n, t, d * 0.92);
-        k.brass(n - 12, t, d * 0.92, 0.035);
+      lead(k, t, n, d, i, spb, chord) {
+        const h = below(n, chord);
+        k.brass(n, t, d * 0.9);
+        k.brass(h, t, d * 0.9, 0.045); // second trumpets play the harmony
         k.glock(n + 12, t, 0.8, 0.03);
-        if (i >= 2) k.flute(n + 12, t, d * 0.9, 0.04);
+        if (i >= 2) k.flute(n + 12, t, d * 0.88, 0.035); // piccolo joins for the second half
       },
-      finish(k, t, e) {
-        k.chord(e.top, t, 1.8, 0.07, (n, tt, d, g) => k.brass(n, tt, d, g));
-        k.chord(e.top, t, 2, 0.07, k.piano);
-        k.tuba(e.root, t, 1.6, 0.22); k.timp(t, 43, 0.3); k.kick(t, 0.55); k.crash(t, 0.16);
-        k.strings(e.top.map((n) => n + 12), t, 2.2, 0.02);
-        k.harp([72, 76, 79, 84, 88, 91, 96], t + 0.05, 0.045, 0.05);
+      pad(k, notes, t, d, g) { k.horns(notes, t, d, g * 1.6); },
+      finish(k, t, e, spb) {
+        const top = e.top, hit = (tt, d, g) => {
+          k.chord(top, tt, d, g, (n, t2, d2, g2) => k.brass(n, t2, d2, g2));
+          k.bones(top.slice(0, 3).map((n) => n - 12), tt, d, g * 0.6);
+          k.tuba(e.root, tt, d, 0.22); k.bassDrum(tt, 0.55); k.timp(tt, e.root + 12, 0.28);
+        };
+        // ta-daaa … bum-BUM!
+        hit(t, 1.25, 0.065);
+        k.horns(top, t, 1.3, 0.02); k.crash(t, 0.16); k.clash(t, 0.08);
+        k.harp(top.map((n) => n + 12).concat(top.slice(1).map((n) => n + 24)), t + 0.05, 0.045, 0.045);
+        k.roll(t + 1.3, t + 1.3 + spb * 1.5, 0.03, 0.14);
+        k.flam(t + 1.3 + spb * 1.5, 0.2); hit(t + 1.3 + spb * 1.5, 0.18, 0.06);
+        hit(t + 1.3 + spb * 2, 1.4, 0.075); k.crash(t + 1.3 + spb * 2, 0.16); k.clash(t + 1.3 + spb * 2, 0.09);
+        k.glock(top[3] + 24, t + 1.3 + spb * 2, 1.4, 0.05);
       },
     },
 
@@ -540,7 +593,7 @@
       song.groove(k, at, b, 'A', i);
       song.bass(k, at, b, bar.root, bar.fifth);
       song.comp(k, at, b, bar.chord, 'A');
-      for (const [x, n, d] of bar.mel) at(b + x, (t) => song.lead(k, t, n, d * spb, i, spb));
+      for (const [x, n, d] of bar.mel) at(b + x, (t) => song.lead(k, t, n, d * spb, i, spb, bar.chord));
       const who = others[i % others.length];
       at(b + 2, (t) => CALLS[who].play(k, t, pans[i]));
       b += 4;
@@ -566,16 +619,16 @@
     // finale: fanfare + everyone cheers, then the friend's solo, then ta-da
     const e = song.end;
     at(b, (t) => { k.crash(t, 0.12); k.kick(t, 0.5); });
-    for (const [x, n, d] of e.fan) at(b + x, (t) => song.lead(k, t, n, d * spb, 3, spb));
+    for (const [x, n, d] of e.fan) at(b + x, (t) => song.lead(k, t, n, d * spb, 3, spb, e.chord));
     song.bass(k, at, b, e.root, e.root + 7, 2);
     others.slice(4, 7).concat(others.slice(0, 1)).forEach((who, i) => at(b + 1 + i * 0.25, (t) => CALLS[who].play(k, t, i % 2 ? k.ch.aL : k.ch.aR)));
     const soloAt = b + 3;
     const call = CALLS[friendCall];
     at(soloAt - 0.5, (t) => k.timpRoll(t, t + 0.5, e.root + 12, 0.02, 0.12));
-    at(soloAt, (t, B) => { call.play(k, t, k.ch.solo); k.strings(e.top, t, call.len + spb, 0.012); });
+    at(soloAt, (t) => { call.play(k, t, k.ch.solo); (song.pad || ((kk, ...a) => kk.strings(...a)))(k, e.top, t, call.len + spb, 0.012); });
     const endBeat = Math.ceil((soloAt + (call.len + 0.15) / spb) * 2) / 2;
-    at(endBeat, (t) => song.finish(k, t, e));
-    return { ev, beats: endBeat };
+    at(endBeat, (t) => song.finish(k, t, e, spb));
+    return { ev, beats: endBeat, tail: song.tail || 2.6 };
   }
 
   /** the room every band plays in: a short, soft reverb */
@@ -618,13 +671,13 @@
     };
     const k = makeKit(this, ch);
     k.ch = ch;
-    const { ev, beats } = arrange(song, k, friendCall, spb);
+    const { ev, beats, tail } = arrange(song, k, friendCall, spb);
 
     const t0 = ctx.currentTime + 0.08;
     const B = (beat) => t0 + beat * spb;
     for (const e of ev) e.t = B(e.beat);
     ev.sort((a, b) => a.t - b.t);
-    const len = B(beats) - t0 + 2.6;
+    const len = B(beats) - t0 + tail;
     const c = { ev, i: 0, bus, nodes: [bus, glue, trim, room, wet, ...Object.values(ch)], B, end: t0 + len, friendCall };
     this._celeb = c;
     this._celebPump();
