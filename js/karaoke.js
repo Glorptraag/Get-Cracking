@@ -1,7 +1,8 @@
 /* Get Cracking — Egg karaoke, the default hatching song.
  *
  * The friend who just hatched is the singer. It sings an original tune with its
- * own recorded voice (sounds/karaoke/sing/<id>.mp3, pitched note by note), puts
+ * own recorded voice (sounds/karaoke/sing/<id>.mp3, pitched note by note; the
+ * friends with no call of their own, like the turtle and the mole, hum it), puts
  * its second sound (sounds/karaoke/extra/<id>.mp3: a purr, a snort, a splash)
  * into the gaps, duets with itself in the chorus and ends on its full call.
  * The band behind it suits the friend's world, and its chirps and tones are
@@ -36,16 +37,16 @@
     chick: ['meadow', 'cheep', 2400], duckling: ['meadow', 'quack', 380], penguin: ['water', 'quack', 450],
     owl: ['woodland', 'hoot', 400], hamster: ['meadow', 'squeak', 2000], bunny: ['meadow', 'squeak', 1500],
     fox: ['woodland', 'woof', 600], kitten: ['meadow', 'meow', 650], bearcub: ['woodland', 'roar', 160],
-    panda: ['jungle', 'baa', 420], frog: ['water', 'croak', 170], turtle: ['water', 'bloop', 700],
+    panda: ['jungle', 'baa', 420], frog: ['water', 'croak', 170], turtle: ['water', 'hoot', 330],
     dino: ['magic', 'roar', 140], dragon: ['magic', 'roar', 150], mouse: ['meadow', 'squeak', 2800],
     piglet: ['meadow', 'oink', 210], koala: ['jungle', 'oink', 140], raccoon: ['woodland', 'squeak', 2200],
     tiger: ['jungle', 'roar', 180], lion: ['jungle', 'roar', 170], calf: ['meadow', 'moo', 180],
     lamb: ['meadow', 'baa', 420], fawn: ['woodland', 'meow', 750], hedgehog: ['woodland', 'squeak', 2300],
-    otter: ['water', 'squeak', 1800], seal: ['water', 'ork', 300], axolotl: ['water', 'bloop', 900],
-    bat: ['woodland', 'squeak', 3000], mole: ['woodland', 'squeak', 2000], monkey: ['jungle', 'ooh', 450],
+    otter: ['water', 'squeak', 1800], seal: ['water', 'ork', 300], axolotl: ['water', 'hoot', 520],
+    bat: ['woodland', 'squeak', 3000], mole: ['woodland', 'hoot', 440], monkey: ['jungle', 'ooh', 450],
     elephant: ['jungle', 'trumpet', 520], squirrel: ['woodland', 'squeak', 2500], puppy: ['meadow', 'woof', 300],
     unicorn: ['magic', 'neigh', 800], capybara: ['jungle', 'squeak', 1500], redpanda: ['woodland', 'squeak', 2000],
-    sloth: ['jungle', 'squeak', 1700], ladybug: ['woodland', 'buzz', 240], snail: ['woodland', 'bloop', 800],
+    sloth: ['jungle', 'squeak', 1700], ladybug: ['woodland', 'hoot', 660], snail: ['woodland', 'hoot', 600],
     goat: ['meadow', 'baa', 440],
   };
 
@@ -59,17 +60,26 @@
   };
 
   /* ---------------------------------------------------------------- song
-   * An original tune in C. ch: [beat, chord, bass root]; mel: [beat, note, beats]. */
+   * An original tune in C. ch: [beat, chord, bass root]; mel: [beat, note, beats]
+   * is the tune, which the band plays softly as a guide. voice is what the friend
+   * sings: the same tune with one syllable per beat, because an animal's call is
+   * about half a second long and cutting it shorter makes it stutter. */
   const C = [60, 64, 67], F = [60, 65, 69], G = [59, 62, 67], Am = [57, 60, 64];
   const VERSE = [
-    { ch: [[0, C, 36]], mel: [[0, 64, 0.5], [0.5, 64, 0.5], [1, 67, 1], [2, 72, 0.5], [2.5, 69, 0.5], [3, 67, 1]] },
-    { ch: [[0, F, 41], [2, G, 43]], mel: [[0, 65, 0.5], [0.5, 65, 0.5], [1, 64, 0.5], [1.5, 62, 0.5], [2, 67, 1]], answer: 'extra' },
-    { ch: [[0, C, 36], [2, Am, 45]], mel: [[0, 64, 0.5], [0.5, 64, 0.5], [1, 67, 1], [2, 72, 0.5], [2.5, 74, 0.5], [3, 76, 1]] },
-    { ch: [[0, F, 41], [1, G, 43], [2, C, 36]], mel: [[0, 69, 0.5], [0.5, 72, 0.5], [1, 71, 0.5], [1.5, 74, 0.5], [2, 72, 1]], answer: 'chirp' },
+    { ch: [[0, C, 36]], mel: [[0, 64, 0.5], [0.5, 64, 0.5], [1, 67, 1], [2, 72, 0.5], [2.5, 69, 0.5], [3, 67, 1]],
+      voice: [[0, 64, 1], [1, 67, 1], [2, 72, 1], [3, 67, 1]] },
+    { ch: [[0, F, 41], [2, G, 43]], mel: [[0, 65, 0.5], [0.5, 65, 0.5], [1, 64, 0.5], [1.5, 62, 0.5], [2, 67, 1]],
+      voice: [[0, 65, 1], [1, 62, 1], [2, 67, 1]], answer: 'extra' },
+    { ch: [[0, C, 36], [2, Am, 45]], mel: [[0, 64, 0.5], [0.5, 64, 0.5], [1, 67, 1], [2, 72, 0.5], [2.5, 74, 0.5], [3, 76, 1]],
+      voice: [[0, 64, 1], [1, 67, 1], [2, 72, 1], [3, 76, 1]] },
+    { ch: [[0, F, 41], [1, G, 43], [2, C, 36]], mel: [[0, 69, 0.5], [0.5, 72, 0.5], [1, 71, 0.5], [1.5, 74, 0.5], [2, 72, 1]],
+      voice: [[0, 69, 1], [1, 71, 1], [2, 72, 1]], answer: 'chirp' },
   ];
   const CHORUS = [
-    { ch: [[0, F, 41], [2, C, 36]], mel: [[0, 72, 1], [1, 72, 0.5], [1.5, 74, 0.5], [2, 76, 1], [3, 72, 1]] },
-    { ch: [[0, G, 43], [2, C, 36]], mel: [[0, 74, 0.5], [0.5, 74, 0.5], [1, 71, 0.5], [1.5, 74, 0.5], [2, 72, 2]] },
+    { ch: [[0, F, 41], [2, C, 36]], mel: [[0, 72, 1], [1, 72, 0.5], [1.5, 74, 0.5], [2, 76, 1], [3, 72, 1]],
+      voice: [[0, 72, 1], [1, 74, 1], [2, 76, 1], [3, 72, 1]] },
+    { ch: [[0, G, 43], [2, C, 36]], mel: [[0, 74, 0.5], [0.5, 74, 0.5], [1, 71, 0.5], [1.5, 74, 0.5], [2, 72, 2]],
+      voice: [[0, 74, 1], [1, 71, 1], [2, 72, 2]] },
   ];
   const MEL_MID = 69; // the middle of the tune: an unpitched voice sounds natural here
 
@@ -135,11 +145,14 @@
         const rate = u.base == null ? 1 : Math.pow(2, (n + u.off - u.base) / 12);
         s.sample(DIR + 'inst/' + id, t, out || k.ch.comp, { rate, gain: GAIN[id] * g, max: d ? Math.max(d, 0.25) : undefined });
       },
+      /** one sung syllable: it rings for as long as it naturally lasts, overlapping
+       *  the next by a touch (legato), and is only faded (gently, never chopped)
+       *  if the call is longer than that */
       sing(n, t, d, out, g = 1) {
-        const len = Math.max(0.14, d * 0.95);
+        const len = d + 0.1;
         if (voice) {
           const rate = Math.pow(2, (n + voice.off - voice.base) / 12);
-          s.sample(DIR + 'sing/' + friendId, t, out, { rate, gain: SING * g, max: len });
+          s.sample(DIR + 'sing/' + friendId, t, out, { rate, gain: SING * g, max: len, fade: 0.12 });
         } else k.say[synKind](t, midi(n + synOff), synKind === 'cheep' ? Math.min(len, 0.14) : len, out, g);
         if (s.onSing && g >= 1) s.onSing(t - s.ctx.currentTime, len);
       },
@@ -226,7 +239,9 @@
         comp(b + x, chord, beats);
       });
       const chordAt = (x) => bar.ch.filter((c) => c[0] <= x).pop()[1];
-      for (const [x, n, d] of bar.mel) sung(b + x, n, d, chordAt(x));
+      for (const [x, n, d] of bar.voice) sung(b + x, n, d, chordAt(x));
+      // the band plays the whole tune softly, so it's clear under the friend's syllables
+      for (const [x, n, d] of bar.mel) at(b + x, (t) => p.inst(full ? w.sparkle : w.fill, n + 12, t, d * spb, full ? 0.6 : 0.42, full ? k.ch.sparkle : k.ch.lead));
       if (bar.answer === 'extra') at(b + 3, (t) => p.extra(t, k.ch.aR, chordAt(3)));
       if (bar.answer === 'chirp') {
         at(b + 3, (t) => p.chirp(t, chordAt(3)));
@@ -252,7 +267,6 @@
       at(beat, (t) => {
         p.sing(n, t, d * spb, k.ch.solo);
         p.sing(below(n, chord), t + 0.012, d * spb, k.ch.aL, 0.5);
-        p.inst(w.sparkle, n + 12, t, d * spb, 0.7, k.ch.sparkle);
       });
     });
     b += CHORUS.length * 4;
@@ -268,10 +282,10 @@
     // ta-da: sung, with the whole band, then one last ad-lib
     const end = Math.ceil((soloAt + (callLen + 0.15) / spb) * 2) / 2;
     at(end, (t) => {
-      p.sing(67, t, spb * 0.5, k.ch.solo);
+      p.sing(67, t, spb, k.ch.solo);
       p.inst(w.kick, 0, t, 0, 1, D);
     });
-    at(end + 0.5, (t) => {
+    at(end + 1, (t) => {
       p.sing(72, t, spb * 2, k.ch.solo);
       p.sing(64, t + 0.012, spb * 2, k.ch.aL, 0.5);
       k.crash(t, 0.13);
@@ -280,8 +294,8 @@
       [48, 55, 60, 64, 67, 72].forEach((n, i) => p.inst(w.comp, n, t + i * 0.03, spb * 3, 0.8));
       p.chirp(t + 0.1, C);
     });
-    at(end + 2, (t) => p.extra(t, k.ch.aR, C));
-    return { ev, beats: end + 2, tail: 2.6, voice: p.voice, world: FRIENDS[friendId][0] };
+    at(end + 2.5, (t) => p.extra(t, k.ch.aR, C));
+    return { ev, beats: end + 2.5, tail: 2.6, voice: p.voice, world: FRIENDS[friendId][0] };
   }
 
   /**

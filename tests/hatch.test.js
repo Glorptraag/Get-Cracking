@@ -205,11 +205,11 @@ const coverage = (p) => p.evaluate(() => {
     const st = await p.evaluate(() => ({ played: played.slice(), bops }));
     const sung = st.played.filter((k) => k === 'karaoke/sing/' + friend.id).length;
     const inst = new Set(st.played.filter((k) => k.startsWith('karaoke/inst/')));
-    ok(sung >= 30, `the ${friend.name} sings the song in its own recorded voice (${sung} sung notes)`);
+    ok(sung >= 20, `the ${friend.name} sings the song in its own recorded voice (${sung} sung notes)`);
     ok(st.played.includes('karaoke/extra/' + friend.id), `its extra sound answers in the gaps (karaoke/extra/${friend.id})`);
     ok(st.played.includes(call), `it ends on its own full call (${call})`);
     ok(inst.size >= 6, `the band is the recorded instruments (${[...inst].map((k) => k.split('/').pop()).join(', ')})`);
-    ok(st.bops >= 25, `the ${friend.name} bops along to its singing (${st.bops} bops)`);
+    ok(st.bops >= 18, `the ${friend.name} bops along to its singing (${st.bops} bops)`);
     ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
     await ctx.close();
   }
