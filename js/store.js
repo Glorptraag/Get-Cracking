@@ -10,8 +10,8 @@
     seconds: 0,
     scene: 'random',        // scene id or 'random'
     music: 'musicbox',
-    endSound: 'band',       // hatching tune: an animal band (js/band.js) or a short jingle
-    tunesV: 2,              // settings from before the animal bands get moved onto them once
+    endSound: 'karaoke',    // hatching tune: Egg karaoke (js/karaoke.js), an animal band (js/band.js) or a short jingle
+    tunesV: 3,              // settings from before a new default song get moved onto it once
     volume: 0.7,
     sayName: true,
     hatchWho: 'animals',    // 'animals' | 'photos' | 'both'
@@ -35,6 +35,8 @@
       if (!GC.Icons.has(s.nextUp.icon)) s.nextUp.icon = GC.Icons.fromEmoji(s.nextUp.icon) || 'star';
       // builds before the animal bands: anyone still on the old default jingle gets the band
       if ((raw.tunesV || 1) < 2) { if (s.endSound === 'tada') s.endSound = 'band'; s.tunesV = 2; }
+      // builds before Egg karaoke: anyone still on the old default (the animal band) gets the karaoke
+      if (s.tunesV < 3) { if (s.endSound === 'band') s.endSound = 'karaoke'; s.tunesV = 3; }
       return s;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULTS));

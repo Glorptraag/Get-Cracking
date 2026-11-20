@@ -46,8 +46,14 @@
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
       .then((idx) => {
         index = idx;
-        // one at a time, so decoding never competes with the hatch animation for long
-        return Object.keys(idx.calls).reduce((p, id) => p.then(() => want(ctx, id)), Promise.resolve());
+        // one at a time, so decoding never competes with the hatch animation for long:
+        // the animal calls, then Egg karaoke's band and every friend's singing voice
+        // (each friend's extra sound is fetched when it hatches)
+        const k = idx.karaoke || {};
+        const keys = Object.keys(idx.calls)
+          .concat(Object.keys(k.inst || {}).map((id) => 'karaoke/inst/' + id))
+          .concat(Object.keys(k.sing || {}).map((id) => 'karaoke/sing/' + id));
+        return keys.reduce((p, id) => p.then(() => want(ctx, id)), Promise.resolve());
       })
       .catch(() => null);
     return loading;

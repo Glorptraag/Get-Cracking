@@ -425,7 +425,9 @@
     r.ring.prog.closest('.ring-layer').animate([{ opacity: 1 }, { opacity: 0.25 }], { duration: 800, fill: 'forwards' });
     const friend = pickFriend();
     r.friend = friend;
-    if (S.sayName) Sound.preloadFriend(friend);
+    Sound.preloadFriend(friend, S.sayName);
+    // Egg karaoke: the friend bops on every note it sings
+    Sound.onSing = (delay, dur) => setTimeout(() => { if (run === r && r.egg.sing) r.egg.sing(dur); }, Math.max(0, delay * 1000));
     // tapping the friend: it says hello in its own voice
     r.egg.onCheer = () => (friend.kind === 'animal' && Sound.friendCall(friend.id)) || Sound.cheer();
     await r.egg.hatch(friend.markup, {
@@ -689,7 +691,7 @@
       optGroup(GC.MUSIC.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
-      h('p', { class: 'hint' }, 'Plays when the egg hatches. In the three animal bands the friend who hatched gets a solo. Tap one to hear it.'),
+      h('p', { class: 'hint' }, 'Plays when the egg hatches. In Egg karaoke the friend who hatched sings the song in its own voice; in the animal bands it gets a solo. Tap one to hear it.'),
       optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),

@@ -15,7 +15,7 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
 
 (async () => {
   const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const p = await browser.newPage();
+  let p = await browser.newPage();
   const errs = [];
   p.on('pageerror', (e) => errs.push(e.message));
   await p.goto('file://' + path.resolve(__dirname, '..', 'tools', 'hatch-lab.html'));
@@ -84,7 +84,7 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
   }
 
   console.log('\nA1b. Animal bands (offline render, every song × a few friends)');
-  const bands = await p.evaluate(() => GC.END_SOUNDS.filter((x) => x.band).map((x) => x.id));
+  const bands = await p.evaluate(() => GC.END_SOUNDS.filter((x) => x.band && x.id !== 'karaoke').map((x) => x.id));
   const friends = ['elephant', 'kitten', 'unicorn', 'snail', null];
   for (const e of bands) {
     for (const fr of friends) {
@@ -113,6 +113,76 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
       if (fr) ok(meta.solo === (await p.evaluate((f) => GC.Band.FRIEND_CALL[f], fr)), `${tag}: the ${fr} takes the solo`);
     }
   }
+
+  // Egg karaoke: one friend from each world (+ a random one), checked like the bands
+  const karaoke = async (label, friends, wantRecorded) => {
+    for (const fr of friends) {
+      const r = await p.evaluate((fr) => renderWith(24, (s, setT) => {
+        let sung = 0;
+        s.onSing = () => sung++;
+        const len = s.endTune('karaoke', fr);
+        const c = s._celeb;
+        clearInterval(c.timer); clearTimeout(c.doneT);
+        for (let t = 0; t < len; t += 0.05) { setT(t); s._celebPump(); }
+        window._lastK = { singer: c.singer, call: c.friendCall, world: c.world, recorded: c.recorded, events: c.ev.length, done: c.i, sung };
+        return len;
+      }), fr);
+      const m = await p.evaluate(() => window._lastK);
+      const tag = `karaoke-${label}-${fr || 'random'}`;
+      fs.writeFileSync(path.join(OUT, `${tag}.wav`), Buffer.from(r.wav, 'base64'));
+      const loud = Math.max(...r.rms);
+      const tail = Math.max(0, ...r.rms.slice(Math.ceil((r.declared + 0.5) * 4)));
+      const gaps = r.rms.slice(2, Math.floor((r.declared - 2.6) * 4)).filter((x) => x < loud * 0.02).length;
+      ok(r.nan === 0 && r.peak > 0.1, `${tag}: plays (peak ${db(r.peak)} dBFS, ${m.world}, ${m.events} events)`);
+      ok(r.clip === 0, `${tag}: no clipping`);
+      ok(m.done === m.events, `${tag}: every scheduled note played (${m.done}/${m.events})`);
+      ok(gaps <= 2, `${tag}: no dead air (${gaps} silent ¼ s)`);
+      ok(tail < loud * 0.03, `${tag}: rings out and stops after ${r.declared.toFixed(1)}s (tail ${db(tail)} dB vs ${db(loud)} dB)`);
+      ok(r.declared >= 12 && r.declared <= 22, `${tag}: song length ${r.declared.toFixed(1)}s`);
+      ok(m.sung >= 30, `${tag}: the friend sings the tune (${m.sung} notes)`);
+      if (fr) ok(m.singer === fr && m.call === (await p.evaluate((f) => GC.Band.FRIEND_CALL[f], fr)), `${tag}: the ${fr} is the singer and ends on its own call`);
+      ok(m.recorded === wantRecorded, `${tag}: ${wantRecorded ? 'sings with its recorded voice' : 'synth voice when recordings are unavailable'}`);
+    }
+  };
+  console.log('\nA1c. Egg karaoke, synthesised fallback (opened from disk: no recordings)');
+  ok((await p.evaluate(() => GC.END_SOUNDS[0].id)) === 'karaoke', 'Egg karaoke is first in the list');
+  await karaoke('synth', ['kitten', 'owl', 'elephant', 'seal', 'dragon', null], false);
+
+  console.log('\nA1d. Egg karaoke with the ElevenLabs recordings (served over http)');
+  const server = require('http').createServer((req, res) => {
+    // the lab page lives in tools/, so its relative sounds/ is the app's sounds/
+    const f = path.join(__dirname, '..', decodeURIComponent(req.url.split('?')[0]).replace(/^\/tools\/sounds\//, '/sounds/'));
+    if (!f.startsWith(path.join(__dirname, '..')) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html' : f.endsWith('.js') ? 'text/javascript' : f.endsWith('.json') ? 'application/json' : 'audio/mpeg' });
+    fs.createReadStream(f).pipe(res);
+  });
+  await new Promise((r) => server.listen(0, r));
+  const hp = await browser.newPage();
+  hp.on('pageerror', (e) => errs.push(e.message));
+  await hp.goto(`http://localhost:${server.address().port}/tools/hatch-lab.html`);
+  const files = await hp.evaluate(async () => {
+    const ctx = new AudioContext();
+    await GC.Samples.load(ctx);
+    const k = GC.Samples.index.karaoke;
+    const extras = Object.keys(k.extra);
+    await Promise.all(extras.map((id) => GC.Samples.want(ctx, 'karaoke/extra/' + id)));
+    const bad = [];
+    for (const kind of ['inst', 'sing', 'extra']) for (const id of Object.keys(k[kind])) if (!GC.Samples.has(`karaoke/${kind}/${id}`)) bad.push(`${kind}/${id}`);
+    const pitched = Object.values(k.inst).filter((x) => x.m != null).length;
+    return { inst: Object.keys(k.inst).length, sing: Object.keys(k.sing).length, extra: extras.length, bad, pitched, friends: Object.keys(GC.Karaoke.FRIENDS).length };
+  });
+  ok(files.sing === files.friends && files.extra === files.friends, `every friend has a singing voice and an extra sound (${files.sing} + ${files.extra} for ${files.friends} friends)`);
+  ok(files.inst >= 19 && files.pitched >= 9, `the band's instruments are recorded and tuned (${files.inst}, ${files.pitched} pitched)`);
+  ok(files.bad.length === 0, `every recording loads and decodes${files.bad.length ? ': ' + files.bad.join(', ') : ''}`);
+  // reuse the offline renderer on the http page
+  const renderSrc = await p.evaluate(() => window.renderWith.toString());
+  await hp.evaluate((src) => { window.renderWith = eval('(' + src + ')'); }, renderSrc);
+  const p0 = p; // karaoke() renders on page p: point it at the http page for this pass
+  p = hp;
+  await karaoke('recorded', ['kitten', 'owl', 'elephant', 'seal', 'dragon', 'ladybug'], true);
+  p = p0;
+  await hp.close();
+  server.close();
 
   console.log('\nA2. Countdown music (offline render, 16 s, final-stretch twinkle from 10 s)');
   for (const m of ['musicbox', 'marimba', 'forest', 'rain', 'ticktock']) {

@@ -82,5 +82,289 @@
   "tiger": 0.967,
   "turtle": 0.784,
   "unicorn": 0.993
+ },
+ "karaoke": {
+  "inst": {
+   "kick": {
+    "d": 0.233,
+    "m": null
+   },
+   "snare": {
+    "d": 0.178,
+    "m": null
+   },
+   "hat": {
+    "d": 0.133,
+    "m": null
+   },
+   "shaker": {
+    "d": 0.328,
+    "m": null
+   },
+   "clap": {
+    "d": 0.201,
+    "m": null
+   },
+   "bongo": {
+    "d": 0.225,
+    "m": null
+   },
+   "woodblock": {
+    "d": 0.127,
+    "m": null
+   },
+   "bass": {
+    "d": 0.901,
+    "m": 43.07
+   },
+   "tuba": {
+    "d": 0.553,
+    "m": 39.09
+   },
+   "uke": {
+    "d": 1,
+    "m": 69.08
+   },
+   "piano": {
+    "d": 0.583,
+    "m": 72.14
+   },
+   "marimba": {
+    "d": 0.548,
+    "m": 72.09
+   },
+   "glock": {
+    "d": 0.502,
+    "m": 105.49
+   },
+   "flute": {
+    "d": 1,
+    "m": 74.14
+   },
+   "harp": {
+    "d": 1.054,
+    "m": 75.96
+   },
+   "kalimba": {
+    "d": 0.634,
+    "m": 71.16
+   },
+   "steelpan": {
+    "d": 1.038,
+    "m": 72.1
+   },
+   "whistle": {
+    "d": 0.593,
+    "m": null
+   },
+   "sparkle": {
+    "d": 0.71,
+    "m": null
+   }
+  },
+  "sing": {
+   "chick": {
+    "d": 0.48,
+    "m": 97.17
+   },
+   "duckling": {
+    "d": 0.48,
+    "m": null
+   },
+   "penguin": {
+    "d": 0.48,
+    "m": 65.27
+   },
+   "owl": {
+    "d": 0.437,
+    "m": 71.48
+   },
+   "hamster": {
+    "d": 0.48,
+    "m": 87.64
+   },
+   "bunny": {
+    "d": 0.364,
+    "m": null
+   },
+   "fox": {
+    "d": 0.355,
+    "m": 89.82
+   },
+   "kitten": {
+    "d": 0.6,
+    "m": 76.26
+   },
+   "bearcub": {
+    "d": 0.6,
+    "m": null
+   },
+   "panda": {
+    "d": 0.6,
+    "m": null
+   },
+   "frog": {
+    "d": 0.434,
+    "m": 84.28
+   },
+   "turtle": {
+    "d": 0.48,
+    "m": 69.28
+   },
+   "dino": {
+    "d": 0.6,
+    "m": null
+   },
+   "dragon": {
+    "d": 0.6,
+    "m": null
+   },
+   "mouse": {
+    "d": 0.479,
+    "m": null
+   },
+   "piglet": {
+    "d": 0.432,
+    "m": null
+   },
+   "koala": {
+    "d": 0.6,
+    "m": 65.03
+   },
+   "raccoon": {
+    "d": 0.48,
+    "m": 103.19
+   },
+   "tiger": {
+    "d": 0.6,
+    "m": null
+   },
+   "lion": {
+    "d": 0.553,
+    "m": 86.51
+   },
+   "calf": {
+    "d": 0.68,
+    "m": 49.98
+   },
+   "lamb": {
+    "d": 0.6,
+    "m": null
+   },
+   "fawn": {
+    "d": 0.48,
+    "m": null
+   },
+   "hedgehog": {
+    "d": 0.395,
+    "m": null
+   },
+   "otter": {
+    "d": 0.48,
+    "m": 69.79
+   },
+   "seal": {
+    "d": 0.48,
+    "m": 77.44
+   },
+   "axolotl": {
+    "d": 0.48,
+    "m": 70.06
+   },
+   "bat": {
+    "d": 0.143,
+    "m": null
+   },
+   "mole": {
+    "d": 0.48,
+    "m": null
+   },
+   "monkey": {
+    "d": 0.347,
+    "m": 83.89
+   },
+   "elephant": {
+    "d": 0.554,
+    "m": 80.54
+   },
+   "squirrel": {
+    "d": 0.48,
+    "m": 86.98
+   },
+   "puppy": {
+    "d": 0.379,
+    "m": 78.35
+   },
+   "unicorn": {
+    "d": 0.68,
+    "m": null
+   },
+   "capybara": {
+    "d": 0.48,
+    "m": null
+   },
+   "redpanda": {
+    "d": 0.48,
+    "m": null
+   },
+   "sloth": {
+    "d": 0.493,
+    "m": null
+   },
+   "ladybug": {
+    "d": 0.48,
+    "m": null
+   },
+   "snail": {
+    "d": 0.48,
+    "m": 84.62
+   },
+   "goat": {
+    "d": 0.6,
+    "m": 65.36
+   }
+  },
+  "extra": {
+   "chick": 0.694,
+   "duckling": 0.691,
+   "penguin": 0.946,
+   "owl": 0.519,
+   "hamster": 0.438,
+   "bunny": 0.424,
+   "fox": 0.8,
+   "kitten": 1.2,
+   "bearcub": 0.777,
+   "panda": 0.443,
+   "frog": 0.277,
+   "turtle": 0.6,
+   "dino": 0.776,
+   "dragon": 0.61,
+   "mouse": 0.762,
+   "piglet": 0.5,
+   "koala": 0.655,
+   "raccoon": 0.749,
+   "tiger": 0.8,
+   "lion": 1.041,
+   "calf": 0.835,
+   "lamb": 0.68,
+   "fawn": 0.604,
+   "hedgehog": 0.618,
+   "otter": 0.355,
+   "seal": 0.612,
+   "axolotl": 0.8,
+   "bat": 0.579,
+   "mole": 0.507,
+   "monkey": 0.8,
+   "elephant": 0.947,
+   "squirrel": 0.734,
+   "puppy": 1,
+   "unicorn": 1,
+   "capybara": 0.8,
+   "redpanda": 0.8,
+   "sloth": 1.096,
+   "ladybug": 0.748,
+   "snail": 0.592,
+   "goat": 0.425
+  }
  }
 }

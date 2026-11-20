@@ -345,6 +345,29 @@
       friend.addEventListener('pointerdown', (e) => { e.stopPropagation(); this.cheer(); });
     }
 
+    /** Egg karaoke: a little bop on each note the friend sings, and now and then a note floats up */
+    sing(dur = 0.3) {
+      if (!this.friend || this._cheering || GC.prefersReducedMotion()) return;
+      const inner = this.friend.querySelector('.critter');
+      const ms = Math.max(160, Math.min(420, dur * 1000));
+      inner.animate([
+        { transform: 'scale(1,1)' }, { transform: 'scale(1.07,.93)', offset: 0.3 },
+        { transform: 'scale(.97,1.05)', offset: 0.65 }, { transform: 'scale(1,1)' },
+      ], { duration: ms, easing: 'ease-out' });
+      if ((this._sung = (this._sung || 0) + 1) % 2) return;
+      const side = this._sung % 4 ? 1 : -1;
+      const g = GC.el('g', { transform: `translate(${side * GC.rand(40, 70)} -150)` }, this.fx);
+      const c = GC.pick(['#f7a8c8', '#ffd86b', '#9fd8e8', '#a9d36b', '#c5a8f0']);
+      const note = GC.el('g', {}, g);
+      GC.el('path', { d: 'M6,-22 V2 M6,-22 L16,-17', fill: 'none', stroke: O, 'stroke-width': 3.5, 'stroke-linecap': 'round' }, note);
+      GC.el('ellipse', { cx: 0, cy: 3, rx: 7.5, ry: 6, fill: c, stroke: O, 'stroke-width': 3 }, note);
+      note.animate([
+        { transform: 'translate(0,0) scale(.3)', opacity: 0 },
+        { transform: `translate(${side * 8}px,-30px) scale(1) rotate(${side * 8}deg)`, opacity: 1, offset: 0.25 },
+        { transform: `translate(${side * 22}px,-110px) scale(.9) rotate(${side * -10}deg)`, opacity: 0 },
+      ], { duration: 1500, easing: 'ease-out' }).finished.then(() => g.remove());
+    }
+
     /** tap the hatched friend: a happy jump, repeatable */
     cheer() {
       if (!this.friend || this._cheering) return;

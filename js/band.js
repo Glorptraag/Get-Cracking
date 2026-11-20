@@ -660,12 +660,22 @@
   };
 
   P.bandTune = function (id, friendId) {
+    const song = SONGS[id];
+    const friendCall = FRIEND_CALL[friendId] || GC.pick(Object.values(FRIEND_CALL));
+    return this._celebrate(song.bpm, (k, spb) => arrange(song, k, friendCall, spb), { friendCall });
+  };
+
+  /**
+   * Play a celebration song through its own little mixer. build(kit, secsPerBeat)
+   * returns { ev: [{ beat, fn(t) }], beats, tail }; every event is scheduled a
+   * little ahead by _celebPump. Used by the animal bands and by Egg karaoke.
+   * Returns the song's length in seconds.
+   */
+  P._celebrate = function (bpm, build, info = {}) {
     if (!this.ensure()) return 0;
     this.stopCelebration(0.05);
     const ctx = this.ctx;
-    const song = SONGS[id];
-    const friendCall = FRIEND_CALL[friendId] || GC.pick(Object.values(FRIEND_CALL));
-    const spb = 60 / song.bpm;
+    const spb = 60 / bpm;
 
     // mixer: one bus per song so it can stop cleanly, gentle glue compression, room
     const bus = ctx.createGain(); bus.gain.value = 1;
@@ -687,14 +697,14 @@
     };
     const k = makeKit(this, ch);
     k.ch = ch;
-    const { ev, beats, tail } = arrange(song, k, friendCall, spb);
+    const { ev, beats, tail } = build(k, spb);
 
     const t0 = ctx.currentTime + 0.08;
     const B = (beat) => t0 + beat * spb;
     for (const e of ev) e.t = B(e.beat);
     ev.sort((a, b) => a.t - b.t);
     const len = B(beats) - t0 + tail;
-    const c = { ev, i: 0, bus, nodes: [bus, glue, trim, room, wet, ...Object.values(ch)], B, end: t0 + len, friendCall };
+    const c = Object.assign({ ev, i: 0, bus, nodes: [bus, glue, trim, room, wet, ...Object.values(ch)], B, end: t0 + len }, info);
     this._celeb = c;
     this._celebPump();
     c.timer = setInterval(() => this._celebPump(), 50);
@@ -751,5 +761,5 @@
   };
   P.friendCall = function (friendId) { return this.animalCall(FRIEND_CALL[friendId]); };
 
-  GC.Band = { SONGS, CALLS, FRIEND_CALL, ids: Object.keys(SONGS) };
+  GC.Band = { SONGS, CALLS, FRIEND_CALL, ids: Object.keys(SONGS), playCall, lenOf, below };
 })();

@@ -5,9 +5,10 @@
  *   1. countdown music — an ambient "something is happening" cue that keeps
  *      working when the child looks away from the screen
  *   2. small sound effects — crack, pop, boop, knock
- *   3. the end tune — a cheerful celebration instead of an alarm. The three
- *      animal bands (full band + animal voices + a solo for the friend who
- *      hatched) live in band.js; the short jingles are here.
+ *   3. the end tune — a cheerful celebration instead of an alarm. Egg karaoke
+ *      (the friend who hatched sings, karaoke.js) and the three animal bands
+ *      (full band + animal voices + a solo for that friend, band.js) are
+ *      songs; the short jingles are here.
  */
 (function () {
   'use strict';
@@ -26,6 +27,7 @@
     { id: 'off', name: 'Quiet', icon: 'quiet' },
   ];
   const ENDS = [
+    { id: 'karaoke', name: 'Egg karaoke', icon: 'mic', band: true },
     { id: 'band', name: 'Animal band', icon: 'drum', band: true },
     { id: 'jungle', name: 'Jungle jam', icon: 'maracas', band: true },
     { id: 'farm', name: 'Farmyard hoedown', icon: 'barn', band: true },
@@ -376,6 +378,7 @@
      *  friendId (optional) = the animal that hatched; it gets a solo in the bands */
     endTune(id, friendId) {
       if (!this.ensure()) return 0;
+      if (id === 'karaoke' && this.karaokeTune) return this.karaokeTune(friendId);
       if (this.bandTune && GC.Band && GC.Band.SONGS[id]) return this.bandTune(id, friendId);
       if (this.stopCelebration) this.stopCelebration(0.2);
       const t0 = this.ctx.currentTime + 0.05;
@@ -434,9 +437,14 @@
       this.say(friend.kind === 'animal' ? `It's ${GC.aName(friend.name)}!` : friend.name);
       return 0;
     }
-    /** have the friend's voice line ready by the time the shell breaks */
-    preloadFriend(friend) {
-      if (this.ctx && GC.Samples) GC.Samples.want(this.ctx, 'voice/' + (friend.kind === 'animal' ? friend.id : 'peekaboo'));
+    /** have the friend's voice line (and its karaoke voice) ready by the time the shell breaks */
+    preloadFriend(friend, sayName = true) {
+      if (!this.ctx || !GC.Samples) return;
+      if (sayName) GC.Samples.want(this.ctx, 'voice/' + (friend.kind === 'animal' ? friend.id : 'peekaboo'));
+      if (friend.kind === 'animal' && GC.Karaoke) {
+        GC.Samples.want(this.ctx, GC.Karaoke.DIR + 'sing/' + friend.id);
+        GC.Samples.want(this.ctx, GC.Karaoke.DIR + 'extra/' + friend.id);
+      }
     }
 
     say(text) {

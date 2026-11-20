@@ -126,6 +126,12 @@
       `<path d="M8 25 L16 38 L24 25 L32 38 L40 25" fill="none" stroke="${C.yellow}" stroke-width="3" stroke-linejoin="round"/>` +
       `<path d="M8 36 C8 40 15 43 24 43 C33 43 40 40 40 36" fill="none" ${S}/>` +
       `<ellipse cx="24" cy="22" rx="16" ry="5.5" fill="${C.cream}" ${S}/>`,
+    // Egg karaoke: a microphone whose head is a cracked egg, and a note
+    mic: `<path d="M19 28 L21 42 C21.3 45 26.7 45 27 42 L29 28 Z" fill="${C.berry}" ${S}/>` +
+      `<path d="M22 4 C30 4 34 12 34 19 C34 25 29 30 22 30 C15 30 10 25 10 19 C10 12 14 4 22 4 Z" fill="${C.cream}" ${S}/>` +
+      `<path d="M11 18 L15 14.5 L18.5 18.5 L22 14.5 L25.5 18.5 L29 14.5 L33 18" ${L(2.6)}/>` +
+      `<path d="M15 9 C16 7.5 17.5 6.5 19 6" ${SHINE}/>` +
+      `<path d="M42 7 V20" ${L(3)}/><path d="M42 7 L46 9" ${L(3)}/><ellipse cx="39.5" cy="20.5" rx="3.4" ry="2.6" fill="${O}"/>`,
     maracas: `<path d="M17 25 L9 44 M31 25 L39 44" fill="none" stroke="${O}" stroke-width="7" stroke-linecap="round"/>` +
       `<path d="M17 25 L9 44 M31 25 L39 44" fill="none" stroke="${C.wood}" stroke-width="3" stroke-linecap="round"/>` +
       `<ellipse cx="19" cy="15" rx="9" ry="11" transform="rotate(22 19 15)" fill="${C.orange}" ${S}/>` +
