@@ -1,13 +1,14 @@
 # Get Cracking
 
-A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and an animal band strikes up instead of an alarm.
+A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend who sings its own karaoke song instead of an alarm.
 
 - **40 hatchable friends**, all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
 - **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
+- **Egg karaoke** (the default hatching song): the friend who just hatched sings an original ~19-second tune in its own recorded voice, pitched note by note, with its second sound (a purr, a snort, a splash…) in the gaps, a harmony with itself in the chorus and its full call to finish. The band and its chirps suit the friend's world (meadow, woodland, jungle, water or magic), and every instrument is a recorded note.
 - **Animal bands** for the hatch: three ~15-second celebration songs, each a full band plus a chorus of animal voices (moo, quack, baa, woof, meow, oink, ribbit, hoot, elephant trumpet, roar, neigh, rooster and more). The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
-- **Real animal sounds and a real voice.** The animal calls, the egg crack and pop, and "It's a Fox!" for every friend are recordings generated with ElevenLabs (`sounds/`, about 720 KB). Everything else (all the music) is synthesised live with Web Audio, and the melodies are original.
-- **Countdown music** (6 choices) and **hatching tunes** (3 animal bands + 4 short jingles).
+- **Real animal sounds and a real voice.** The animal calls, the egg crack and pop, "It's a Fox!" for every friend, and Egg karaoke's band and singing voices are recordings generated with ElevenLabs (`sounds/`, about 1.1 MB). Everything else is synthesised live with Web Audio, and the melodies are original.
+- **Countdown music** (6 choices) and **hatching tunes** (Egg karaoke, 3 animal bands, 4 short jingles).
 - **Runs fully offline.** No login, no account, no network requests, and nothing leaves the device. The recordings ship with the app and are cached for offline use like everything else.
 
 ## Run it
@@ -30,6 +31,13 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 - **Time's up:** a soft chime plays, never an alarm. With "Wait for a tap" (the default) the egg glows and knocks every 5 s for up to 5 minutes, and a tap anywhere hatches it (`timeUp()`).
 - **Friend's name:** after the hatch, the recorded voice says "It's a Fox!" / "It's an Owl!" (or "Peekaboo!" for a photo) while the band dips under it. The device voice is only a fallback (`Sound.sayFriend`).
 - **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again and say hello in its own voice (`Sound.friendCall`).
+- **Egg karaoke** (`js/karaoke.js`), the default hatching song:
+  - *Shape:* a count-in on the sticks with a hello chirp, then two sung verse lines. The friend answers the first with its extra sound, and the band chirps back and echoes the second. Next comes a chorus where the friend sings a harmony with itself while the tune is doubled up high, a stop for the friend's own full call, and a sung "ta-daaa" with one last ad-lib.
+  - *The singer:* each friend has a short recorded syllable (`sounds/karaoke/sing/`) whose pitch was measured when it was picked. The app moves it by whole octaves to sit near its natural pitch, then tunes every note with `playbackRate`, so a chick sings high and a calf moos low but both are in tune. A syllable with no clear pitch (a sniff, a buzz) is played relative to the middle of the tune.
+  - *The worlds:* meadow (ukulele, upright bass, claps, egg shaker, glockenspiel, slide whistle and cheeps), woodland (harp, flute, wood block, birdsong trills), jungle (marimba, tuba oom-pah, bongos, steel pan, parrot whistles), water (kalimba, soft snare, glockenspiel, bubble bloops) and magic (piano, tuba, glockenspiel, harp, sparkles). The chirps and tones always play the current chord's notes.
+  - *Band:* every instrument is one recorded note (`sounds/karaoke/inst/`) pitched to each note of the song, so it is always in time and in key.
+  - *Fallback:* anything not loaded yet, or the app opened from disk, plays on the synth kit from `band.js` instead (the voice too), so the song always works. The choice is made once at the start, so a song never switches voice halfway.
+  - *On screen:* the friend bops on every note it sings and music notes float up (`Egg.sing`). Reduced motion turns this off.
 - **Animal bands** (`js/band.js`): every song has the same shape so children learn it: intro, four bars where the band plays a line and an animal answers, two bars where the animals sing the tune, everyone cheers, the hatched friend's solo, then a big ta-da chord. The answering animals are shuffled each time.
   - *Animal band*: a proper marching band. It opens with the drum major's whistle and a snare roll, then plays a dotted march tune on trumpets (with a harmony line) over tuba oom-pah, trombones, French horns, marching bass drum, flammed snare, hand cymbals, glockenspiel and a piccolo. A kazoo joins the animal choir, the finale steps up a key, and it ends "ta-daaa… bum-BUM!"
   - *Jungle jam*: steel drum, marimba, ukulele, bongos, shaker, claves, bass, pan flute; monkeys, elephants, parrots, frogs, lions
@@ -54,16 +62,21 @@ js/hatch/*.js         one file per hatch style (roll, boom, crumble)
 js/scenes.js          the 10 diorama worlds + ambient particles
 js/samples.js         loads the recorded sounds in sounds/ (falls back to synth if missing)
 js/audio.js           Web Audio music, sfx, short end jingles, the friend's name
-js/band.js            the three animal bands: instruments, animal voices, songs
+js/band.js            the three animal bands: instruments, animal voices, songs; the shared song player
+js/karaoke.js         Egg karaoke: the friend sings, five world arrangements
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
-sounds/               recorded animal calls + effects; sounds/voice/ "It's a …!" lines; index.json
+sounds/               recorded animal calls + effects; sounds/voice/ "It's a …!" lines;
+                      sounds/karaoke/ the karaoke band (inst/), voices (sing/) and ad-libs (extra/); index.json
 tools/*.html          dev contact sheets for checking every animal / scene
 tools/sounds.json     the prompt (and chosen take) for every recorded sound
-tools/gen-sounds.js   generate animal calls/effects with ElevenLabs (budget-capped, never re-buys)
+tools/karaoke.json    the prompt for every Egg karaoke recording
+tools/gen-sounds.js   generate sounds with ElevenLabs (budget-capped, never re-buys; --manifest for karaoke)
 tools/gen-voice.js    record "It's a …!" for every friend with ElevenLabs
 tools/pick-sounds.js  trim, level and encode the chosen takes into sounds/
+tools/pick-karaoke.js score every karaoke take, keep the best, measure its pitch, write sounds/karaoke/
+tools/level.js        shared trim/level/encode, plus onset and YIN pitch measurement
 tools/hatch-lab.html  play any hatch style, in slow motion if needed
 tools/hatch-snap.js   node tools/hatch-snap.js <style> out.png: a 16-frame contact sheet of a hatch
 ```
@@ -82,6 +95,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
 - **Audio:**
   - the tunes don't clip, they fully decay (no stuck notes), and there are no silent gaps in the music
   - every animal band renders with 5 different friends: no clipping, no dead air, every note plays, the right friend takes the solo; live, a stall skips notes instead of bursting, a new song/jingle/egg stops the old one, and Stop is silent at once
+  - Egg karaoke renders for a friend from every world, both on the synth fallback and (served over http) with the recordings: no clipping, no dead air, every note plays, the hatched friend sings the tune and ends on its own call, and every one of the 99 karaoke recordings loads and decodes
   - the final-stretch twinkle is there
   - notes land exactly on the beat, and a 700 ms stall doesn't produce a burst of missed notes
   - double-starting the music never doubles the notes
@@ -91,6 +105,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
   - frame pacing holds on a slow CPU
   - stopping mid-hatch is clean, and the DOM doesn't grow over 15 back-to-back hatches
   - the reduced-motion versions finish in under 1.5 s
+  - in the real app, Egg karaoke is the default: the friend sings in its recorded voice, its extra sound and call play, the band is the recorded instruments, and the friend bops along
 
 ## Adding a hatch style
 
@@ -116,7 +131,18 @@ node tools/pick-sounds.js takes/                         # set "take" in sounds.
 
 The generators read each request's cost from the API, keep a ledger in `takes/ledger.json`, stop before `--budget` and never re-request a take they already have. Sound effects cost 10 credits per second and a voice line about 5. Generating everything once (two takes of each sound, 41 voice lines) cost under 1,000 credits.
 
-Every recording has a synthesised stand-in, which plays until it loads, or always when the app is opened straight from disk (browsers won't fetch files there). The animal choir in the bands stays synthesised, because it has to sing the tune.
+Every recording has a synthesised stand-in, which plays until it loads, or always when the app is opened straight from disk (browsers won't fetch files there). The animal choir in the three bands stays synthesised.
+
+### Egg karaoke recordings
+
+Egg karaoke's 19 instrument notes, 40 singing syllables and 40 extra sounds were made with ElevenLabs Sound Effects from the prompts in `tools/karaoke.json` (3 takes of each note and syllable, 2 of each extra; about 1,900 credits). The picker scores every take and keeps the best one. It rejects takes that came back silent, prefers one clean onset and a steady pitch, and measures the pitch the app tunes from. Pin a take with `"take": n` in the manifest if your ears disagree.
+
+```sh
+node tools/gen-sounds.js takes/ --manifest tools/karaoke.json --takes 3 --budget 2500
+node tools/pick-karaoke.js takes/      # writes sounds/karaoke/ and the karaoke section of sounds/index.json
+```
+
+The full song could not be made with ElevenLabs Music: the API key used here doesn't have the `music_generation` permission. Building the song from recorded notes also keeps the singer exactly in time and in tune with the band, which a pre-mixed track couldn't.
 
 ## Not possible on the web (yet)
 
@@ -124,6 +150,6 @@ The **Lock Screen / Live Activity** timer that reviewers asked for needs a nativ
 
 ## Credits
 
-Animal sounds, effects and voice lines: generated with [ElevenLabs](https://elevenlabs.io) (Sound Effects and Text to Speech). Check that your ElevenLabs plan's terms cover how you publish the app.
+Animal sounds, effects, voice lines and Egg karaoke's instruments and voices: generated with [ElevenLabs](https://elevenlabs.io) (Sound Effects and Text to Speech). Check that your ElevenLabs plan's terms cover how you publish the app.
 
 Fonts: [Fredoka](https://fonts.google.com/specimen/Fredoka) and [Patrick Hand SC](https://fonts.google.com/specimen/Patrick+Hand+SC), both under the SIL Open Font License, bundled in `fonts/` so the app works offline.

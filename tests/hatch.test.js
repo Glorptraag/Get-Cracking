@@ -21,7 +21,7 @@ async function page(browser, settings, opts = {}) {
   const errs = [];
   p.on('pageerror', (e) => errs.push(e.message));
   p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
-  await p.addInitScript((s) => localStorage.setItem('gc.settings.v1', JSON.stringify(Object.assign({ fullscreen: false, seenHint: true, minutes: 0, seconds: 10, hatchMode: 'tap', music: 'musicbox' }, s))), settings);
+  await p.addInitScript((s) => localStorage.setItem('gc.settings.v1', JSON.stringify(Object.assign({ fullscreen: false, seenHint: true, minutes: 0, seconds: 10, hatchMode: 'tap', music: 'musicbox', tunesV: 3 }, s))), settings);
   await p.goto('http://localhost:8767/index.html');
   await p.waitForTimeout(400);
   if (opts.throttle) { const cdp = await ctx.newCDPSession(p); await cdp.send('Emulation.setCPUThrottlingRate', { rate: opts.throttle }); }
@@ -177,6 +177,39 @@ const coverage = (p) => p.evaluate(() => {
     // a voice file that can't load falls back to the device voice
     const fell = await p.evaluate(() => { const before = spoke; GC.Sound.sayFriend({ kind: 'animal', id: 'nobody', name: 'Nobody' }); return spoke - before; });
     ok(fell === 1, 'a missing recording falls back to the device voice');
+    ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  console.log('\n■ Egg karaoke (the default hatching song) in the real app');
+  {
+    const { p, ctx, errs } = await page(browser, { hatchStyle: 'roll', sayName: true });
+    ok((await p.evaluate(() => GC.app.settings().endSound)) === 'karaoke', 'Egg karaoke is the default hatching song');
+    await p.evaluate(() => {
+      window.played = [];
+      const smp = GC.Sound.sample.bind(GC.Sound);
+      GC.Sound.sample = (key, ...a) => { const d = smp(key, ...a); if (d) played.push(key); return d; };
+      window.bops = 0;
+      const sing = GC.Egg.prototype.sing;
+      GC.Egg.prototype.sing = function (...a) { bops++; return sing.apply(this, a); };
+    });
+    await toReady(p);
+    // the band and every singing voice load in the background after the first tap
+    await p.waitForFunction(() => GC.Samples.index && GC.Samples.index.karaoke && Object.keys(GC.Samples.index.karaoke.inst).every((k) => GC.Samples.has('karaoke/inst/' + k)), null, { timeout: 20000 }).catch(() => {});
+    await p.mouse.click(195, 420);
+    await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 8000 });
+    const friend = await p.evaluate(() => GC.app.run.friend);
+    const call = await p.evaluate((id) => GC.Band.FRIEND_CALL[id], friend.id);
+    await p.waitForFunction((c) => played.includes(c), call, { timeout: 25000 }).catch(() => {});
+    await p.waitForTimeout(2500);
+    const st = await p.evaluate(() => ({ played: played.slice(), bops }));
+    const sung = st.played.filter((k) => k === 'karaoke/sing/' + friend.id).length;
+    const inst = new Set(st.played.filter((k) => k.startsWith('karaoke/inst/')));
+    ok(sung >= 30, `the ${friend.name} sings the song in its own recorded voice (${sung} sung notes)`);
+    ok(st.played.includes('karaoke/extra/' + friend.id), `its extra sound answers in the gaps (karaoke/extra/${friend.id})`);
+    ok(st.played.includes(call), `it ends on its own full call (${call})`);
+    ok(inst.size >= 6, `the band is the recorded instruments (${[...inst].map((k) => k.split('/').pop()).join(', ')})`);
+    ok(st.bops >= 25, `the ${friend.name} bops along to its singing (${st.bops} bops)`);
     ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
     await ctx.close();
   }
