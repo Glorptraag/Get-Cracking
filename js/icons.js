@@ -120,6 +120,22 @@
       `<path d="${star(32, 11, 2.4, 6, 4)}" fill="${C.yellow}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/>` +
       `<circle cx="41" cy="22" r="3" fill="${C.pink}" stroke="${O}" stroke-width="2.4"/><circle cx="22" cy="7" r="2.6" fill="${C.sky}" stroke="${O}" stroke-width="2.4"/>` +
       `<path d="M37 33 C40 31 41 35 44 33" fill="none" stroke="${O}" stroke-width="2.6" stroke-linecap="round"/>`,
+    drum: `<path d="M5 9 L19 19 M43 9 L29 19" fill="none" stroke="${O}" stroke-width="3.5" stroke-linecap="round"/>` +
+      `<circle cx="5" cy="9" r="3" fill="${C.cream}" ${S}/><circle cx="43" cy="9" r="3" fill="${C.cream}" ${S}/>` +
+      `<path d="M8 22 V37 C8 41 15 44 24 44 C33 44 40 41 40 37 V22 Z" fill="${C.berry}" ${S}/>` +
+      `<path d="M8 25 L16 38 L24 25 L32 38 L40 25" fill="none" stroke="${C.yellow}" stroke-width="3" stroke-linejoin="round"/>` +
+      `<path d="M8 36 C8 40 15 43 24 43 C33 43 40 40 40 36" fill="none" ${S}/>` +
+      `<ellipse cx="24" cy="22" rx="16" ry="5.5" fill="${C.cream}" ${S}/>`,
+    maracas: `<path d="M17 25 L9 44 M31 25 L39 44" fill="none" stroke="${O}" stroke-width="7" stroke-linecap="round"/>` +
+      `<path d="M17 25 L9 44 M31 25 L39 44" fill="none" stroke="${C.wood}" stroke-width="3" stroke-linecap="round"/>` +
+      `<ellipse cx="19" cy="15" rx="9" ry="11" transform="rotate(22 19 15)" fill="${C.orange}" ${S}/>` +
+      `<ellipse cx="30" cy="15" rx="9" ry="11" transform="rotate(-22 30 15)" fill="${C.leaf}" ${S}/>` +
+      `<path d="M25 11 L35 15 M24 17 L33 21" fill="none" stroke="${C.yellow}" stroke-width="2.8" stroke-linecap="round"/>` +
+      `<path d="M3 9 C4.5 7 6 7 7 9 M41 4 C42.5 2 44 2 45 4" fill="none" stroke="${O}" stroke-width="2.6" stroke-linecap="round"/>`,
+    barn: `<path d="M5 43 V21 L14 9 H34 L43 21 V43 Z" fill="${C.berry}" ${S}/>` +
+      `<path d="M3 22 L14 8 H34 L45 22" fill="none" stroke="${O}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+      `<path d="M15 43 V28 H33 V43 Z" fill="${C.cream}" ${S}/><path d="M15 28 L33 43 M33 28 L15 43" fill="none" stroke="${O}" stroke-width="3" stroke-linecap="round"/>` +
+      `<rect x="20" y="13" width="8" height="8" rx="1.5" fill="${C.yellow}" ${S}/>`,
     bell: `<circle cx="24" cy="39" r="4" fill="${C.gold}" ${S}/><circle cx="24" cy="6.5" r="2.8" fill="${C.gold}" ${S}/>` +
       `<path d="M24 8.5 C15 8.5 12.5 16 12.5 23 V30 L8 36 H40 L35.5 30 V23 C35.5 16 33 8.5 24 8.5 Z" fill="${C.yellow}" ${S}/>` +
       `<path d="M17.5 28 V22 C17.5 18 19 15.5 21 14.5" ${SHINE}/>`,

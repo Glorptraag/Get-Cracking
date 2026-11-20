@@ -10,7 +10,8 @@
     seconds: 0,
     scene: 'random',        // scene id or 'random'
     music: 'musicbox',
-    endSound: 'tada',
+    endSound: 'band',       // hatching tune: an animal band (js/band.js) or a short jingle
+    tunesV: 2,              // settings from before the animal bands get moved onto them once
     volume: 0.7,
     sayName: true,
     hatchWho: 'animals',    // 'animals' | 'photos' | 'both'
@@ -32,6 +33,8 @@
       const s = Object.assign({}, DEFAULTS, raw, { nextUp: Object.assign({}, DEFAULTS.nextUp, raw.nextUp || {}) });
       // older builds saved an emoji here; it is now the name of a drawn icon
       if (!GC.Icons.has(s.nextUp.icon)) s.nextUp.icon = GC.Icons.fromEmoji(s.nextUp.icon) || 'star';
+      // builds before the animal bands: anyone still on the old default jingle gets the band
+      if ((raw.tunesV || 1) < 2) { if (s.endSound === 'tada') s.endSound = 'band'; s.tunesV = 2; }
       return s;
     } catch (e) {
       return JSON.parse(JSON.stringify(DEFAULTS));

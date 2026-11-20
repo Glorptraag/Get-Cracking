@@ -3,11 +3,11 @@
  * CPU throttled 4× (≈ mid-range phone). Checks: one hatch per egg even under
  * tap spam, the friend is never covered once landed, frame pacing, stop
  * mid-hatch, hatch-now while paused, back-to-back hatches (DOM / timer leaks),
- * and reduced motion. */
+ * reduced motion, and that the recorded sounds (sounds/) load and are used. */
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/json', '.json': 'application/json', '.mp3': 'audio/mpeg' };
 const server = http.createServer((req, res) => {
   const f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
   fs.readFile(f, (err, d) => { if (err) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' }); res.end(d); });
@@ -29,7 +29,7 @@ async function page(browser, settings, opts = {}) {
     window.T = { hatches: 0, tunes: 0, pops: 0 };
     const h = GC.Egg.prototype.hatch;
     GC.Egg.prototype.hatch = function (...a) { if (this === (GC.app.run && GC.app.run.egg)) T.hatches++; return h.apply(this, a); };
-    const et = GC.Sound.endTune.bind(GC.Sound); GC.Sound.endTune = (id) => { T.tunes++; return et(id); };
+    const et = GC.Sound.endTune.bind(GC.Sound); GC.Sound.endTune = (...a) => { T.tunes++; return et(...a); };
     const pop = GC.Sound.pop.bind(GC.Sound); GC.Sound.pop = () => { T.pops++; pop(); };
     window.frames_ = [];
     let last = performance.now();
@@ -121,6 +121,42 @@ const coverage = (p) => p.evaluate(() => {
     ok(Object.keys(styles).length >= 2, `"Surprise me" rotates styles (${JSON.stringify(styles)})`);
     ok(counts[14] < counts[2] * 1.25, `DOM doesn't grow across 15 hatches (${counts[2]} → ${counts[14]} nodes)`);
     ok(await p.evaluate(() => T.hatches) >= 16, 'every egg hatched');
+    ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
+    await ctx.close();
+  }
+
+  console.log('\n■ recorded sounds (ElevenLabs clips in sounds/)');
+  {
+    const { p, ctx, errs } = await page(browser, { hatchStyle: 'roll', endSound: 'band', sayName: true });
+    await p.evaluate(() => {
+      window.played = [];
+      const smp = GC.Sound.sample.bind(GC.Sound);
+      GC.Sound.sample = (key, ...a) => { const d = smp(key, ...a); if (d) played.push(key); return d; };
+      window.spoke = 0;
+      const say = GC.Sound.say.bind(GC.Sound); GC.Sound.say = (...a) => { spoke++; return say(...a); };
+    });
+    await toReady(p);
+    const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'sounds', 'index.json'), 'utf8'));
+    await p.waitForFunction((n) => Object.keys(GC.Samples.index ? GC.Samples.index.calls : {}).filter((k) => GC.Samples.has(k)).length >= n, Object.keys(idx.calls).length, { timeout: 15000 }).catch(() => {});
+    const loaded = await p.evaluate(() => Object.keys(GC.Samples.index.calls).filter((k) => GC.Samples.has(k)).length);
+    ok(loaded === Object.keys(idx.calls).length, `every animal call and effect loads (${loaded}/${Object.keys(idx.calls).length})`);
+    await p.mouse.click(195, 420);
+    await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 8000 });
+    const friend = await p.evaluate(() => GC.app.run.friend);
+    const call = await p.evaluate((id) => GC.Band.FRIEND_CALL[id], friend.id);
+    await p.waitForTimeout(1200);
+    let st = await p.evaluate(() => ({ played: played.slice(), spoke }));
+    ok(st.played.includes('pop'), 'the shell pop is the recording');
+    ok(st.played.includes('voice/' + friend.id) && st.spoke === 0, `"It's ${friend.name}!" is the recorded voice, not the device voice (${st.played.filter((k) => k.startsWith('voice/')).join(', ') || 'none'}, device voice used ${st.spoke}×)`);
+    // the friend's solo in the band comes later in the song
+    await p.waitForFunction((c) => played.includes(c), call, { timeout: 20000 }).catch(() => {});
+    st = await p.evaluate(() => ({ played: played.slice() }));
+    ok(st.played.includes(call), `the ${friend.name} sings its solo with the recording (${call})`);
+    const answers = st.played.filter((k) => idx.calls[k] !== undefined && k !== 'pop' && k !== 'crack');
+    ok(answers.length >= 5, `the band's animal answers are recordings too (${answers.length} played)`);
+    // a voice file that can't load falls back to the device voice
+    const fell = await p.evaluate(() => { const before = spoke; GC.Sound.sayFriend({ kind: 'animal', id: 'nobody', name: 'Nobody' }); return spoke - before; });
+    ok(fell === 1, 'a missing recording falls back to the device voice');
     ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
     await ctx.close();
   }

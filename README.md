@@ -1,12 +1,14 @@
 # Get Cracking
 
-A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and a cheerful tune plays instead of an alarm.
+A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend and an animal band strikes up instead of an alarm.
 
 - **40 hatchable friends**, all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
 - **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
-- **Countdown music** (6 choices) and **hatching tunes** (4 choices). All of it is synthesised live with Web Audio, and the melodies are original.
-- **Runs fully offline.** No login, no account, no network requests, and nothing leaves the device.
+- **Animal bands** for the hatch: three ~15-second celebration songs, each a full band plus a chorus of animal voices (moo, quack, baa, woof, meow, oink, ribbit, hoot, elephant trumpet, roar, neigh, rooster and more). The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
+- **Real animal sounds and a real voice.** The animal calls, the egg crack and pop, and "It's a Fox!" for every friend are recordings generated with ElevenLabs (`sounds/`, about 720 KB). Everything else (all the music) is synthesised live with Web Audio, and the melodies are original.
+- **Countdown music** (6 choices) and **hatching tunes** (3 animal bands + 4 short jingles).
+- **Runs fully offline.** No login, no account, no network requests, and nothing leaves the device. The recordings ship with the app and are cached for offline use like everything else.
 
 ## Run it
 
@@ -26,7 +28,14 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 - **Ground ring:** the ring around the egg empties as time runs out, and its pebbles light up at each crack step (`buildRing` in `js/app.js`).
 - **Idle egg:** it breathes, and wobbles more at later steps. Tapping it squashes it and never changes the timer.
 - **Time's up:** a soft chime plays, never an alarm. With "Wait for a tap" (the default) the egg glows and knocks every 5 s for up to 5 minutes, and a tap anywhere hatches it (`timeUp()`).
-- **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again.
+- **Friend's name:** after the hatch, the recorded voice says "It's a Fox!" / "It's an Owl!" (or "Peekaboo!" for a photo) while the band dips under it. The device voice is only a fallback (`Sound.sayFriend`).
+- **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again and say hello in its own voice (`Sound.friendCall`).
+- **Animal bands** (`js/band.js`): every song has the same shape so children learn it: intro, four bars where the band plays a line and an animal answers, two bars where the animals sing the tune, everyone cheers, the hatched friend's solo, then a big ta-da chord. The answering animals are shuffled each time.
+  - *Animal band*: a proper marching band. It opens with the drum major's whistle and a snare roll, then plays a dotted march tune on trumpets (with a harmony line) over tuba oom-pah, trombones, French horns, marching bass drum, flammed snare, hand cymbals, glockenspiel and a piccolo. A kazoo joins the animal choir, the finale steps up a key, and it ends "ta-daaa… bum-BUM!"
+  - *Jungle jam*: steel drum, marimba, ukulele, bongos, shaker, claves, bass, pan flute; monkeys, elephants, parrots, frogs, lions
+  - *Farmyard hoedown*: fiddle, banjo, harmonica, jug, washboard, cowbell, hand claps, slide whistle; cows, sheep, pigs, ducks, dogs, horses, goats and a rooster to start
+  - Each of the 40 friends has a call (`FRIEND_CALL`). The voices are one small synth (`_voice`: oscillators → vowel formant filters → tremolo/vibrato), so the same moo can be a cow or a calf, and the animals can sing pitched notes.
+  - Songs are scheduled a little ahead at a time, like the countdown music, so the hatch animation stays smooth and the song stops at once on New egg / Stop. The band ducks while the device voice says the friend's name.
 - **Countdown music:** gains an extra twinkle in the last 10% of the timer (`Sound.setTension`).
 - **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the lock button. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
 - **Also:** an optional "Next up" card after the hatch, the screen kept awake during a run (Wake Lock), and a friend book that collects every animal hatched.
@@ -43,11 +52,18 @@ js/egg.js             egg, crack stages, hatch choreography
 js/shellfx.js         hatch-style registry + the contract every style follows
 js/hatch/*.js         one file per hatch style (roll, boom, crumble)
 js/scenes.js          the 10 diorama worlds + ambient particles
-js/audio.js           Web Audio music, sfx, end tunes, speech
+js/samples.js         loads the recorded sounds in sounds/ (falls back to synth if missing)
+js/audio.js           Web Audio music, sfx, short end jingles, the friend's name
+js/band.js            the three animal bands: instruments, animal voices, songs
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
+sounds/               recorded animal calls + effects; sounds/voice/ "It's a …!" lines; index.json
 tools/*.html          dev contact sheets for checking every animal / scene
+tools/sounds.json     the prompt (and chosen take) for every recorded sound
+tools/gen-sounds.js   generate animal calls/effects with ElevenLabs (budget-capped, never re-buys)
+tools/gen-voice.js    record "It's a …!" for every friend with ElevenLabs
+tools/pick-sounds.js  trim, level and encode the chosen takes into sounds/
 tools/hatch-lab.html  play any hatch style, in slow motion if needed
 tools/hatch-snap.js   node tools/hatch-snap.js <style> out.png: a 16-frame contact sheet of a hatch
 ```
@@ -65,6 +81,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
 - **Timer:** finishes within 50 ms on a 5-minute timer. Every crack lands within 8 ms of its landmark. Also covers a 60-minute run, pause and resume, ±1 minute with a 5-second floor, the tap-to-hatch wait, a throttled hidden tab, and start/stop abuse.
 - **Audio:**
   - the tunes don't clip, they fully decay (no stuck notes), and there are no silent gaps in the music
+  - every animal band renders with 5 different friends: no clipping, no dead air, every note plays, the right friend takes the solo; live, a stall skips notes instead of bursting, a new song/jingle/egg stops the old one, and Stop is silent at once
   - the final-stretch twinkle is there
   - notes land exactly on the beat, and a 700 ms stall doesn't produce a burst of missed notes
   - double-starting the music never doubles the notes
@@ -86,10 +103,27 @@ Hatch styles are interchangeable plug-ins. Each file in `js/hatch/` calls `GC.Sh
 
 Because no style touches shared code, several can be built in parallel. Add the new script tag to `index.html`, `tools/hatch-lab.html` and the `sw.js` file list, and it shows up in settings automatically.
 
+## Recorded sounds
+
+The animal calls, egg crack, shell pop and the "It's a Fox!" voice (ElevenLabs voice "Jessica") were generated once with ElevenLabs and are committed in `sounds/`. The app never contacts ElevenLabs. To change or add one:
+
+```sh
+export ELEVENLABS_API_KEY=…                           # needs Sound Effects + Text to Speech access
+node tools/gen-sounds.js takes/ --takes 2 --budget 3000  # new prompts in tools/sounds.json
+node tools/gen-voice.js takes/                           # a line for any new friend in js/animals.js
+node tools/pick-sounds.js takes/                         # set "take" in sounds.json first
+```
+
+The generators read each request's cost from the API, keep a ledger in `takes/ledger.json`, stop before `--budget` and never re-request a take they already have. Sound effects cost 10 credits per second and a voice line about 5. Generating everything once (two takes of each sound, 41 voice lines) cost under 1,000 credits.
+
+Every recording has a synthesised stand-in, which plays until it loads, or always when the app is opened straight from disk (browsers won't fetch files there). The animal choir in the bands stays synthesised, because it has to sing the tune.
+
 ## Not possible on the web (yet)
 
 The **Lock Screen / Live Activity** timer that reviewers asked for needs a native iOS or Android wrapper. The state machine in `app.js` is built so it can be ported to one.
 
 ## Credits
+
+Animal sounds, effects and voice lines: generated with [ElevenLabs](https://elevenlabs.io) (Sound Effects and Text to Speech). Check that your ElevenLabs plan's terms cover how you publish the app.
 
 Fonts: [Fredoka](https://fonts.google.com/specimen/Fredoka) and [Patrick Hand SC](https://fonts.google.com/specimen/Patrick+Hand+SC), both under the SIL Open Font License, bundled in `fonts/` so the app works offline.

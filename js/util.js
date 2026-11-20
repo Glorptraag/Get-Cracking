@@ -13,6 +13,14 @@
   GC.clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   GC.rand = (a, b) => a + Math.random() * (b - a);
   GC.pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  /** "a Fox", "an Owl", "a Unicorn" (it starts with a "you" sound) */
+  GC.aName = (name) => ((/^[aeiou]/i.test(name) && !/^(uni|use|eu)/i.test(name)) ? 'an ' : 'a ') + name;
+  /** a shuffled copy */
+  GC.shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  };
 
   /** Deterministic PRNG so scenes/animals draw the same every time. */
   GC.seeded = function (seed) {

@@ -5,12 +5,17 @@
  *   1. countdown music — an ambient "something is happening" cue that keeps
  *      working when the child looks away from the screen
  *   2. small sound effects — crack, pop, boop, knock
- *   3. the end tune — a cheerful celebration instead of an alarm
+ *   3. the end tune — a cheerful celebration instead of an alarm. The three
+ *      animal bands (full band + animal voices + a solo for the friend who
+ *      hatched) live in band.js; the short jingles are here.
  */
 (function () {
   'use strict';
   const GC = window.GC;
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  // recordings are levelled to -14 LUFS (tools/pick-sounds.js); these sit them in the mix
+  const SAMPLE_GAIN = 0.62;  // animal calls and effects: level with the synth band's animals
+  const VOICE_GAIN = 1.25;   // "It's a Fox!": clearly on top while the band ducks under it
 
   const MUSIC = [
     { id: 'musicbox', name: 'Music box', icon: 'notes' },
@@ -21,6 +26,9 @@
     { id: 'off', name: 'Quiet', icon: 'quiet' },
   ];
   const ENDS = [
+    { id: 'band', name: 'Animal band', icon: 'drum', band: true },
+    { id: 'jungle', name: 'Jungle jam', icon: 'maracas', band: true },
+    { id: 'farm', name: 'Farmyard hoedown', icon: 'barn', band: true },
     { id: 'tada', name: 'Ta-da parade', icon: 'tada' },
     { id: 'chimes', name: 'Happy chimes', icon: 'bell' },
     { id: 'birds', name: 'Birdsong hello', icon: 'chick' },
@@ -77,6 +85,7 @@
       }
       if (this.ctx.state === 'suspended') this.ctx.resume();
       this._mediaSession();
+      if (GC.Samples) GC.Samples.load(this.ctx); // recorded animal calls, in the background
       return this.ctx;
     }
 
@@ -159,6 +168,7 @@
     /* ------------------------------------------------------- music */
     startMusic(id) {
       this.stopMusic();
+      if (this.stopCelebration) this.stopCelebration(0.3);
       this.music = id;
       if (!this.ensure() || id === 'off') return;
       this.musicBus.gain.cancelScheduledValues(this.ctx.currentTime);
@@ -271,8 +281,32 @@
     }
 
     /* --------------------------------------------------------- sfx */
+    /**
+     * Play a recorded sound (js/samples.js) if it has loaded. Returns its length
+     * in seconds, or 0 so the caller can fall back to the synthesised version.
+     *   o.gain, o.rate (playback speed/pitch), o.max (cut off with a quick fade)
+     */
+    sample(key, t, out, o = {}) {
+      const buf = GC.Samples && GC.Samples.get(key);
+      if (!buf || !this.ctx) return 0;
+      const ctx = this.ctx, rate = o.rate || 1;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+      const g = ctx.createGain(), level = (o.gain ?? 1) * SAMPLE_GAIN;
+      g.gain.value = level;
+      src.connect(g); g.connect(out || this.sfxBus);
+      let dur = buf.duration / rate;
+      if (o.max && o.max < dur) {
+        dur = o.max;
+        g.gain.setValueAtTime(level, t + dur - 0.06);
+        g.gain.linearRampToValueAtTime(0, t + dur);
+      }
+      src.start(t); src.stop(t + dur + 0.02);
+      return dur;
+    }
+
     crack() {
       if (!this.ensure()) return;
+      if (this.sample('crack', this.ctx.currentTime + 0.01, this.sfxBus, { gain: 0.9, rate: GC.rand(0.92, 1.1) })) return;
       const t = this.ctx.currentTime + 0.01;
       for (let i = 0; i < 3; i++) this.noiseBurst(t + i * 0.045 + Math.random() * 0.02, 0.06, { freq: GC.rand(2500, 4200), q: 2, gain: 0.25, filter: 'bandpass' });
       this.tone(220, t, 0.08, { gain: 0.1, bus: this.sfxBus, slide: 0.6 });
@@ -301,6 +335,7 @@
     }
     pop() {
       if (!this.ensure()) return;
+      if (this.sample('pop', this.ctx.currentTime, this.sfxBus, { gain: 1.1 })) return;
       const t = this.ctx.currentTime;
       this.tone(320, t, 0.25, { gain: 0.3, bus: this.sfxBus, slide: 3.2 });
       this.noiseBurst(t, 0.25, { freq: 1500, q: 0.7, gain: 0.2 });
@@ -337,9 +372,12 @@
       src.connect(f); f.connect(g); g.connect(this.sfxBus); src.start(t, Math.random()); src.stop(t + 0.5);
     }
 
-    /** the celebration tune; returns its length in seconds */
-    endTune(id) {
+    /** the celebration tune; returns its length in seconds.
+     *  friendId (optional) = the animal that hatched; it gets a solo in the bands */
+    endTune(id, friendId) {
       if (!this.ensure()) return 0;
+      if (this.bandTune && GC.Band && GC.Band.SONGS[id]) return this.bandTune(id, friendId);
+      if (this.stopCelebration) this.stopCelebration(0.2);
       const t0 = this.ctx.currentTime + 0.05;
       const bus = this.sfxBus;
       const bell = (n, t, d = 1.6, g = 0.14) => this.tone(midi(n), t, d, { gain: g, bus, partials: [[1, 1], [2.76, 0.18], [5.4, 0.06]] });
@@ -377,15 +415,35 @@
     preview(kind, id) {
       this.ensure();
       if (kind === 'end') { this.stopMusic(0.2); return this.endTune(id); }
+      if (this.stopCelebration) this.stopCelebration(0.2);
       this.startMusic(id);
       clearTimeout(this._previewT);
       this._previewT = setTimeout(() => this.stopMusic(), 5000);
+    }
+
+    /**
+     * "It's a Fox!" when a friend hatches: the recorded voice (sounds/voice/<id>.mp3)
+     * if it has loaded, otherwise the device's own speech voice.
+     */
+    sayFriend(friend) {
+      const key = 'voice/' + (friend.kind === 'animal' ? friend.id : 'peekaboo');
+      if (this.ctx) {
+        const len = this.sample(key, this.ctx.currentTime + 0.05, this.master, { gain: VOICE_GAIN });
+        if (len) { if (this.duckCelebration) this.duckCelebration(len + 0.3); return len; }
+      }
+      this.say(friend.kind === 'animal' ? `It's ${GC.aName(friend.name)}!` : friend.name);
+      return 0;
+    }
+    /** have the friend's voice line ready by the time the shell breaks */
+    preloadFriend(friend) {
+      if (this.ctx && GC.Samples) GC.Samples.want(this.ctx, 'voice/' + (friend.kind === 'animal' ? friend.id : 'peekaboo'));
     }
 
     say(text) {
       try {
         if (!('speechSynthesis' in window)) return;
         speechSynthesis.cancel();
+        if (this.duckCelebration) this.duckCelebration(1.4 + text.length * 0.06);
         const u = new SpeechSynthesisUtterance(text);
         u.rate = 0.9; u.pitch = 1.25; u.volume = Math.min(1, this.volume + 0.2);
         speechSynthesis.speak(u);
