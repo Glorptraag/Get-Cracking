@@ -20,13 +20,21 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Friend book | done | done | |
 | Next-up card | done | done | |
 | Grown-up tray | done | done | hold-to-open |
-| Music and sounds | done | done | countdown music, effects, 4 end jingles; the name is said with the device voice on both |
+| Music and sounds | done | done | countdown music, effects, 4 end jingles |
+| Animal bands | done | done | Animal band, Jungle jam, Farmyard hoedown; friend solo; tap the friend for its call. Ported in parity/to-mac-20261120-0720 (not compile-checked) |
+| Recorded sounds | done | done | 37 ElevenLabs animal calls + crack + pop; "It's a Fox!" voice lines (device voice only as fallback); "a/an" names. Ported in parity/to-mac-20261120-0720 |
 | Settings and storage | done | done | |
 | Visual style | done | done | |
 | Shared helpers | done | done | |
 | Offline / install | done | n/a | PWA service worker on web; a native app is offline by nature |
 
 ## Idioms
+
+- Ports land on a branch from the web commit they came from; the web sync point only moves once every web change before it is handled. Run 1 (2026-11-20) ported the audio commits (9e02873, cf0f7fb, 3866e54) and deferred 982859f and 2f810aa, so WEB_SYNCED stayed at c4600dd. The next run lists those audio files again: classify them as already matched.
+- Web Audio node graph (oscillators, BiquadFilters, gains) → voices rendered sample by sample in the Synth render callback (`SynthVoice`, `VSpec` in Audio/Sound.swift). The band's lookahead pump → `Celebration` events run inside the render callback, under the same lock.
+- Web stereo panning (StereoPannerNode) → dropped: the iPhone synth renders mono. Channel levels are kept (`Kit.g`).
+- Web ConvolverNode room → a small Schroeder reverb (`Room`).
+- Recordings: `sounds/<id>.mp3` → `Resources/Sounds/call-<id>.mp3`, `sounds/voice/<id>.mp3` → `voice-<id>.mp3` (the synchronised folder flattens into the bundle, so names must not collide). The parity script filters .mp3 as noise: copy new or changed recordings by hand when sounds/ changes.
 
 - Web SVG drawing → the iPhone app's own vector scene graph (`Core/VNode.swift`, `Core/Renderer.swift`, SwiftUI `Canvas`); port drawings as path data, don't rasterise.
 - Web Audio synth → `AVAudioEngine` synth in `Audio/Sound.swift`; `speechSynthesis` → `AVSpeechSynthesizer`.

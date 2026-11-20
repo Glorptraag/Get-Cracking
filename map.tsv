@@ -18,3 +18,6 @@ index.html	GetCracking/UI/SetupView.swift	Setup screen
 index.html	GetCracking/UI/TimerView.swift	Timer screen
 css/app.css	GetCracking/UI/Theme.swift	Visual style
 css/app.css	GetCracking/Art/Loops.swift	Visual style
+js/band.js	GetCracking/Audio/Band.swift	Animal bands
+js/samples.js	GetCracking/Audio/Sound.swift	Recorded sounds
+sounds/index.json	GetCracking/Resources/Sounds/	Recorded sounds
