@@ -1,6 +1,8 @@
 # Parity: Get Cracking web (main) ↔ iPhone (ios-swiftui)
 
-**Direction: web → iPhone only.** Ports are made on `parity/to-mac-*` branches cut from `ios-swiftui` and opened as draft PRs into `ios-swiftui`. Nothing is ever ported, opened or merged into `main`. iPhone-only changes are recorded here, never ported back. (The skill calls the native side "mac"; here it is the iPhone app, iOS 17.)
+**Direction: web → iPhone only.** Ports are made on `parity/to-mac-*` branches cut from `ios-swiftui` and opened as draft PRs into `ios-swiftui`. Nothing is ever ported, opened or merged into `main`. iPhone-only changes are recorded here, never ported back.
+
+**Never merge the SwiftUI branch.** Claude never merges `ios-swiftui` anywhere, and never merges a port PR into it: the owner reviews, builds in Xcode and merges every `parity/to-mac-*` PR themselves. (The skill calls the native side "mac"; here it is the iPhone app, iOS 17.)
 
 Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking starts there. The next sync picks up everything `main` has gained since.
 
