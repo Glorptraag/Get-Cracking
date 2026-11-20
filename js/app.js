@@ -691,7 +691,7 @@
       optGroup(GC.MUSIC.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.music, (v) => (S.music = v),
         (v) => { Sound.setVolume(S.volume); if (v === 'off') Sound.stopMusic(); else Sound.preview('music', v); }),
       h('h3', { style: 'margin-top:18px' }, 'Hatching tune'),
-      h('p', { class: 'hint' }, 'Plays when the egg hatches. In Egg karaoke the friend who hatched sings the song in its own voice; in the animal bands it gets a solo. Tap one to hear it.'),
+      h('p', { class: 'hint' }, 'Plays when the egg hatches. In Egg karaoke the friend who hatched plays in the band with its own voice; in the animal bands it gets a solo. Tap one to hear it.'),
       optGroup(GC.END_SOUNDS.map((m) => ({ v: m.id, icon: m.icon, label: m.name })), () => S.endSound, (v) => (S.endSound = v),
         (v) => { Sound.setVolume(S.volume); Sound.preview('end', v); }),
       h('div', { class: 'row', style: 'margin-top:12px' }, h('label', {}, 'Volume'), vol),
