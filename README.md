@@ -8,7 +8,9 @@ This branch is the **native SwiftUI iPhone app**, built for the App Store. It co
 - **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation.
 - **3 hatch styles** (Roll away, Kaboom, Crumble), plus "Surprise me".
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
-- **Countdown music** (6 choices) and **hatching tunes** (4 choices), all synthesised live on the device. No audio files; the melodies are original.
+- **Animal bands** for the hatch: three ~15-second celebration songs (a marching band, a jungle calypso, a farmyard hoedown), each a full band plus a chorus of animal voices. The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
+- **Real animal sounds and a real voice.** The animal calls, the egg crack and pop, and "It's a Fox!" for every friend are recordings generated once with ElevenLabs and bundled in `Resources/Sounds` (~710 KB). The device's speech voice is only a fallback.
+- **Countdown music** (6 choices) and **hatching tunes** (3 animal bands + 4 short jingles), synthesised live on the device. The melodies are original.
 - **Fully offline.** No login, no account, no ads, no network requests, no analytics. Settings, photos and the friend book stay on the device.
 
 ## Requirements
@@ -77,7 +79,9 @@ GetCracking/
     Hatch/RollFX.swift          "Roll away"
     Hatch/BoomFX.swift          "Kaboom"
     Hatch/CrumbleFX.swift       "Crumble"
-  Audio/Sound.swift             AVAudioEngine synth: music, sound effects, end tunes, speech
+  Audio/Sound.swift             AVAudioEngine synth: music, sound effects, end jingles, band voices, recordings, the friend's name
+  Audio/Band.swift              the three animal bands: instruments, animal calls, songs (port of the web app's js/band.js)
+  Resources/Sounds/             recorded calls (call-*.mp3) and "It's a …!" lines (voice-*.mp3)
   Model/
     AppModel.swift              app state, the run controller (timer state machine), ground ring
     Store.swift                 settings, friend book, photo storage

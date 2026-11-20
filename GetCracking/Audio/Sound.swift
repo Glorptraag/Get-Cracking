@@ -1,12 +1,16 @@
 import AVFoundation
 import UIKit
 
-/// Everything is synthesised live — no audio files, and all melodies are
-/// original. Three jobs:
+/// The music is synthesised live and all melodies are original. Jobs:
 ///   1. countdown music — an ambient "something is happening" cue that keeps
 ///      working when the child looks away from the screen
 ///   2. small sound effects — crack, pop, boop, knock
-///   3. the end tune — a cheerful celebration instead of an alarm
+///   3. the end tune — a cheerful celebration instead of an alarm. The three
+///      animal bands (a full band, animal voices and a solo for the friend who
+///      hatched) live in Band.swift; the short jingles are here.
+///   4. recorded sounds — real animal calls, the egg crack and pop, and
+///      "It's a Fox!" for every friend (Resources/Sounds, generated once with
+///      ElevenLabs). Every one has a synthesised stand-in.
 ///
 /// A single AVAudioSourceNode renders a tiny polyphonic synth (sine /
 /// triangle partials with exponential envelopes, filtered noise bursts), a
@@ -26,6 +30,9 @@ final class Sound {
         Choice(id: "off", name: "Quiet", icon: "🔇"),
     ]
     static let endSounds: [Choice] = [
+        Choice(id: "band", name: "Animal band", icon: "🥁"),
+        Choice(id: "jungle", name: "Jungle jam", icon: "🪇"),
+        Choice(id: "farm", name: "Farmyard hoedown", icon: "🐮"),
         Choice(id: "tada", name: "Ta-da parade", icon: "🎉"),
         Choice(id: "chimes", name: "Happy chimes", icon: "🔔"),
         Choice(id: "birds", name: "Birdsong hello", icon: "🐤"),
@@ -40,6 +47,7 @@ final class Sound {
     private let speech = AVSpeechSynthesizer()
     private var previewWork: DispatchWorkItem?
     private var pausedMusic: String?
+    private var samplesLoading = false
     private(set) var volume: Double = 0.7
 
     private init() {
@@ -98,6 +106,47 @@ final class Sound {
             engine.prepare()
             do { try engine.start() } catch { return false }
         }
+        loadSamples()
+        return true
+    }
+
+    // MARK: recorded sounds
+
+    /// "It's a Fox!" sits clearly on top while the band ducks under it
+    static let voiceGain = 1.25
+
+    /// Decode the animal calls and effects in the background (the voice lines
+    /// load one at a time, when a friend hatches).
+    private func loadSamples() {
+        guard !samplesLoading else { return }
+        samplesLoading = true
+        let names = Band.callNames + ["crack", "pop"]
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            for name in names {
+                guard let url = Bundle.main.url(forResource: "call-" + name, withExtension: "mp3"),
+                      let pcm = Sound.decode(url) else { continue }
+                guard let self else { return }
+                self.lock.lock(); self.synth.samples[name] = pcm; self.lock.unlock()
+            }
+        }
+    }
+
+    /// an MP3 from the app bundle → mono float samples
+    static func decode(_ url: URL) -> (data: [Float], sr: Double)? {
+        guard let file = try? AVAudioFile(forReading: url),
+              let buf = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)),
+              (try? file.read(into: buf)) != nil,
+              let ch = buf.floatChannelData, buf.frameLength > 1 else { return nil }
+        let data = Array(UnsafeBufferPointer(start: ch[0], count: Int(buf.frameLength)))
+        return (data, file.processingFormat.sampleRate)
+    }
+
+    /// load one voice line if it isn't already; true when it can play
+    private func haveSample(_ key: String, file: String) -> Bool {
+        lock.lock(); let have = synth.samples[key] != nil; lock.unlock()
+        if have { return true }
+        guard let url = Bundle.main.url(forResource: file, withExtension: "mp3"), let pcm = Sound.decode(url) else { return false }
+        lock.lock(); synth.samples[key] = pcm; lock.unlock()
         return true
     }
 
@@ -128,7 +177,10 @@ final class Sound {
     // MARK: music
 
     func startMusic(_ id: String) {
-        with { $0.startMusic(id) }
+        with { s in
+            s.stopCelebration(fade: 0.3)
+            s.startMusic(id)
+        }
     }
 
     func stopMusic(fade: Double = 0.6) {
@@ -149,6 +201,7 @@ final class Sound {
 
     func preview(music id: String) {
         previewWork?.cancel()
+        stopCelebration(fade: 0.2)
         if id == "off" { stopMusic(); return }
         startMusic(id)
         let w = DispatchWorkItem { [weak self] in self?.stopMusic() }
@@ -165,26 +218,71 @@ final class Sound {
 
     // MARK: sound effects
 
-    func crack() { with { $0.crack() } }
+    func crack() {
+        with { s in
+            if s.playSample("crack", at: s.t + 0.01, bus: .sfx, gain: 0.9, rate: GC.rand(0.92, 1.1)) == 0 { s.crack() }
+        }
+    }
     func boop() { with { $0.boop() } }
     func knock() { with { $0.knock() } }
     func ready() { with { $0.ready() } }
-    func pop() { with { $0.pop() } }
+    func pop() {
+        with { s in
+            if s.playSample("pop", at: s.t, bus: .sfx, gain: 1.1) == 0 { s.pop() }
+        }
+    }
     func cheer() { with { $0.cheer() } }
     func clink(_ p: Double = 0.5) { with { $0.clink(p) } }
     func thud(_ p: Double = 0.5) { with { $0.thud(p) } }
     func whoosh() { with { $0.whoosh() } }
 
-    /// the celebration tune; returns its length in seconds
+    /// the celebration tune; returns its length in seconds.
+    /// friend (optional) = the animal that hatched; it gets a solo in the bands
     @discardableResult
-    func endTune(_ id: String) -> Double {
+    func endTune(_ id: String, friend: String? = nil) -> Double {
         var len = 0.0
-        with { len = $0.endTune(id) }
+        with { s in
+            if Band.songs[id] != nil {
+                len = Band.perform(id, friend: friend, on: s)
+            } else {
+                s.stopCelebration(fade: 0.2)
+                len = s.endTune(id)
+            }
+        }
         return len
     }
 
-    /// "It's a Fox!" in the device voice.
+    /// stop a band that is playing (New egg, Stop, closing a preview)
+    func stopCelebration(fade: Double = 0.3) {
+        lock.lock(); synth.stopCelebration(fade: fade); lock.unlock()
+    }
+
+    /// tapping the hatched friend: it says hello in its own voice; 0 if it has none
+    @discardableResult
+    func friendCall(_ friendId: String) -> Double {
+        var len = 0.0
+        with { len = Band.friendCall(friendId, on: $0) }
+        return len
+    }
+
+    /// "It's a Fox!" (or "Peekaboo!" for a photo) in the recorded voice,
+    /// falling back to the device voice if the recording can't be loaded.
+    func sayFriend(animalId: String?, name: String) {
+        let id = animalId ?? "peekaboo"
+        if haveSample("voice/" + id, file: "voice-" + id) {
+            var len = 0.0
+            with { s in
+                len = s.playSample("voice/" + id, at: s.t + 0.05, bus: .voice, gain: Sound.voiceGain)
+                if len > 0 { s.duckCelebration(len + 0.3) }
+            }
+            if len > 0 { return }
+        }
+        say(animalId != nil ? "It's \(GC.aName(name))!" : name)
+    }
+
+    /// The device voice (only a fallback now).
     func say(_ text: String) {
+        lock.lock(); synth.duckCelebration(1.4 + Double(text.count) * 0.06); lock.unlock()
         speech.stopSpeaking(at: .immediate)
         let u = AVSpeechUtterance(string: text)
         u.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
@@ -217,9 +315,11 @@ private let MARIMBA = Song(bpm: 112, steps: 2,
     bass: [43, nil, 50, nil, 45, nil, 50, nil, 43, nil, 50, nil, 47, nil, 45, nil,
            40, nil, 47, nil, 42, nil, 50, nil, 43, nil, 47, nil, 43, nil, nil, nil])
 
-private enum Bus { case music, sfx }
-private enum Wave { case sine, triangle }
-private enum FilterType { case lowpass, highpass, bandpass }
+/// music: the countdown; sfx: effects and jingles (with echo);
+/// celeb: an animal band (its own level, so it can stop or duck); voice: "It's a Fox!"
+enum Bus { case music, sfx, celeb, voice }
+enum Wave { case sine, triangle }
+enum FilterType { case lowpass, highpass, bandpass }
 
 /// RBJ biquad.
 private struct Biquad {
@@ -280,6 +380,175 @@ private struct Env {
     }
 }
 
+// MARK: - band voices (Band.swift builds songs out of these)
+
+enum OscType { case saw, square, sine, triangle }
+
+/// A pitch or filter sweep: (seconds from the note's start, value),
+/// exponential between points, like Web Audio's exponentialRampToValueAtTime.
+typealias Path = [(Double, Double)]
+
+/// One synthesised voice: oscillators → (filter) → (vowel formants) →
+/// (tremolo) → envelope. Brass, horns, fiddle, kazoo and every animal are one
+/// of these. Keep arguments in this order when calling the memberwise init.
+struct VSpec {
+    var type: OscType = .saw
+    var f: Path
+    var partials: [(Double, Double)] = [(1, 1)]
+    /// extra copies, detuned in cents, for a section sound
+    var detune: [Double] = [0]
+    var dur: Double
+    var gain: Double = 0.2
+    var attack: Double? = nil
+    var release: Double = 0.08
+    var sus: Double = 1
+    /// percussive exponential decay instead of a held note
+    var pluck = false
+    var vib: (rate: Double, cents: Double, delay: Double)? = nil
+    var trem: (rate: Double, depth: Double)? = nil
+    var filter: (type: FilterType, f: Path, q: Double)? = nil
+    var formants: [(f: Path, q: Double, amp: Double)] = []
+    /// breath or growl mixed in before the filters
+    var noise: Double = 0
+    var noiseF: Double = 1500
+}
+
+/// Steps through a Path one sample at a time.
+private struct Glide {
+    private let pts: [(Int, Double)]
+    private var seg = 0
+    private var mul = 1.0
+    private var left = 0
+    private(set) var value: Double
+
+    init(_ path: Path, sr: Double) {
+        let p = path.isEmpty ? [(0.0, 440.0)] : path
+        pts = p.map { (Int(($0.0 * sr).rounded()), max($0.1, 0.0001)) }
+        value = pts[0].1
+        setup()
+    }
+
+    private mutating func setup() {
+        while seg + 1 < pts.count {
+            let n = pts[seg + 1].0 - pts[seg].0
+            if n > 0 {
+                left = n
+                mul = pow(pts[seg + 1].1 / value, 1 / Double(n))
+                return
+            }
+            seg += 1
+            value = pts[seg].1
+        }
+        left = 0
+        mul = 1
+    }
+
+    mutating func next() -> Double {
+        let v = value
+        if left > 0 {
+            value *= mul
+            left -= 1
+            if left == 0 {
+                seg += 1
+                value = pts[seg].1
+                setup()
+            }
+        }
+        return v
+    }
+}
+
+/// polyBLEP: rounds off the saw/square edges so they don't alias into fizz
+private func blep(_ t: Double, _ dt: Double) -> Double {
+    if t < dt { let x = t / dt; return x + x - x * x - 1 }
+    if t > 1 - dt { let x = (t - 1) / dt; return x * x + x + x + 1 }
+    return 0
+}
+
+private struct SynthVoice {
+    var start: Int64
+    let len: Int
+    var k = 0
+    let type: OscType
+    var pitch: Glide
+    let ratios: [Double]
+    let amps: [Double]
+    var phases: [Double]
+    let vibRate: Double, vibCents: Double, vibStart: Int, vibRamp: Int
+    var vibPhase = 0.0
+    let tremRate: Double, tremDepth: Double
+    var tremPhase = 0.0
+    var filter: Biquad?
+    let filterType: FilterType
+    var filterF: Glide?
+    let filterQ: Double
+    var formants: [Biquad]
+    var formantF: [Glide]
+    let formantQ: [Double]
+    let formantAmp: [Double]
+    let noise: Double
+    var noiseFilter = Biquad()
+    var noisePos: Int
+    let pluck: Bool
+    var env: Env
+    let peak: Double, aN: Int, relStart: Int, sus: Double
+    let bus: Bus
+}
+
+private struct SampleVoice {
+    var start: Int64
+    let data: [Float]
+    var pos = 0.0
+    let step: Double
+    let gain: Double
+    let end: Int
+    let fadeAt: Int
+    let fadeLen: Int
+    var k = 0
+    let bus: Bus
+}
+
+/// A short, soft room for the bands (four damped combs + two all-passes).
+private struct Room {
+    private var combs: [[Double]] = []
+    private var cpos: [Int] = []
+    private var damp: [Double] = []
+    private var aps: [[Double]] = []
+    private var apos: [Int] = []
+
+    mutating func setup(sr: Double) {
+        let k = sr / 44_100
+        combs = [1116.0, 1188, 1277, 1356].map { [Double](repeating: 0, count: max(1, Int($0 * k))) }
+        cpos = [0, 0, 0, 0]
+        damp = [0, 0, 0, 0]
+        aps = [556.0, 441].map { [Double](repeating: 0, count: max(1, Int($0 * k))) }
+        apos = [0, 0]
+    }
+
+    mutating func process(_ x: Double) -> Double {
+        guard !combs.isEmpty else { return 0 }
+        var out = 0.0
+        let input = x * 0.1
+        for i in 0..<combs.count {
+            let y = combs[i][cpos[i]]
+            damp[i] = y * 0.7 + damp[i] * 0.3
+            combs[i][cpos[i]] = input + damp[i] * 0.8
+            cpos[i] += 1
+            if cpos[i] >= combs[i].count { cpos[i] = 0 }
+            out += y
+        }
+        for i in 0..<aps.count {
+            let b = aps[i][apos[i]]
+            let y = b - out
+            aps[i][apos[i]] = out + b * 0.5
+            apos[i] += 1
+            if apos[i] >= aps[i].count { apos[i] = 0 }
+            out = y
+        }
+        return out
+    }
+}
+
 private struct ToneVoice {
     var start: Int64
     var env: Env
@@ -305,12 +574,27 @@ private struct NoiseVoice {
     var bus: Bus
 }
 
-private final class Synth {
+final class Synth {
     var sr: Double
     private var now: Int64 = 0
     private var tones: [ToneVoice] = []
     private var noises: [NoiseVoice] = []
+    private var voices: [SynthVoice] = []
+    private var plays: [SampleVoice] = []
     private var noise: [Float] = []
+
+    /// decoded recordings: key → (mono samples, their sample rate)
+    var samples: [String: (data: [Float], sr: Double)] = [:]
+    /// recordings are levelled to -14 LUFS (tools/pick-sounds.js); this sits them in the mix
+    static let sampleGain = 0.62
+
+    // an animal band: its scheduled events, level, room
+    private var celeb: Celebration?
+    private var celebGain = 1.0
+    private var celebStopping = false
+    private var celebFadeTau = 0.1
+    private var duckUntil = 0.0
+    private var room = Room()
 
     // buses + echo
     private var musicGain = 0.0001, musicTarget = 0.0001, musicTau = 0.5
@@ -345,12 +629,15 @@ private final class Synth {
         delay = [Double](repeating: 0, count: Int(s * 0.32))
         delayPos = 0
         echoLP.set(.lowpass, freq: 2600, q: 0.707, sr: s)
-        tones.reserveCapacity(128)
-        noises.reserveCapacity(64)
+        room.setup(sr: s)
+        tones.reserveCapacity(256)
+        noises.reserveCapacity(128)
+        voices.reserveCapacity(96)
+        plays.reserveCapacity(32)
     }
 
     var t: Double { Double(now) / sr }
-    var isBusy: Bool { playing || !tones.isEmpty || !noises.isEmpty || bed != nil }
+    var isBusy: Bool { playing || celeb != nil || !tones.isEmpty || !noises.isEmpty || !voices.isEmpty || !plays.isEmpty || bed != nil }
 
     private func sample(_ time: Double) -> Int64 { Int64((time * sr).rounded()) }
 
@@ -359,7 +646,7 @@ private final class Synth {
     /// one plucked / struck note
     func tone(_ freq: Double, _ at: Double, _ dur: Double, gain: Double = 0.2, attack: Double = 0.005,
               partials: [(Double, Double)] = [(1, 1)], wave: Wave = .sine, slide: Double? = nil, bus: Bus = .music) {
-        guard tones.count < 160 else { return }
+        guard tones.count < 256 else { return }
         var mul = 1.0, left = 0
         if let s = slide {
             left = max(1, Int(dur * 0.8 * sr))
@@ -372,11 +659,127 @@ private final class Synth {
 
     func noiseBurst(_ at: Double, _ dur: Double, freq: Double = 2000, q: Double = 1, gain: Double = 0.2,
                     attack: Double = 0.003, type: FilterType = .bandpass, bus: Bus = .sfx) {
-        guard noises.count < 80 else { return }
+        guard noises.count < 128 else { return }
         var v = NoiseVoice(start: sample(at), env: Env(peak: gain, attack: attack, dur: dur, sr: sr),
                            type: type, freq: freq, q: q, pos: Int.random(in: 0..<max(1, noise.count)), bus: bus)
         v.filter.set(type, freq: freq, q: q, sr: sr)
         noises.append(v)
+    }
+
+    /// one band voice (see VSpec); gain multiplies the spec's own gain
+    func voice(_ v: VSpec, at: Double, gain: Double = 1, bus: Bus) {
+        guard voices.count < 96, v.dur > 0 else { return }
+        var ratios: [Double] = [], amps: [Double] = []
+        let share = 1 / Double(v.detune.count).squareRoot()
+        for (ratio, amp) in v.partials {
+            for cents in v.detune {
+                ratios.append(ratio * pow(2, cents / 1200))
+                amps.append(amp * share)
+            }
+        }
+        let len = max(1, Int(v.dur * sr))
+        let peak = v.gain * gain
+        let a = min(v.attack ?? 0.02, v.dur * 0.4)
+        let r = min(v.release, v.dur * 0.5)
+        var filter: Biquad? = nil
+        var filterF: Glide? = nil
+        if let f = v.filter {
+            filterF = Glide(f.f, sr: sr)
+            var b = Biquad()
+            b.set(f.type, freq: filterF?.value ?? 1000, q: f.q, sr: sr)
+            filter = b
+        }
+        var formants: [Biquad] = [], formantF: [Glide] = [], formantQ: [Double] = [], formantAmp: [Double] = []
+        for fm in v.formants {
+            let g = Glide(fm.f, sr: sr)
+            var b = Biquad()
+            b.set(.bandpass, freq: g.value, q: fm.q, sr: sr)
+            formants.append(b)
+            formantF.append(g)
+            formantQ.append(fm.q)
+            formantAmp.append(fm.amp * fm.q.squareRoot()) // narrow bands lose level; give it back
+        }
+        var nf = Biquad()
+        nf.set(.bandpass, freq: v.noiseF, q: 0.8, sr: sr)
+        voices.append(SynthVoice(
+            start: sample(at), len: len, type: v.type, pitch: Glide(v.f, sr: sr),
+            ratios: ratios, amps: amps, phases: [Double](repeating: 0, count: ratios.count),
+            vibRate: v.vib?.rate ?? 0, vibCents: v.vib?.cents ?? 0,
+            vibStart: Int((v.vib?.delay ?? 0) * sr), vibRamp: max(1, Int(0.12 * sr)),
+            tremRate: v.trem?.rate ?? 0, tremDepth: v.trem?.depth ?? 0,
+            filter: filter, filterType: v.filter?.type ?? .lowpass, filterF: filterF, filterQ: v.filter?.q ?? 1,
+            formants: formants, formantF: formantF, formantQ: formantQ, formantAmp: formantAmp,
+            noise: v.noise, noiseFilter: nf, noisePos: Int.random(in: 0..<max(1, noise.count)),
+            pluck: v.pluck, env: Env(peak: peak, attack: v.attack ?? 0.004, dur: v.dur, sr: sr),
+            peak: peak, aN: max(1, Int(a * sr)), relStart: max(1, Int((v.dur - r) * sr)), sus: v.sus,
+            bus: bus))
+    }
+
+    /// Play a recording if it has loaded. Returns its length, or 0 so the
+    /// caller can fall back to the synthesised version.
+    @discardableResult
+    func playSample(_ key: String, at: Double, bus: Bus, gain: Double = 1, rate: Double = 1, maxDur: Double? = nil) -> Double {
+        guard let smp = samples[key], smp.data.count > 1, plays.count < 32 else { return 0 }
+        var dur = Double(smp.data.count - 1) / smp.sr / rate
+        var fadeAt = Int.max
+        if let m = maxDur, m < dur {
+            dur = m
+            fadeAt = max(0, Int((m - 0.06) * sr))
+        }
+        plays.append(SampleVoice(start: sample(at), data: smp.data, step: smp.sr / sr * rate,
+                                 gain: gain * Synth.sampleGain, end: Int(dur * sr), fadeAt: fadeAt,
+                                 fadeLen: max(1, Int(0.06 * sr)), bus: bus))
+        return dur
+    }
+
+    /// length of a loaded recording, in seconds
+    func sampleLength(_ key: String) -> Double? {
+        guard let smp = samples[key], smp.sr > 0 else { return nil }
+        return Double(smp.data.count) / smp.sr
+    }
+
+    // MARK: animal bands
+
+    /// a new song replaces whatever band was playing
+    func startCelebration(_ c: Celebration) {
+        purgeCelebration()
+        celebGain = 1
+        celebStopping = false
+        duckUntil = 0
+        celeb = c
+    }
+
+    func stopCelebration(fade: Double) {
+        guard celeb != nil || hasCelebVoices else { return }
+        celeb = nil
+        celebStopping = true
+        celebFadeTau = max(0.01, fade / 3)
+    }
+
+    /// dip the band while "It's a Fox!" is said
+    func duckCelebration(_ secs: Double) { duckUntil = t + secs }
+
+    private var hasCelebVoices: Bool {
+        tones.contains { $0.bus == .celeb } || noises.contains { $0.bus == .celeb } ||
+            voices.contains { $0.bus == .celeb } || plays.contains { $0.bus == .celeb }
+    }
+
+    private func purgeCelebration() {
+        tones.removeAll { $0.bus == .celeb }
+        noises.removeAll { $0.bus == .celeb }
+        voices.removeAll { $0.bus == .celeb }
+        plays.removeAll { $0.bus == .celeb }
+    }
+
+    /// run every song event due before `end` (a little ahead, so notes start on time)
+    private func runCelebration(until end: Double) {
+        guard let c = celeb else { return }
+        while c.i < c.events.count && c.events[c.i].t < end {
+            let e = c.events[c.i]
+            c.i += 1
+            if e.t >= t - 0.05 { e.fn(c.kit, e.t) } // skip anything a stall made us miss
+        }
+        if c.i >= c.events.count && t > c.end { celeb = nil }
     }
 
     // MARK: music
@@ -558,10 +961,21 @@ private final class Synth {
         let blockEnd = t + Double(n) / sr
         // look a little ahead so a note never starts late
         schedule(until: blockEnd + 0.05)
+        runCelebration(until: blockEnd + 0.05)
 
         var musicBuf = [Double](repeating: 0, count: n)
         var sfxBuf = [Double](repeating: 0, count: n)
+        var celebBuf = [Double](repeating: 0, count: n)
+        var voiceBuf = [Double](repeating: 0, count: n)
         let twoPi = 2 * Double.pi
+        func add(_ bus: Bus, _ k: Int, _ x: Double) {
+            switch bus {
+            case .music: musicBuf[k] += x
+            case .sfx: sfxBuf[k] += x
+            case .celeb: celebBuf[k] += x
+            case .voice: voiceBuf[k] += x
+            }
+        }
 
         // tones
         var i = 0
@@ -586,7 +1000,7 @@ private final class Synth {
                     v.phases[p] = np
                 }
                 if v.slideLeft > 0 { v.freq *= v.freqMul; v.slideLeft -= 1 }
-                if v.bus == .music { musicBuf[k] += s * e } else { sfxBuf[k] += s * e }
+                add(v.bus, k, s * e)
                 k += 1
             }
             if v.env.done { tones.swapAt(i, tones.count - 1); tones.removeLast() } else { tones[i] = v; i += 1 }
@@ -610,10 +1024,116 @@ private final class Synth {
                 v.pos += 1
                 if v.pos >= nlen { v.pos = 0 }
                 let s = v.filter.process(x) * v.env.next()
-                if v.bus == .music { musicBuf[k] += s } else { sfxBuf[k] += s }
+                add(v.bus, k, s)
                 k += 1
             }
             if v.env.done { noises.swapAt(i, noises.count - 1); noises.removeLast() } else { noises[i] = v; i += 1 }
+        }
+
+        // band voices
+        i = 0
+        while i < voices.count {
+            var v = voices[i]
+            let offset = Int(v.start - now)
+            if offset >= n { i += 1; continue }
+            var k = max(0, offset)
+            while k < n && v.k < v.len {
+                // envelope
+                let e: Double
+                if v.pluck {
+                    e = v.env.next()
+                } else if v.k < v.aN {
+                    e = v.peak * Double(v.k) / Double(v.aN)
+                } else if v.k < v.relStart {
+                    let span = Double(max(1, v.relStart - v.aN))
+                    e = v.peak + (v.peak * v.sus - v.peak) * Double(v.k - v.aN) / span
+                } else {
+                    let span = Double(max(1, v.len - v.relStart))
+                    e = v.peak * v.sus * max(0, 1 - Double(v.k - v.relStart) / span)
+                }
+                // pitch + vibrato
+                var f = v.pitch.next()
+                if v.vibCents > 0 && v.k >= v.vibStart {
+                    let depth = min(1, Double(v.k - v.vibStart) / Double(v.vibRamp)) * v.vibCents
+                    v.vibPhase += v.vibRate / sr
+                    if v.vibPhase >= 1 { v.vibPhase -= 1 }
+                    f *= exp2(depth * sin(twoPi * v.vibPhase) / 1200)
+                }
+                // oscillators
+                var x = 0.0
+                for j in 0..<v.ratios.count {
+                    let ph = v.phases[j]
+                    let dt = min(0.49, f * v.ratios[j] / sr)
+                    let w: Double
+                    switch v.type {
+                    case .saw: w = 2 * ph - 1 - blep(ph, dt)
+                    case .square:
+                        var p2 = ph + 0.5
+                        if p2 >= 1 { p2 -= 1 }
+                        w = (ph < 0.5 ? 1 : -1) + blep(ph, dt) - blep(p2, dt)
+                    case .sine: w = sin(twoPi * ph)
+                    case .triangle: w = 4 * abs(ph - 0.5) - 1
+                    }
+                    x += w * v.amps[j]
+                    var np = ph + dt
+                    if np >= 1 { np -= 1 }
+                    v.phases[j] = np
+                }
+                if v.noise > 0 {
+                    x += v.noiseFilter.process(Double(noise[v.noisePos])) * v.noise
+                    v.noisePos += 1
+                    if v.noisePos >= nlen { v.noisePos = 0 }
+                }
+                // filter, then the vowel formants (coefficients follow their sweeps every 32 samples)
+                let retune = v.k % 32 == 0
+                if v.filter != nil, var ff = v.filterF {
+                    let fv = ff.next()
+                    v.filterF = ff
+                    if retune { v.filter!.set(v.filterType, freq: fv, q: v.filterQ, sr: sr) }
+                    x = v.filter!.process(x)
+                }
+                if !v.formants.isEmpty {
+                    var sum = 0.0
+                    for j in 0..<v.formants.count {
+                        let fv = v.formantF[j].next()
+                        if retune { v.formants[j].set(.bandpass, freq: fv, q: v.formantQ[j], sr: sr) }
+                        sum += v.formants[j].process(x) * v.formantAmp[j]
+                    }
+                    x = sum
+                }
+                if v.tremDepth > 0 {
+                    v.tremPhase += v.tremRate / sr
+                    if v.tremPhase >= 1 { v.tremPhase -= 1 }
+                    x *= 1 - v.tremDepth / 2 + v.tremDepth / 2 * sin(twoPi * v.tremPhase)
+                }
+                add(v.bus, k, x * e)
+                v.k += 1
+                k += 1
+            }
+            if v.k >= v.len { voices.swapAt(i, voices.count - 1); voices.removeLast() } else { voices[i] = v; i += 1 }
+        }
+
+        // recordings
+        i = 0
+        while i < plays.count {
+            var v = plays[i]
+            let offset = Int(v.start - now)
+            if offset >= n { i += 1; continue }
+            var k = max(0, offset)
+            let last = v.data.count - 1
+            while k < n && v.k < v.end {
+                let p = Int(v.pos)
+                if p >= last { v.k = v.end; break }
+                let frac = v.pos - Double(p)
+                let x = Double(v.data[p]) * (1 - frac) + Double(v.data[p + 1]) * frac
+                var g = v.gain
+                if v.k >= v.fadeAt { g *= max(0, 1 - Double(v.k - v.fadeAt) / Double(v.fadeLen)) }
+                add(v.bus, k, x * g)
+                v.pos += v.step
+                v.k += 1
+                k += 1
+            }
+            if v.k >= v.end { plays.swapAt(i, plays.count - 1); plays.removeLast() } else { plays[i] = v; i += 1 }
         }
 
         // ambient bed
@@ -635,6 +1155,11 @@ private final class Synth {
             bed = (b.target == 0 && b.gain < 0.0002) ? nil : b
         }
 
+        // the band's level: 1, dipped under the voice line, or fading out when stopped
+        let celebTarget = celebStopping ? 0 : (t < duckUntil ? 0.3 : 1)
+        let celebTau = celebStopping ? celebFadeTau : (celebTarget < celebGain ? 0.08 : 0.3)
+        let ck = 1 - exp(-1 / (celebTau * sr))
+
         // buses → echo → master → gentle compressor
         let mk = 1 - exp(-1 / (musicTau * sr))
         let vk = 1 - exp(-1 / (0.05 * sr))
@@ -653,7 +1178,10 @@ private final class Synth {
                 delayPos += 1
                 if delayPos >= dlen { delayPos = 0 }
             }
-            var y = (m + s + lpOut * 0.35) * master
+            celebGain += (celebTarget - celebGain) * ck
+            let c = celebBuf[j] * celebGain
+            let wet = room.process(c) * 0.22
+            var y = (m + s + lpOut * 0.35 + c + wet + voiceBuf[j]) * master
             let level = abs(y)
             compEnv += (level - compEnv) * (level > compEnv ? attack : release)
             if compEnv > threshold {
@@ -664,5 +1192,11 @@ private final class Synth {
             out[j] = Float(tanh(y))
         }
         now += Int64(n)
+        // a stopped band has faded out: clear it away and reset its level
+        if celebStopping && celebGain < 0.0005 {
+            purgeCelebration()
+            celebStopping = false
+            celebGain = 1
+        }
     }
 }

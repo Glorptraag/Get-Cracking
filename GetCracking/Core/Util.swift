@@ -13,6 +13,13 @@ enum GC {
     static func clamp(_ v: Double, _ a: Double, _ b: Double) -> Double { max(a, min(b, v)) }
     static func pick<T>(_ arr: [T]) -> T { arr[Int.random(in: 0..<arr.count)] }
 
+    /// "a Fox", "an Owl", "a Unicorn" (it starts with a "you" sound)
+    static func aName(_ name: String) -> String {
+        let low = name.lowercased()
+        let vowel = "aeiou".contains(low.first ?? "x") && !(low.hasPrefix("uni") || low.hasPrefix("use") || low.hasPrefix("eu"))
+        return (vowel ? "an " : "a ") + name
+    }
+
     @MainActor static var reduceMotion: Bool { UIAccessibility.isReduceMotionEnabled }
 
     /// Lighten (amt > 0) or darken (amt < 0) a #rrggbb colour.

@@ -32,6 +32,8 @@ struct RootView: View {
         .statusBarHidden(true)
         .sheet(item: $model.sheet, onDismiss: {
             Sound.shared.stopMusic(fade: 0.3)
+            // stop a song being previewed, but not the one celebrating a hatch
+            if model.run?.phase != .hatched { Sound.shared.stopCelebration(fade: 0.3) }
         }) { kind in
             SheetView(kind: kind)
                 .environment(model)

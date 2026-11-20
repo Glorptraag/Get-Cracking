@@ -18,7 +18,8 @@ struct Settings: Codable, Equatable {
     var seconds = 0
     var scene = "random"        // scene id or "random"
     var music = "musicbox"
-    var endSound = "tada"
+    var endSound = "band"       // hatching tune: an animal band (Audio/Band.swift) or a short jingle
+    var tunesV = 2              // settings from before the animal bands get moved onto them once
     var volume = 0.7
     var sayName = true
     var hatchWho = "animals"    // "animals" | "photos" | "both"
@@ -54,6 +55,12 @@ struct Settings: Codable, Equatable {
         showNumbers = (try? c.decodeIfPresent(Bool.self, forKey: .showNumbers)) ?? d.showNumbers
         nextUp = (try? c.decodeIfPresent(NextUp.self, forKey: .nextUp)) ?? d.nextUp
         seenHint = (try? c.decodeIfPresent(Bool.self, forKey: .seenHint)) ?? d.seenHint
+        // builds before the animal bands: anyone still on the old default jingle gets the band
+        tunesV = (try? c.decodeIfPresent(Int.self, forKey: .tunesV)) ?? 1
+        if tunesV < 2 {
+            if endSound == "tada" { endSound = "band" }
+            tunesV = 2
+        }
     }
 
     /// total length of the timer in seconds (never less than 10 s)
