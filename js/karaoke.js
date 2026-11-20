@@ -1,27 +1,33 @@
 /* Get Cracking — Egg karaoke, the default hatching song.
  *
- * The friend who just hatched is the singer. It sings an original tune with its
- * own recorded voice (sounds/karaoke/sing/<id>.mp3, pitched note by note; the
- * friends with no call of their own, like the turtle and the mole, hum it), puts
- * its second sound (sounds/karaoke/extra/<id>.mp3: a purr, a snort, a splash)
- * into the gaps, duets with itself in the chorus and ends on its full call.
- * The band behind it suits the friend's world, and its chirps and tones are
- * always in the song's key:
+ * A little band plays an original tune, and the friend who just hatched is one
+ * of the players. The tune is carried by instruments and passed around: the
+ * lead instrument plays the first verse line, a second instrument takes the
+ * next, and in the chorus everyone plays, with a counter-melody and sparkle
+ * on top. The friend's own recorded voice (sounds/karaoke/sing/<id>.mp3,
+ * pitched to the chord; a hum for friends with no call of their own) is one
+ * more part in the band:
+ *   - off-beat stabs through the verse, with its second sound (a purr, a
+ *     snort, a splash: sounds/karaoke/extra/<id>.mp3) and the world's chirps
+ *     answering in the gaps
+ *   - in the chorus it sings the hook together with the lead instrument
+ *   - one short solo break (its full call), then it joins the "ta-da"
+ * Each world has its own band, and its chirps and tones are always in key:
  *
- *   meadow    ukulele, upright bass, claps, egg shaker, glockenspiel, slide whistle, cheeps
- *   woodland  harp, upright bass, wood block, shaker, flute, birdsong trills
- *   jungle    marimba, tuba, bongos, shaker, steel pan, parrot whistles
- *   water     kalimba, upright bass, soft snare, hi-hat, glockenspiel, bubble bloops
- *   magic     piano, tuba, snare, hi-hat, glockenspiel, harp, sparkles
+ *   meadow    piano lead, flute, ukulele, upright bass, claps, egg shaker, wood block, glockenspiel, cheeps + slide whistle
+ *   woodland  flute lead, kalimba, harp, upright bass, wood block, shaker, glockenspiel, birdsong trills
+ *   jungle    steel pan lead, marimba, tuba, bongos, shaker, wood block, glockenspiel, parrot whistles
+ *   water     kalimba lead, glockenspiel, piano, upright bass, soft snare, hi-hat, flute, bubble bloops
+ *   magic     harp lead, flute, piano, tuba, snare, hi-hat, glockenspiel, sparkles
  *
  * Every instrument is a single ElevenLabs-recorded note (sounds/karaoke/inst/),
  * pitched to each note here, so the band is always in time and in tune. Anything
  * not loaded yet (or the app opened from disk) is played by the synthesised kit
  * in band.js instead, so the song always works.
  *
- *   intro (count-in, a hello chirp) → verse: two sung lines, each answered
- *   (its own extra sound, then the band's chirp) → chorus: sung with a harmony
- *   → stop! the friend's big call → ta-da, sung.
+ *   intro (count-in, hello) → verse (lead, then the second instrument, with the
+ *   friend's stabs and answers) → chorus (everyone, the friend on the hook)
+ *   → stop! the friend's solo break → ta-da.
  */
 (function () {
   'use strict';
@@ -51,12 +57,13 @@
   };
 
   /* -------------------------------------------------------------- worlds */
+  /* lead and second carry the tune; comp, bass, sparkle and the drums fill out the band */
   const WORLDS = {
-    meadow: { bpm: 124, kick: 'kick', back: 'clap', tick: 'shaker', bass: 'bass', bassStyle: 'walk', comp: 'uke', compStyle: 'strum', sparkle: 'glock', fill: 'uke', chirp: 'cheeps' },
-    woodland: { bpm: 116, kick: 'kick', back: 'woodblock', tick: 'shaker', bass: 'bass', bassStyle: 'root5', comp: 'harp', compStyle: 'arp', sparkle: 'flute', fill: 'flute', chirp: 'birds' },
-    jungle: { bpm: 128, kick: 'kick', back: 'bongo', tick: 'shaker', bass: 'tuba', bassStyle: 'oompah', comp: 'marimba', compStyle: 'offbeat', sparkle: 'steelpan', fill: 'steelpan', chirp: 'parrot' },
-    water: { bpm: 112, kick: 'kick', back: 'snare', backGain: 0.55, tick: 'hat', bass: 'bass', bassStyle: 'root5', comp: 'kalimba', compStyle: 'arp', sparkle: 'glock', fill: 'kalimba', chirp: 'bubbles' },
-    magic: { bpm: 120, kick: 'kick', back: 'snare', tick: 'hat', bass: 'tuba', bassStyle: 'root5', comp: 'piano', compStyle: 'block', sparkle: 'glock', fill: 'harp', chirp: 'sparkle' },
+    meadow: { bpm: 124, lead: 'piano', second: 'flute', comp: 'uke', compStyle: 'strum', bass: 'bass', bassStyle: 'walk', sparkle: 'glock', kick: 'kick', back: 'clap', tick: 'shaker', perc: 'woodblock', chirp: 'cheeps' },
+    woodland: { bpm: 116, lead: 'flute', second: 'kalimba', comp: 'harp', compStyle: 'arp', bass: 'bass', bassStyle: 'root5', sparkle: 'glock', kick: 'kick', back: 'woodblock', tick: 'shaker', chirp: 'birds' },
+    jungle: { bpm: 128, lead: 'steelpan', second: 'marimba', comp: 'marimba', compStyle: 'offbeat', bass: 'tuba', bassStyle: 'oompah', sparkle: 'glock', kick: 'kick', back: 'bongo', tick: 'shaker', perc: 'woodblock', chirp: 'parrot' },
+    water: { bpm: 112, lead: 'kalimba', second: 'glock', comp: 'piano', compStyle: 'arp', bass: 'bass', bassStyle: 'root5', sparkle: 'flute', kick: 'kick', back: 'snare', backGain: 0.55, tick: 'hat', chirp: 'bubbles' },
+    magic: { bpm: 120, lead: 'harp', second: 'flute', comp: 'piano', compStyle: 'block', bass: 'tuba', bassStyle: 'root5', sparkle: 'glock', kick: 'kick', back: 'snare', tick: 'hat', chirp: 'sparkle' },
   };
 
   /* ---------------------------------------------------------------- song
@@ -89,10 +96,11 @@
    * plays where a glockenspiel lives), then tuned by playbackRate. */
   const GAIN = {
     kick: 0.95, snare: 0.5, hat: 0.28, shaker: 0.32, clap: 0.5, bongo: 0.55, woodblock: 0.45,
-    bass: 0.8, tuba: 0.68, uke: 0.24, piano: 0.23, marimba: 0.32, glock: 0.26, flute: 0.34,
-    harp: 0.28, kalimba: 0.32, steelpan: 0.32, whistle: 0.35, sparkle: 0.4,
+    bass: 0.85, tuba: 0.72, uke: 0.27, piano: 0.27, marimba: 0.36, glock: 0.28, flute: 0.38,
+    harp: 0.32, kalimba: 0.36, steelpan: 0.36, whistle: 0.35, sparkle: 0.4,
   };
-  const SING = 1.6; // the singer sits on top of the band: it's karaoke
+  const SING = 1.3;  // the friend's voice is one part in the band, level with the instruments
+  const LEAD = 1.35; // whichever instrument has the tune sits a little forward
   const HOME = { bass: 40, tuba: 40, uke: 64, piano: 64, marimba: 64, harp: 64, kalimba: 72, glock: 84, flute: 76, steelpan: 72 };
   const SYN = {
     kick: (k, n, t, d, g) => k.kick(t, 0.5 * g),
@@ -203,6 +211,7 @@
         if (x === 1 || x === 3) at(b + x, (t) => { p.inst(w.back, 0, t, 0, w.backGain || 1, D); if (full && w.back !== 'clap') p.inst('clap', 0, t, 0, 0.7, D); });
         at(b + x, (t) => p.inst(w.tick, 0, t, 0, x % 1 ? 0.6 : 1, D));
       }
+      if (w.perc) [1.5, 3.5].forEach((x) => at(b + x, (t) => p.inst(w.perc, 0, t, 0, 0.6, D)));
     };
     const bass = (b, root, beats) => {
       const r = root;
@@ -230,71 +239,87 @@
         }
       }
     };
-    const bars = (list, b0, full, sung) => list.forEach((bar, i) => {
+    const L = k.ch.lead, SP = k.ch.sparkle, A = k.ch.aR;
+    const melody = (id, b, mel, g, up = 12, out = L) => {
+      for (const [x, n, d] of mel) at(b + x, (t) => p.inst(id, n + up, t, d * spb * 1.05, g, out));
+    };
+    const bars = (list, b0, chorus) => list.forEach((bar, i) => {
       const b = b0 + i * 4;
-      groove(b, full);
+      groove(b, chorus);
       bar.ch.forEach(([x, chord, root], j) => {
         const beats = (j + 1 < bar.ch.length ? bar.ch[j + 1][0] : 4) - x;
         bass(b + x, root, beats);
         comp(b + x, chord, beats);
       });
       const chordAt = (x) => bar.ch.filter((c) => c[0] <= x).pop()[1];
-      for (const [x, n, d] of bar.voice) sung(b + x, n, d, chordAt(x));
-      // the band plays the whole tune softly, so it's clear under the friend's syllables
-      for (const [x, n, d] of bar.mel) at(b + x, (t) => p.inst(full ? w.sparkle : w.fill, n + 12, t, d * spb, full ? 0.6 : 0.42, full ? k.ch.sparkle : k.ch.lead));
-      if (bar.answer === 'extra') at(b + 3, (t) => p.extra(t, k.ch.aR, chordAt(3)));
+      const harmony = bar.mel.filter(([, , d]) => d >= 1).map(([x, n, d]) => [x, below(n, chordAt(x)), d]);
+      if (!chorus) {
+        // the tune passes around the band: the lead's line, then the second instrument's
+        const [tune, other] = i < 2 ? [w.lead, w.second] : [w.second, w.lead];
+        melody(tune, b, bar.mel, LEAD);
+        melody(other, b, harmony, 0.45, 12, SP);
+        // the friend: off-beat stabs on the chord, and its answers in the gaps
+        at(b + 1, (t) => p.sing(chordAt(1)[2], t, spb * 0.75, A));
+        if (!bar.answer) at(b + 3, (t) => p.sing(chordAt(3)[0] + 12, t, spb * 0.75, A));
+      } else {
+        // everyone: the tune on the lead, a counter-melody, sparkle up high, the friend on the hook
+        melody(w.lead, b, bar.mel, LEAD);
+        melody(w.second, b, harmony, 0.6, 12, SP);
+        melody(w.sparkle, b, bar.mel, 0.4, 24, SP);
+        for (const [x, n, d] of bar.voice) at(b + x, (t) => p.sing(n, t, d * spb, k.ch.solo));
+      }
+      if (bar.answer === 'extra') at(b + 3, (t) => p.extra(t, A, chordAt(3)));
       if (bar.answer === 'chirp') {
         at(b + 3, (t) => p.chirp(t, chordAt(3)));
         // the band echoes the end of the line, an octave up
-        bar.mel.slice(-3).forEach(([, n], j) => at(b + 3 + j * 0.25, (t) => p.inst(w.fill, n + 12, t, spb * 0.4, 0.7, k.ch.lead)));
+        bar.mel.slice(-3).forEach(([, n], j) => at(b + 3 + j * 0.25, (t) => p.inst(w.lead, n + 24, t, spb * 0.4, 0.7, SP)));
       }
     });
 
-    // intro: a count-in on the sticks, a hello chirp, the band walks up to the singer
+    // intro: a count-in on the sticks, the band walks up, the friend says hello
     for (let x = 0; x < 4; x++) at(x, (t) => p.inst('woodblock', 0, t, 0, x === 0 ? 1 : 0.7, D));
-    at(1.5, (t) => p.chirp(t, C));
-    [60, 64, 67, 72].forEach((n, i) => at(2 + i * 0.5, (t) => p.inst(w.fill, n + 12, t, spb * 0.5, 0.6, k.ch.lead)));
+    at(0, (t) => C.forEach((n) => p.inst(w.comp, n, t, spb * 2, 0.7)));
+    at(2, (t) => p.sing(67, t, spb, A));
+    [60, 64, 67, 72].forEach((n, i) => at(2 + i * 0.5, (t) => p.inst(w.lead, n + 12, t, spb * 0.5, 0.8, L)));
     at(3, (t) => p.inst(w.bass, 43, t, spb * 0.9, 1, k.ch.bass));
+    at(3.5, (t) => p.chirp(t, C));
     let b = 4;
 
-    // verse: the friend sings, then answers itself and the band chirps back
-    bars(VERSE, b, false, (beat, n, d) => at(beat, (t) => p.sing(n, t, d * spb, k.ch.solo)));
+    // verse: the instruments take turns with the tune; the friend plays along
+    bars(VERSE, b, false);
     b += VERSE.length * 4;
 
-    // chorus: fuller band, the tune doubled up high, the friend sings a harmony with itself
+    // chorus: the whole band, the friend singing the hook with the lead
     at(b, (t) => k.crash(t, 0.1));
-    bars(CHORUS, b, true, (beat, n, d, chord) => {
-      at(beat, (t) => {
-        p.sing(n, t, d * spb, k.ch.solo);
-        p.sing(below(n, chord), t + 0.012, d * spb, k.ch.aL, 0.5);
-      });
-    });
+    bars(CHORUS, b, true);
     b += CHORUS.length * 4;
     // a chirp in the chorus's last held note
     at(b - 1, (t) => p.chirp(t, C));
 
-    // stop! one band hit, then the friend's own big call on its own
+    // stop! one band hit, then the friend's solo break: its own full call
     at(b, (t) => { k.crash(t, 0.12); p.inst(w.kick, 0, t, 0, 1, D); p.inst(w.bass, 36, t, spb, 1, k.ch.bass); C.forEach((n) => p.inst(w.comp, n, t, spb, 1)); });
     const call = FRIEND_CALL[friendId];
     const callLen = lenOf(call);
     const soloAt = b + 1;
     at(soloAt, (t) => { playCall(k, call, t, k.ch.solo); k.strings([60, 64, 67], t, callLen + spb, 0.01); });
-    // ta-da: sung, with the whole band, then one last ad-lib
+    // ta-da: the whole band, the friend with them, then one last ad-lib
     const end = Math.ceil((soloAt + (callLen + 0.15) / spb) * 2) / 2;
     at(end, (t) => {
       p.sing(67, t, spb, k.ch.solo);
+      p.inst(w.lead, 79, t, spb, LEAD, L);
       p.inst(w.kick, 0, t, 0, 1, D);
     });
     at(end + 1, (t) => {
       p.sing(72, t, spb * 2, k.ch.solo);
-      p.sing(64, t + 0.012, spb * 2, k.ch.aL, 0.5);
+      p.inst(w.lead, 84, t, spb * 3, LEAD, L);
+      p.inst(w.second, 76, t, spb * 3, 0.7, SP);
       k.crash(t, 0.13);
       p.inst(w.kick, 0, t, 0, 1, D);
       p.inst(w.bass, 36, t, spb * 3, 1, k.ch.bass);
       [48, 55, 60, 64, 67, 72].forEach((n, i) => p.inst(w.comp, n, t + i * 0.03, spb * 3, 0.8));
       p.chirp(t + 0.1, C);
     });
-    at(end + 2.5, (t) => p.extra(t, k.ch.aR, C));
+    at(end + 2.5, (t) => p.extra(t, A, C));
     return { ev, beats: end + 2.5, tail: 2.6, voice: p.voice, world: FRIENDS[friendId][0] };
   }
 
