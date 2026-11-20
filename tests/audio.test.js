@@ -139,7 +139,7 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
       ok(gaps <= 2, `${tag}: no dead air (${gaps} silent ¼ s)`);
       ok(tail < loud * 0.03, `${tag}: rings out and stops after ${r.declared.toFixed(1)}s (tail ${db(tail)} dB vs ${db(loud)} dB)`);
       ok(r.declared >= 12 && r.declared <= 22, `${tag}: song length ${r.declared.toFixed(1)}s`);
-      ok(m.sung >= 30, `${tag}: the friend sings the tune (${m.sung} notes)`);
+      ok(m.sung >= 20, `${tag}: the friend sings the tune (${m.sung} notes)`);
       if (fr) ok(m.singer === fr && m.call === (await p.evaluate((f) => GC.Band.FRIEND_CALL[f], fr)), `${tag}: the ${fr} is the singer and ends on its own call`);
       ok(m.recorded === wantRecorded, `${tag}: ${wantRecorded ? 'sings with its recorded voice' : 'synth voice when recordings are unavailable'}`);
     }

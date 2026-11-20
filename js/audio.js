@@ -299,7 +299,7 @@
       let dur = buf.duration / rate;
       if (o.max && o.max < dur) {
         dur = o.max;
-        g.gain.setValueAtTime(level, t + dur - 0.06);
+        g.gain.setValueAtTime(level, t + dur - Math.min(o.fade || 0.06, dur / 2));
         g.gain.linearRampToValueAtTime(0, t + dur);
       }
       src.start(t); src.stop(t + dur + 0.02);

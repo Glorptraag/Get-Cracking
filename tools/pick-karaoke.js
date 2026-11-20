@@ -5,7 +5,7 @@
  * For every sound in tools/karaoke.json it levels each take made by
  * tools/gen-sounds.js --manifest tools/karaoke.json, measures it (onsets, pitch,
  * how steady the pitch is) and keeps the best one, unless the manifest names a
- * "take". Scores:
+ * "take" (or "fromTake": ignore takes made before the prompt changed). Scores:
  *   inst (pitched)  one clean onset and a steady, clear pitch
  *   inst (drum)     one hit, short
  *   sing            one syllable, short; a clear pitch is a bonus (the app tunes it)
@@ -39,7 +39,8 @@ const report = {}, missing = [];
 for (const s of man.sounds) {
   const kind = s.id.split('/')[0], name = s.id.split('/')[1];
   const takes = [];
-  for (let n = 1; fs.existsSync(path.join(dir, `${fileId(s.id)}-${n}.mp3`)); n++) {
+  // fromTake: the prompt changed at that take, so the earlier ones are for the old prompt
+  for (let n = s.fromTake || 1; fs.existsSync(path.join(dir, `${fileId(s.id)}-${n}.mp3`)); n++) {
     const src = path.join(dir, `${fileId(s.id)}-${n}.mp3`), out = path.join(tmp, `${fileId(s.id)}-${n}.mp3`);
     // a take that came back (nearly) silent is no good, however loud we make it
     const pk = peakDb(src);
@@ -62,7 +63,7 @@ for (const s of man.sounds) {
   const pitched = kind === 'inst' ? s.pitched && a.clarity >= 0.5 && a.spread < 1.5 : a.clarity >= 0.35 && a.spread < 4;
   if (kind === 'extra') index.extra[name] = a.dur;
   else index[kind][name] = { d: a.dur, m: pitched ? +a.midi.toFixed(2) : null };
-  console.log(`${s.id.padEnd(16)} take ${pick.n}/${takes.length}  ${a.dur.toFixed(2)}s  onsets ${a.onsets}  ` +
+  console.log(`${s.id.padEnd(16)} take ${pick.n} (best of ${good.length})  ${a.dur.toFixed(2)}s  onsets ${a.onsets}  ` +
     `pitch ${a.midi === null ? '  -  ' : a.midi.toFixed(1)}${pitched ? '' : ' (relative)'}  clarity ${a.clarity}  spread ${a.spread}  score ${pick.score}`);
 }
 
