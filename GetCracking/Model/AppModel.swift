@@ -235,19 +235,29 @@ final class RunController {
         scene.ringLayer.play([KF(opacity: 1), KF(opacity: 0.25)], duration: 0.8, fill: true)
         let friend = pickFriend()
         let s = settings
-        egg.onCheer = { Sound.shared.cheer() }
+        // tapping the friend: it says hello in its own voice
+        egg.onCheer = {
+            if let id = friend.animalId, Sound.shared.friendCall(id) > 0 { return }
+            Sound.shared.cheer()
+        }
         Task { @MainActor in
             await egg.hatch(friend: friend.node, style: s.hatchStyle) {
                 Sound.shared.pop()
-                GC.after(0.12) { Sound.shared.endTune(s.endSound) }
+                GC.after(0.12) { Sound.shared.endTune(s.endSound, friend: friend.animalId) }
             }
             guard !ended else { return }
             phase = .hatched
-            hatchText = friend.animalId != nil ? "It's a \(friend.name)!" : friend.name
+            hatchText = friend.animalId != nil ? "It's \(GC.aName(friend.name))!" : friend.name
             showHatchPill = true
             if let id = friend.animalId {
                 app?.book = Store.addToBook(id)
-                if s.sayName { GC.after(0.5) { Sound.shared.say("It's a \(friend.name)!") } }
+            }
+            // "It's a Fox!" in the recorded voice ("Peekaboo!" for a photo)
+            if s.sayName {
+                GC.after(0.5) { [weak self] in
+                    guard self?.ended == false else { return }
+                    Sound.shared.sayFriend(animalId: friend.animalId, name: friend.name)
+                }
             }
             if s.nextUp.on && (!s.nextUp.text.isEmpty || s.nextUp.photo != nil) {
                 GC.after(2.2) { [weak self] in if self?.ended == false { self?.showNextCard = true } }
@@ -354,6 +364,7 @@ final class RunController {
         trayTask?.cancel()
         egg.disposed = true
         Sound.shared.stopMusic(fade: 0.3)
+        Sound.shared.stopCelebration(fade: 0.3)
         Sound.shared.releaseMedia()
         UIApplication.shared.isIdleTimerDisabled = false
     }

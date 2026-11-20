@@ -177,7 +177,7 @@ struct SoundSection: View {
                 Sound.shared.preview(music: id)
             }
             Text("Hatching tune").font(Theme.hand(24)).padding(.top, 18)
-            Text("Plays when the egg hatches. Tap one to hear it.").font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
+            Text("Plays when the egg hatches. In the three animal bands the friend who hatched gets a solo. Tap one to hear it.").font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
             OptionChips(options: Sound.endSounds.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
                         selected: model.settings.endSound) { id in
                 model.settings.endSound = id
@@ -192,7 +192,7 @@ struct SoundSection: View {
                 .onChange(of: model.settings.volume) { _, v in Sound.shared.setVolume(v) }
             }
             .padding(.top, 12)
-            ToggleRow(label: "Say the friend's name", sub: "“It's a Fox!” (uses the device voice)", isOn: $model.settings.sayName)
+            ToggleRow(label: "Say the friend's name", sub: "“It's a Fox!” when a friend hatches", isOn: $model.settings.sayName)
         }
     }
 }
