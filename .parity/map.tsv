@@ -1,0 +1,23 @@
+web	mac	feature
+js/util.js	GetCracking/Core/Util.swift	Shared helpers
+js/animals.js	GetCracking/Art/Animals.swift	40 friends
+js/egg.js	GetCracking/Art/Egg.swift	Egg and cracking
+js/shellfx.js	GetCracking/Art/Hatch/ShellFX.swift	Hatch styles
+js/hatch/roll.js	GetCracking/Art/Hatch/RollFX.swift	Hatch styles
+js/hatch/boom.js	GetCracking/Art/Hatch/BoomFX.swift	Hatch styles
+js/hatch/crumble.js	GetCracking/Art/Hatch/CrumbleFX.swift	Hatch styles
+js/scenes.js	GetCracking/Art/Scenes.swift	10 worlds
+js/scenes.js	GetCracking/Art/Props.swift	10 worlds
+js/audio.js	GetCracking/Audio/Sound.swift	Music and sounds
+js/store.js	GetCracking/Model/Store.swift	Settings and storage
+js/app.js	GetCracking/Model/AppModel.swift	Timer
+js/app.js	GetCracking/UI/SetupView.swift	Setup screen
+js/app.js	GetCracking/UI/TimerView.swift	Timer screen
+js/app.js	GetCracking/UI/SheetView.swift	Settings sheets
+index.html	GetCracking/UI/SetupView.swift	Setup screen
+index.html	GetCracking/UI/TimerView.swift	Timer screen
+css/app.css	GetCracking/UI/Theme.swift	Visual style
+css/app.css	GetCracking/Art/Loops.swift	Visual style
+js/band.js	GetCracking/Audio/Band.swift	Animal bands
+js/samples.js	GetCracking/Audio/Sound.swift	Recorded sounds
+sounds/index.json	GetCracking/Resources/Sounds/	Recorded sounds
