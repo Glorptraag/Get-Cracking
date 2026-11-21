@@ -89,7 +89,7 @@ const coverage = (p) => p.evaluate(() => {
     await ctx.close();
   }
 
-  console.log('\n■ abuse — stop mid-hatch, hatch-now while paused, 15 back-to-back hatches');
+  console.log('\n■ abuse — stop mid-hatch, hatch-now while paused, 2×15 back-to-back hatches');
   {
     const { p, ctx, errs } = await page(browser, { hatchStyle: 'random' });
     for (const at of [100, 400, 900, 1600]) {
@@ -105,22 +105,42 @@ const coverage = (p) => p.evaluate(() => {
     await p.evaluate(() => document.querySelector('.tray [data-act="hatch"]').click());
     await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 6000 }).catch(() => {});
     ok(await p.evaluate(() => GC.app.run.phase) === 'hatched', '"Hatch now" while paused hatches');
-    const counts = [];
+    // n back-to-back "Again" → hatch cycles; returns the style and DOM size after each hatch
+    const backToBack = async (n) => {
+      const runs = [];
+      for (let i = 0; i < n; i++) {
+        await p.evaluate(() => { const r = GC.app.run; if (r) { r.endAt = Date.now(); } });
+        await p.evaluate(() => document.querySelector('.tray [data-act="again"]').click());
+        await p.waitForTimeout(150);
+        await p.evaluate(() => { GC.app.run.endAt = Date.now(); });
+        await p.waitForFunction(() => GC.app.run && GC.app.run.phase === 'ready', null, { timeout: 4000 });
+        await p.mouse.click(195, 420);
+        await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 6000 });
+        runs.push(await p.evaluate(() => ({ style: GC.app.run.egg.style, nodes: document.querySelectorAll('*').length })));
+      }
+      return runs;
+    };
     const styles = {};
-    for (let i = 0; i < 15; i++) {
-      await p.evaluate(() => { const r = GC.app.run; if (r) { r.endAt = Date.now(); } });
-      await p.evaluate(() => document.querySelector('.tray [data-act="again"]').click());
-      await p.waitForTimeout(150);
-      await p.evaluate(() => { GC.app.run.endAt = Date.now(); });
-      await p.waitForFunction(() => GC.app.run && GC.app.run.phase === 'ready', null, { timeout: 4000 });
-      await p.mouse.click(195, 420);
-      await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 6000 });
-      const s = await p.evaluate(() => GC.app.run.egg.style); styles[s] = (styles[s] || 0) + 1;
-      counts.push(await p.evaluate(() => document.querySelectorAll('*').length));
-    }
+    for (const r of await backToBack(15)) styles[r.style] = (styles[r.style] || 0) + 1;
     ok(Object.keys(styles).length >= 2, `"Surprise me" rotates styles (${JSON.stringify(styles)})`);
-    ok(counts[14] < counts[2] * 1.25, `DOM doesn't grow across 15 hatches (${counts[2]} → ${counts[14]} nodes)`);
-    ok(await p.evaluate(() => T.hatches) >= 16, 'every egg hatched');
+    // Growth check on a fixed style. The DOM size after a hatch depends on the shell style
+    // (crumble leaves ~1,300–1,440 nodes, boom/roll ~1,000–1,150), so comparing two
+    // "Surprise me" hatches flakes. Within one style it still varies with the animal
+    // (a friend is 27–50 nodes) and the rubble, so compare the average of the first 5
+    // hatches with the last 5 and turn the difference into nodes added per hatch.
+    // An absolute per-hatch limit, not a ratio: the 16 hatches above already sit in the
+    // baseline, and a ratio loosens as the baseline grows (1.25× of ~1,350 would let
+    // ~28 nodes/hatch through, i.e. a leaked friend every hatch). Without a leak this
+    // measures within about ±7 nodes/hatch; leaking every friend measures ~42 (smallest
+    // friend 27). 15 sits between the two with room on both sides.
+    await p.evaluate(() => { GC.app.settings().hatchStyle = 'crumble'; });
+    const fixed = await backToBack(15);
+    const counts = fixed.map((r) => r.nodes);
+    const avg = (a) => Math.round(a.reduce((s, v) => s + v, 0) / a.length);
+    const first = avg(counts.slice(0, 5)), last = avg(counts.slice(10)), perHatch = (last - first) / 10;
+    ok(fixed.every((r) => r.style === 'crumble'), 'fixed-style pass ran crumble every time');
+    ok(perHatch < 15, `DOM doesn't grow across 15 crumble hatches (avg ${first} → ${last} nodes, ${perHatch.toFixed(1)}/hatch)`);
+    ok(await p.evaluate(() => T.hatches) >= 31, 'every egg hatched');
     ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
     await ctx.close();
   }
