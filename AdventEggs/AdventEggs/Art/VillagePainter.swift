@@ -253,11 +253,8 @@ struct VillagePainter {
             Draw.fillOut(c, frame, slot.trim, 5)
         case .door:
             Draw.fillOut(c, Draw.rect(r.minX - 11, r.minY - 11, r.width + 22, r.height + 11, r: 20), slot.trim, 5)
-            c.fill(Draw.circle(r.midX, r.minY - 30, 22), with: .color(Color(hex: 0xffe9a8).opacity(0.5)))
-            // a wreath over every front door
-            Draw.stroke(c, Draw.circle(r.midX, r.minY - 30, 16), .ink, 15)
-            Draw.stroke(c, Draw.circle(r.midX, r.minY - 30, 16), Color(hex: 0x3f8a5a), 9)
-            Draw.fillOut(c, Draw.circle(r.midX, r.minY - 15, 5), Color(hex: 0xd63b4f), 2.5)
+            // a doorstep in the snow
+            Draw.fillOut(c, Draw.rect(r.minX - 16, r.maxY - 2, r.width + 32, 12, r: 5), Color(hex: 0xd0c3ad), 4)
         case .window:
             Draw.fillOut(c, Draw.rect(r.minX - 10, r.minY - 10, r.width + 20, r.height + 20, r: 8), slot.trim, 5)
             Draw.fillOut(c, Draw.rect(r.minX - 18, r.maxY + 6, r.width + 36, 16, r: 8), .white, 4)

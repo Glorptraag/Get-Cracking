@@ -147,7 +147,7 @@ struct FriendPainter {
     private func arms(_ c: GraphicsContext, _ w: CGFloat, _ h: CGFloat) {
         let holding = has {
             switch $0 {
-            case .gift, .jar, .holdNutcracker: return true
+            case .gift, .jar: return true
             default: return false
             }
         }
@@ -398,18 +398,19 @@ struct FriendPainter {
             Draw.fillOut(c, Draw.oval(-9, y - 4, 9, 6, deg: -20), ribbon, 3)
             Draw.fillOut(c, Draw.oval(9, y - 4, 9, 6, deg: 20), ribbon, 3)
         case .jar(let col):
-            let y = -h * 0.26
-            Draw.fillOut(c, Draw.rect(-10, y - 34, 20, 14, r: 3), col, 4)
-            Draw.fillOut(c, Draw.oval(0, y, 23, 20), col, 4.5)
-            Draw.fillOut(c, Draw.oval(0, y - 36, 15, 6), .goldLeaf, 3.5)
+            let y = -h * 0.17
+            Draw.fillOut(c, Draw.rect(-9, y - 29, 18, 12, r: 3), col, 4)
+            Draw.fillOut(c, Draw.oval(0, y, 20, 17), col, 4.5)
+            Draw.fillOut(c, Draw.oval(0, y - 30, 13, 5), .goldLeaf, 3.5)
             c.fill(Draw.oval(-8, y - 6, 5, 8), with: .color(.white.opacity(0.45)))
         case .wand:
             let tip = CGPoint(x: w + 22, y: -h * 0.86)
             Draw.tube(c, Draw.line(CGPoint(x: w * 0.82, y: -h * 0.34), tip), Color(hex: 0xf6e7c2), 4)
             Draw.fillOut(c, Draw.star(tip.x, tip.y, outer: 15, inner: 7), .goldLeaf, 4)
         case .holdNutcracker:
-            let x = w * 0.08
-            let y = -h * 0.42
+            // a little nutcracker standing beside her
+            let x = w + 16
+            let y: CGFloat = -34
             Draw.fillOut(c, Draw.rect(x - 11, y, 22, 32, r: 5), Color(hex: 0xc23b3f), 3.5)
             Draw.fillOut(c, Draw.circle(x, y - 6, 9), Color(hex: 0xf6d2b4), 3.5)
             Draw.fillOut(c, Draw.rect(x - 8, y - 30, 16, 18, r: 2), Color(hex: 0x2d2a3a), 3.5)
