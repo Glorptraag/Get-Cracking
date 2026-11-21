@@ -116,10 +116,21 @@ const coverage = (p) => p.evaluate(() => {
       await p.mouse.click(195, 420);
       await p.waitForFunction(() => GC.app.run.phase === 'hatched', null, { timeout: 6000 });
       const s = await p.evaluate(() => GC.app.run.egg.style); styles[s] = (styles[s] || 0) + 1;
-      counts.push(await p.evaluate(() => document.querySelectorAll('*').length));
+      // Leak-relevant nodes only: leave out this egg's world (a random scene is
+      // 574–1,029 nodes) and this egg itself (crumble leaves ~300 more rubble
+      // than roll). Anything left over from earlier eggs, inside the stage or
+      // out, still counts.
+      counts.push(await p.evaluate(() => {
+        const stage = document.getElementById('stage');
+        const eggLayer = stage.querySelector('.egg-layer');
+        const egg = GC.app.run.egg.root;
+        const world = stage.querySelectorAll('*').length - eggLayer.querySelectorAll('*').length;
+        const thisEgg = 1 + egg.querySelectorAll('*').length;
+        return document.querySelectorAll('*').length - world - thisEgg;
+      }));
     }
     ok(Object.keys(styles).length >= 2, `"Surprise me" rotates styles (${JSON.stringify(styles)})`);
-    ok(counts[14] < counts[2] * 1.25, `DOM doesn't grow across 15 hatches (${counts[2]} → ${counts[14]} nodes)`);
+    ok(counts[14] < counts[2] * 1.25, `DOM doesn't grow across 15 hatches (${counts[2]} → ${counts[14]} nodes, excluding the current world and egg)`);
     ok(await p.evaluate(() => T.hatches) >= 16, 'every egg hatched');
     ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
     await ctx.close();
