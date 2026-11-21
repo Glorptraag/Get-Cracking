@@ -5,7 +5,7 @@ A visual timer for little ones that doesn't use words. The countdown runs around
 - **40 hatchable friends**, all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
 - **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
-- **Egg karaoke** (the default hatching song): a little band plays an original ~19-second tune, and the friend who just hatched is one of the players. The tune passes between instruments; the friend adds off-beat stabs and its second sound (a purr, a snort, a splash…) in the verse, sings the hook with the lead instrument in the chorus, and takes a short solo break. Each world (meadow, woodland, jungle, water or magic) has its own band of recorded instruments.
+- **Egg karaoke** (the default hatching song): a little band plays an original ~19-second tune, and the friend who just hatched is one of the players. The tune passes between instruments; the friend adds off-beat stabs and its second sound (a purr, a snort, a splash…) in the verse, joins the hook with the lead instrument in the chorus, and takes a short solo break. A friend whose call holds a note (a meow, a moo, a hoot) sings in tune, and the song moves to that friend's key so its voice still sounds like itself. A friend whose sound is not a note (a quack, an oink, a sniff, a turtle's shell knock) plays it as it is, in time, like a percussion instrument. Each world (meadow, woodland, jungle, water or magic) has its own band of recorded instruments.
 - **Animal bands** for the hatch: three ~15-second celebration songs, each a full band plus a chorus of animal voices (moo, quack, baa, woof, meow, oink, ribbit, hoot, elephant trumpet, roar, neigh, rooster and more). The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
 - **Real animal sounds and a real voice.** The animal calls, the egg crack and pop, "It's a Fox!" for every friend, and Egg karaoke's band and singing voices are recordings generated with ElevenLabs (`sounds/`, about 1.1 MB). Everything else is synthesised live with Web Audio, and the melodies are original.
 - **Countdown music** (6 choices) and **hatching tunes** (Egg karaoke, 3 animal bands, 4 short jingles).
@@ -33,7 +33,11 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
 - **Hatch:** a shared squash-and-stretch, then the chosen hatch style breaks the shell (`js/shellfx.js`, `js/hatch/*.js`). The friend jumps out, lands and loops idle animations. Tapping it makes it jump again and say hello in its own voice (`Sound.friendCall`).
 - **Egg karaoke** (`js/karaoke.js`), the default hatching song:
   - *Shape:* a count-in on the sticks while the friend says hello. In the verse, the lead instrument plays the first line and a second instrument takes the next, with a soft counter-line under each. The friend plays off-beat stabs on the chord and answers with its extra sound, and the band chirps back and echoes. In the chorus the whole band plays (tune, counter-melody, sparkle up high) and the friend sings the hook with the lead. Then a stop for the friend's solo break (its full call) and a "ta-daaa" with everyone.
-  - *The friend's part:* each friend has a short recorded syllable (`sounds/karaoke/sing/`) whose pitch was measured when it was picked; friends with no call of their own play the sound they really make instead, tuned like a percussion instrument (the turtle knocks its shell, the mole sniffs, the snail squelches, the axolotl bloops a bubble, the ladybug flutters its wings, the bunny thumps its foot). The app moves it by whole octaves to sit near its natural pitch, then tunes every note with `playbackRate`. It is mixed level with the instruments: one part in the band, not a soloist on top.
+  - *The friend's part:* each friend has one short recorded sound (`sounds/karaoke/sing/`), and what it does with it depends on the sound. `tools/pick-karaoke.js` measures every recording and decides:
+    - **It sings** (26 friends) if the call holds a clear, fairly steady pitch for at least 0.15 s. Like real karaoke, the whole song is then moved to that friend's key (between 7 semitones down and 4 up), so its voice lands on its natural pitch and is never bent more than 5 semitones either way. Before this, some voices were pushed up almost an octave.
+    - **It plays** (14 friends) if the sound is not a note. It is never re-pitched into a tune: the friend plays it as it is, in time, leaning at most 2 semitones with the melody the way a drummer moves between toms. That covers the six friends with no call of their own, who make the sound they really make (the turtle knocks its shell, the mole sniffs, the snail squelches, the axolotl bloops a bubble, the ladybug flutters its wings, the bunny thumps its foot), and calls that are just not notes (the duckling's quack, the piglet's oink, the frog's croak, the fox's yip, the unicorn's neigh, the mouse, the bat, the sloth).
+    - Until a recording has loaded, a synthesised stand-in voice sings instead.
+    It is mixed level with the instruments: one part in the band, not a soloist on top.
   - *The worlds:* meadow (piano lead, flute, ukulele, upright bass, claps, egg shaker, wood block, glockenspiel, cheeps and slide whistle), woodland (flute lead, kalimba, harp, upright bass, wood block, birdsong trills), jungle (steel pan lead, marimba, tuba oom-pah, bongos, parrot whistles), water (kalimba lead, glockenspiel, piano, flute, soft snare, bubble bloops) and magic (harp lead, flute, piano, tuba, glockenspiel, sparkles). The chirps and tones always play the current chord's notes.
   - *Band:* every instrument is one recorded note (`sounds/karaoke/inst/`) pitched to each note of the song, so it is always in time and in key.
   - *Fallback:* anything not loaded yet, or the app opened from disk, plays on the synth kit from `band.js` instead (the voice too), so the song always works. The choice is made once at the start, so a song never switches voice halfway.
@@ -63,7 +67,7 @@ js/scenes.js          the 10 diorama worlds + ambient particles
 js/samples.js         loads the recorded sounds in sounds/ (falls back to synth if missing)
 js/audio.js           Web Audio music, sfx, short end jingles, the friend's name
 js/band.js            the three animal bands: instruments, animal voices, songs; the shared song player
-js/karaoke.js         Egg karaoke: the friend sings, five world arrangements
+js/karaoke.js         Egg karaoke: the friend sings or plays along, five world arrangements
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
@@ -95,7 +99,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
 - **Audio:**
   - the tunes don't clip, they fully decay (no stuck notes), and there are no silent gaps in the music
   - every animal band renders with 5 different friends: no clipping, no dead air, every note plays, the right friend takes the solo; live, a stall skips notes instead of bursting, a new song/jingle/egg stops the old one, and Stop is silent at once
-  - Egg karaoke renders for a friend from every world, both on the synth fallback and (served over http) with the recordings: no clipping, no dead air, every note plays, the hatched friend sings the tune and ends on its own call, and every one of the 99 karaoke recordings loads and decodes
+  - Egg karaoke renders for a friend from every world, both on the synth fallback and (served over http) with the recordings: no clipping, no dead air, every note plays, the hatched friend plays its part and ends on its own call, and every one of the 99 karaoke recordings loads and decodes. A friend with a pitched call sings different notes and is never bent more than 5.6 semitones; a friend whose sound is not a note is never bent more than 2
   - the final-stretch twinkle is there
   - notes land exactly on the beat, and a 700 ms stall doesn't produce a burst of missed notes
   - double-starting the music never doubles the notes
@@ -105,7 +109,7 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
   - frame pacing holds on a slow CPU
   - stopping mid-hatch is clean, and the DOM doesn't grow over 15 back-to-back hatches
   - the reduced-motion versions finish in under 1.5 s
-  - in the real app, Egg karaoke is the default: the friend sings in its recorded voice, its extra sound and call play, the band is the recorded instruments, and the friend bops along
+  - in the real app, Egg karaoke is the default: the friend plays its part with its recorded sound, its extra sound and call play, the band is the recorded instruments, and the friend bops along
 
 ## Adding a hatch style
 
@@ -135,11 +139,12 @@ Every recording has a synthesised stand-in, which plays until it loads, or alway
 
 ### Egg karaoke recordings
 
-Egg karaoke's 19 instrument notes, 40 singing syllables and 40 extra sounds were made with ElevenLabs Sound Effects from the prompts in `tools/karaoke.json` (3 takes of each note and syllable, 2 of each extra, plus real action sounds for the six friends with no call of their own; about 2,090 credits). The picker scores every take and keeps the best one. It rejects takes that came back silent, prefers one clean onset and a steady pitch, and measures the pitch the app tunes from. Pin a take with `"take": n` in the manifest if your ears disagree, or set `"fromTake": n` after changing a prompt so older takes are ignored.
+Egg karaoke's 19 instrument notes, 40 singing syllables and 40 extra sounds were made with ElevenLabs Sound Effects from the prompts in `tools/karaoke.json` (3 takes of each note and syllable, 2 of each extra, plus real action sounds for the six friends with no call of their own, and a second draft of 17 calls with longer "one long call on a steady note" prompts; about 2,650 credits). The picker scores every take and keeps the best one. It rejects takes that came back silent, prefers one clean onset and a pitch that is held as long as possible, and measures the pitch the app tunes from. A call only counts as singable if it holds a clear pitch for 0.15 s; otherwise it is written with no pitch and the app plays it as it is. Not every redraft worked: the duckling, mouse, piglet, fox, bat and sloth came back as noise or a ramble, so those keep their short call and play it as it is. Pin a take with `"take": n` in the manifest if your ears disagree, or set `"fromTake": n` after changing a prompt so older takes are ignored.
 
 ```sh
 node tools/gen-sounds.js takes/ --manifest tools/karaoke.json --takes 3 --budget 2500
 node tools/pick-karaoke.js takes/      # writes sounds/karaoke/ and the karaoke section of sounds/index.json
+node tools/pick-karaoke.js takes/ --only sing/fox,sing/owl   # re-pick just these
 ```
 
 The full song could not be made with ElevenLabs Music: the API key used here doesn't have the `music_generation` permission. Building the song from recorded notes also keeps the singer exactly in time and in tune with the band, which a pre-mixed track couldn't.

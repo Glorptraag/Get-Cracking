@@ -4,11 +4,16 @@
  * of the players. The tune is carried by instruments and passed around: the
  * lead instrument plays the first verse line, a second instrument takes the
  * next, and in the chorus everyone plays, with a counter-melody and sparkle
- * on top. The friend's own recorded voice (sounds/karaoke/sing/<id>.mp3,
- * pitched to the chord) is one more part in the band. A friend with no call of
- * its own plays the sound it really makes instead, tuned like a percussion
- * instrument: the turtle knocks its shell, the mole sniffs, the snail squelches,
- * the axolotl bloops a bubble, the ladybug flutters, the bunny thumps:
+ * on top. The friend's own recorded sound (sounds/karaoke/sing/<id>.mp3) is one
+ * more part in the band, and what it does with it depends on the sound:
+ *   sings   a call that holds a clear note (a meow, a moo, a hoot) sings in tune.
+ *           Like real karaoke, the whole song moves to that friend's key, so its
+ *           voice is only ever nudged a few notes and still sounds like itself.
+ *   plays   a sound that is not a note (a quack, a grunt, a sniff, a turtle's
+ *           shell knock, a snail's squelch, a bunny's thump) is never re-pitched:
+ *           the friend plays it as it is, in time, like a percussion instrument.
+ * Which one is decided from the recording by tools/pick-karaoke.js (a pitch in
+ * sounds/index.json = sings). Either way the friend plays:
  *   - off-beat stabs through the verse, with its second sound (a purr, a
  *     snort, a splash: sounds/karaoke/extra/<id>.mp3) and the world's chirps
  *     answering in the gaps
@@ -90,7 +95,17 @@
     { ch: [[0, G, 43], [2, C, 36]], mel: [[0, 74, 0.5], [0.5, 74, 0.5], [1, 71, 0.5], [1.5, 74, 0.5], [2, 72, 2]],
       voice: [[0, 74, 1], [1, 71, 1], [2, 72, 2]] },
   ];
-  const MEL_MID = 69; // the middle of the tune: an unpitched voice sounds natural here
+  const MEL_MID = 69; // the middle of the tune, where the synthesised stand-in voices sit
+  /* The friend's own notes run from the G of its verse stabs to the E at the top
+   * of the hook. The song is moved (KEY_LO..KEY_HI semitones) so the middle of
+   * that range lands on the pitch of the friend's own call. */
+  const PART_MID = 71.5, KEY_LO = -7, KEY_HI = 4;
+  const keyFor = (pitch) => {
+    let k = (((pitch - PART_MID) % 12) + 12) % 12; // 0..12
+    if (k > KEY_HI + 0.5) k -= 12;
+    return Math.max(KEY_LO, Math.min(KEY_HI, Math.round(k)));
+  };
+  const FLOOR = { bass: 31, tuba: 31 }; // a low key must not push the bass below what a small speaker can play
 
   /* --------------------------------------------------------- instruments
    * Recorded note when loaded, else the synth kit. Pitched recordings are
@@ -139,18 +154,23 @@
     }
     const [world, synKind, synHz] = FRIENDS[friendId];
     const singInfo = idx.sing[friendId];
-    const voice = singInfo && has('sing/' + friendId)
-      ? { base: singInfo.m ?? MEL_MID, off: singInfo.m == null ? 0 : 12 * Math.round((singInfo.m - MEL_MID) / 12) }
-      : null;
+    // a recorded call with a pitch sings (and sets the key); one without is played as it is
+    const rec = singInfo && has('sing/' + friendId);
+    const sings = rec && singInfo.m != null;
+    const key = sings ? keyFor(singInfo.m) : 0;
+    const voice = sings ? { base: singInfo.m, off: 12 * Math.round((singInfo.m - (PART_MID + key)) / 12) } : null;
+    const role = sings ? 'sings' : rec ? 'plays' : 'synth';
     // synth voice: whole octaves too, so the tune keeps its shape
     const synOff = 12 * Math.round((69 + 12 * Math.log2(synHz / 440) - MEL_MID) / 12);
     const hasExtra = !!idx.extra[friendId] && has('extra/' + friendId);
 
     const p = {
-      world: WORLDS[world], voice: !!voice,
+      world: WORLDS[world], voice: !!rec, role, key,
       /** d = how long the note may ring (0 = let a drum ring out) */
       inst(id, n, t, d, g = 1, out) {
         const u = use[id];
+        n += key;
+        if (n < FLOOR[id]) n += 12;
         if (!u) { SYN[id](k, n, t, d, g, out || k.ch.comp); return; }
         const rate = u.base == null ? 1 : Math.pow(2, (n + u.off - u.base) / 12);
         s.sample(DIR + 'inst/' + id, t, out || k.ch.comp, { rate, gain: GAIN[id] * g, max: d ? Math.max(d, 0.25) : undefined });
@@ -161,8 +181,13 @@
       sing(n, t, d, out, g = 1) {
         const len = d + 0.1;
         if (voice) {
-          const rate = Math.pow(2, (n + voice.off - voice.base) / 12);
+          const rate = Math.pow(2, (n + key + voice.off - voice.base) / 12);
           s.sample(DIR + 'sing/' + friendId, t, out, { rate, gain: SING * g, max: len, fade: 0.12 });
+        } else if (rec) {
+          // not a note: its own sound, as it is. It only leans a touch up or down
+          // with the tune (two semitones at most), the way a drummer moves between toms
+          const lean = Math.max(-2, Math.min(2, (n - PART_MID) * 0.35));
+          s.sample(DIR + 'sing/' + friendId, t, out, { rate: Math.pow(2, lean / 12), gain: SING * g, max: len, fade: 0.12 });
         } else k.say[synKind](t, midi(n + synOff), synKind === 'cheep' ? Math.min(len, 0.14) : len, out, g);
         if (s.onSing && g >= 1) s.onSing(t - s.ctx.currentTime, len);
       },
@@ -174,7 +199,7 @@
       },
       /** tones and chirps that suit the world, always on the chord's notes */
       chirp(t, chord) {
-        const hi = chord.map((n) => n + 24), o = k.ch.sparkle;
+        const hi = chord.map((n) => n + 24 + key), o = k.ch.sparkle;
         switch (p.world.chirp) {
           case 'cheeps':
             k.say.cheep(t, midi(hi[2]), 0.08, o, 0.8); k.say.cheep(t + 0.12, midi(hi[2] + 5), 0.08, o, 0.8);
@@ -188,10 +213,10 @@
             p.inst('bongo', 0, t + 0.1, 0, 0.6, k.ch.drums); p.inst('bongo', 0, t + 0.22, 0, 0.5, k.ch.drums);
             break;
           case 'bubbles':
-            [0, 1, 2, 0].forEach((j, i) => k.say.bloop(t + i * 0.09, midi(chord[j] + 12 * (1 + (i === 3))), 0.1, o, 0.9));
+            [0, 1, 2, 0].forEach((j, i) => k.say.bloop(t + i * 0.09, midi(chord[j] + key + 12 * (1 + (i === 3))), 0.1, o, 0.9));
             break;
           default: // sparkle
-            p.inst('sparkle', 0, t, 0, 0.8, o);
+            p.inst('sparkle', 84, t, 0, 0.8, o);
             chord.concat(chord[0] + 12).forEach((n, i) => p.inst('glock', n + 12, t + i * 0.07, 0.6, 0.6, o));
         }
       },
@@ -303,7 +328,7 @@
     const call = FRIEND_CALL[friendId];
     const callLen = lenOf(call);
     const soloAt = b + 1;
-    at(soloAt, (t) => { playCall(k, call, t, k.ch.solo); k.strings([60, 64, 67], t, callLen + spb, 0.01); });
+    at(soloAt, (t) => { playCall(k, call, t, k.ch.solo); k.strings([60, 64, 67].map((n) => n + p.key), t, callLen + spb, 0.01); });
     // ta-da: the whole band, the friend with them, then one last ad-lib
     const end = Math.ceil((soloAt + (callLen + 0.15) / spb) * 2) / 2;
     at(end, (t) => {
@@ -322,7 +347,7 @@
       p.chirp(t + 0.1, C);
     });
     at(end + 2.5, (t) => p.extra(t, A, C));
-    return { ev, beats: end + 2.5, tail: 2.6, voice: p.voice, world: FRIENDS[friendId][0] };
+    return { ev, beats: end + 2.5, tail: 2.6, voice: p.voice, role: p.role, key: p.key, world: FRIENDS[friendId][0] };
   }
 
   /**
@@ -339,9 +364,9 @@
     const wld = WORLDS[FRIENDS[friendId][0]];
     let meta = null;
     const len = this._celebrate(wld.bpm, (k, spb) => (meta = arrange(k, this, friendId, spb)), { friendCall: FRIEND_CALL[friendId], singer: friendId });
-    if (this._celeb && meta) Object.assign(this._celeb, { recorded: meta.voice, world: meta.world });
+    if (this._celeb && meta) Object.assign(this._celeb, { recorded: meta.voice, role: meta.role, key: meta.key, world: meta.world });
     return len;
   };
 
-  GC.Karaoke = { FRIENDS, WORLDS, VERSE, CHORUS, DIR };
+  GC.Karaoke = { FRIENDS, WORLDS, VERSE, CHORUS, DIR, keyFor, PART_MID };
 })();
