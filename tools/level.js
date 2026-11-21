@@ -6,6 +6,11 @@
  *                    small mono MP3. Returns { dur, gain }.
  *   analyse(file)    { dur, onsets, midi, clarity, spread } where midi is the
  *                    median pitch of the loud part (YIN), or null if unpitched.
+ *   voice(file)      the same for an animal's call, heard the way a singer is judged:
+ *                    a wide pitch range (70 Hz to 9 kHz, so a mouse's squeak counts),
+ *                    eff = seconds within 15 dB of the loudest point, and
+ *                    voiced = seconds of clear, steady pitch. A call can only sing a
+ *                    tune if it holds a pitch long enough to hear it.
  *   peakDb(file)     loudest sample in dBFS (a take that came back near-silent is useless)
  */
 const fs = require('fs');
@@ -46,7 +51,7 @@ function pcm(file, sr) {
 
 /** YIN pitch of one frame: Hz or 0 (unvoiced) */
 function yin(x, start, W, tauMin, tauMax, sr, thresh = 0.15) {
-  const d = new Float32Array(tauMax + 1);
+  const d = new Float32Array(tauMax + 2);
   for (let tau = 1; tau <= tauMax; tau++) {
     let s = 0;
     for (let j = 0; j < W; j++) { const v = x[start + j] - x[start + j + tau]; s += v * v; }
@@ -106,7 +111,37 @@ function analyse(file) {
   return { dur: +dur.toFixed(3), onsets, midi: med === null ? null : +med.toFixed(2), clarity: +clarity.toFixed(2), spread: +spread.toFixed(2) };
 }
 
+function voice(file) {
+  const SR = 44100, x = pcm(file, SR), hop = 441, env = [];
+  for (let i = 0; i + hop <= x.length; i += hop) {
+    let s = 0; for (let j = i; j < i + hop; j++) s += x[j] * x[j];
+    env.push(10 * Math.log10(s / hop + 1e-12));
+  }
+  const top = Math.max(...env);
+  const eff = env.filter((e) => e > top - 15).length * 0.01;
+  let onsets = 0, armed = true;
+  for (const e of env) {
+    if (armed && e > top - 12) { onsets++; armed = false; } else if (!armed && e < top - 18) armed = true;
+  }
+  const W = 1536, tauMin = Math.floor(SR / 9000), tauMax = Math.ceil(SR / 70);
+  const f0 = [];
+  let loud = 0;
+  for (let i = 0; i + W + tauMax + 2 < x.length; i += hop) {
+    const ei = Math.min(env.length - 1, Math.floor((i + W / 2) / hop));
+    if (env[ei] < top - 15) continue;
+    loud++;
+    const f = yin(x, i, W, tauMin, tauMax, SR);
+    if (f) f0.push(69 + 12 * Math.log2(f / 440));
+  }
+  const voiced = f0.length * 0.01;
+  f0.sort((a, b) => a - b);
+  const med = f0.length ? f0[Math.floor(f0.length / 2)] : null;
+  const spread = f0.length > 2 ? f0[Math.floor(f0.length * 0.8)] - f0[Math.floor(f0.length * 0.2)] : 99;
+  return { dur: +(x.length / SR).toFixed(3), eff: +eff.toFixed(2), onsets, midi: med === null ? null : +med.toFixed(2),
+    clarity: loud ? +(f0.length / loud).toFixed(2) : 0, spread: +spread.toFixed(2), voiced: +voiced.toFixed(2) };
+}
+
 /** loudest sample in dBFS */
 const peakDb = (file) => +(measure(file, 'volumedetect').match(/max_volume:\s*(-?[0-9.]+)/) || [0, -99])[1];
 
-module.exports = { level, analyse, pcm, peakDb };
+module.exports = { level, analyse, voice, pcm, peakDb };

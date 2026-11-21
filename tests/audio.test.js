@@ -120,11 +120,16 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
       const r = await p.evaluate((fr) => renderWith(24, (s, setT) => {
         let sung = 0;
         s.onSing = () => sung++;
+        // how far the friend's own recording is re-pitched on each note (semitones)
+        const bend = [], smp = s.sample.bind(s);
+        s.sample = (key, t, out, o = {}) => { if (key.startsWith('karaoke/sing/')) bend.push(12 * Math.log2(o.rate || 1)); return smp(key, t, out, o); };
         const len = s.endTune('karaoke', fr);
         const c = s._celeb;
         clearInterval(c.timer); clearTimeout(c.doneT);
         for (let t = 0; t < len; t += 0.05) { setT(t); s._celebPump(); }
-        window._lastK = { singer: c.singer, call: c.friendCall, world: c.world, recorded: c.recorded, events: c.ev.length, done: c.i, sung };
+        delete s.sample;
+        const pitch = ((GC.Samples.index && GC.Samples.index.karaoke && GC.Samples.index.karaoke.sing[c.singer]) || {}).m;
+        window._lastK = { singer: c.singer, call: c.friendCall, world: c.world, recorded: c.recorded, role: c.role, key: c.key, pitch, bend, events: c.ev.length, done: c.i, sung };
         return len;
       }), fr);
       const m = await p.evaluate(() => window._lastK);
@@ -141,7 +146,20 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
       ok(r.declared >= 12 && r.declared <= 22, `${tag}: song length ${r.declared.toFixed(1)}s`);
       ok(m.sung >= 12, `${tag}: the friend plays its part in the band (${m.sung} notes)`);
       if (fr) ok(m.singer === fr && m.call === (await p.evaluate((f) => GC.Band.FRIEND_CALL[f], fr)), `${tag}: the ${fr} is the singer and ends on its own call`);
-      ok(m.recorded === wantRecorded, `${tag}: ${wantRecorded ? 'sings with its recorded voice' : 'synth voice when recordings are unavailable'}`);
+      ok(m.recorded === wantRecorded, `${tag}: ${wantRecorded ? 'uses its recorded sound' : 'synth voice when recordings are unavailable'}`);
+      if (!wantRecorded) ok(m.role === 'synth' && m.key === 0, `${tag}: stand-in voice, song in its home key`);
+      else {
+        const far = Math.max(...m.bend.map(Math.abs));
+        ok(m.bend.length >= 12, `${tag}: its recording is heard all through the song (${m.bend.length} times)`);
+        if (m.pitch != null) {
+          ok(m.role === 'sings', `${tag}: a call with a clear pitch sings the tune`);
+          ok(far <= 5.6, `${tag}: the song moves to its key (${m.key >= 0 ? '+' : ''}${m.key}), so its voice is never bent more than ${far.toFixed(1)} semitones`);
+          ok(new Set(m.bend.map((x) => x.toFixed(1))).size >= 4, `${tag}: it really sings different notes`);
+        } else {
+          ok(m.role === 'plays' && m.key === 0, `${tag}: a sound that is not a note is played, not sung`);
+          ok(far <= 2.01, `${tag}: its sound stays as it is (bent ${far.toFixed(1)} semitones at most)`);
+        }
+      }
     }
   };
   console.log('\nA1c. Egg karaoke, synthesised fallback (opened from disk: no recordings)');
@@ -179,7 +197,14 @@ const db = (x) => (x > 0 ? (20 * Math.log10(x)).toFixed(1) : '-inf');
   await hp.evaluate((src) => { window.renderWith = eval('(' + src + ')'); }, renderSrc);
   const p0 = p; // karaoke() renders on page p: point it at the http page for this pass
   p = hp;
-  await karaoke('recorded', ['kitten', 'owl', 'elephant', 'seal', 'dragon', 'ladybug'], true);
+  await karaoke('recorded', ['kitten', 'owl', 'elephant', 'seal', 'dragon', 'ladybug', 'turtle', 'piglet'], true);
+  const roles = await hp.evaluate(() => {
+    const sing = GC.Samples.index.karaoke.sing, ids = Object.keys(sing);
+    return { sings: ids.filter((id) => sing[id].m != null), plays: ids.filter((id) => sing[id].m == null), keys: ids.filter((id) => sing[id].m != null).map((id) => GC.Karaoke.keyFor(sing[id].m)) };
+  });
+  ok(roles.sings.length >= 20, `most friends have a call that can sing (${roles.sings.length} sing, ${roles.plays.length} play their sound as it is)`);
+  ok(['turtle', 'mole', 'snail', 'axolotl', 'ladybug', 'bunny'].every((id) => roles.plays.includes(id)), 'friends with no call of their own never have their sound re-pitched into a tune');
+  ok(roles.keys.every((k) => k >= -7 && k <= 4), `every singer's key is within reach of the band (${Math.min(...roles.keys)} to +${Math.max(...roles.keys)})`);
   p = p0;
   await hp.close();
   server.close();
