@@ -5,8 +5,10 @@
  * lead instrument plays the first verse line, a second instrument takes the
  * next, and in the chorus everyone plays, with a counter-melody and sparkle
  * on top. The friend's own recorded voice (sounds/karaoke/sing/<id>.mp3,
- * pitched to the chord; a hum for friends with no call of their own) is one
- * more part in the band:
+ * pitched to the chord) is one more part in the band. A friend with no call of
+ * its own plays the sound it really makes instead, tuned like a percussion
+ * instrument: the turtle knocks its shell, the mole sniffs, the snail squelches,
+ * the axolotl bloops a bubble, the ladybug flutters, the bunny thumps:
  *   - off-beat stabs through the verse, with its second sound (a purr, a
  *     snort, a splash: sounds/karaoke/extra/<id>.mp3) and the world's chirps
  *     answering in the gaps
@@ -41,18 +43,18 @@
    * world, then the synthesised stand-in voice: [kind in band.js k.say, Hz]. */
   const FRIENDS = {
     chick: ['meadow', 'cheep', 2400], duckling: ['meadow', 'quack', 380], penguin: ['water', 'quack', 450],
-    owl: ['woodland', 'hoot', 400], hamster: ['meadow', 'squeak', 2000], bunny: ['meadow', 'squeak', 1500],
+    owl: ['woodland', 'hoot', 400], hamster: ['meadow', 'squeak', 2000], bunny: ['meadow', 'bloop', 260],
     fox: ['woodland', 'woof', 600], kitten: ['meadow', 'meow', 650], bearcub: ['woodland', 'roar', 160],
-    panda: ['jungle', 'baa', 420], frog: ['water', 'croak', 170], turtle: ['water', 'hoot', 330],
+    panda: ['jungle', 'baa', 420], frog: ['water', 'croak', 170], turtle: ['water', 'bloop', 500],
     dino: ['magic', 'roar', 140], dragon: ['magic', 'roar', 150], mouse: ['meadow', 'squeak', 2800],
     piglet: ['meadow', 'oink', 210], koala: ['jungle', 'oink', 140], raccoon: ['woodland', 'squeak', 2200],
     tiger: ['jungle', 'roar', 180], lion: ['jungle', 'roar', 170], calf: ['meadow', 'moo', 180],
     lamb: ['meadow', 'baa', 420], fawn: ['woodland', 'meow', 750], hedgehog: ['woodland', 'squeak', 2300],
-    otter: ['water', 'squeak', 1800], seal: ['water', 'ork', 300], axolotl: ['water', 'hoot', 520],
-    bat: ['woodland', 'squeak', 3000], mole: ['woodland', 'hoot', 440], monkey: ['jungle', 'ooh', 450],
+    otter: ['water', 'squeak', 1800], seal: ['water', 'ork', 300], axolotl: ['water', 'bloop', 800],
+    bat: ['woodland', 'squeak', 3000], mole: ['woodland', 'sniff', 2600], monkey: ['jungle', 'ooh', 450],
     elephant: ['jungle', 'trumpet', 520], squirrel: ['woodland', 'squeak', 2500], puppy: ['meadow', 'woof', 300],
     unicorn: ['magic', 'neigh', 800], capybara: ['jungle', 'squeak', 1500], redpanda: ['woodland', 'squeak', 2000],
-    sloth: ['jungle', 'squeak', 1700], ladybug: ['woodland', 'hoot', 660], snail: ['woodland', 'hoot', 600],
+    sloth: ['jungle', 'squeak', 1700], ladybug: ['woodland', 'buzz', 240], snail: ['woodland', 'bloop', 700],
     goat: ['meadow', 'baa', 440],
   };
 
