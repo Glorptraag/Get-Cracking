@@ -1,0 +1,12 @@
+# web-only plumbing: the offline PWA, dev tools, docs
+^sw\.js$
+^manifest\.webmanifest$
+^tools/
+^README\.md$
+# native-only plumbing: the app entry point and the vector renderer the browser gives the web app for free
+^GetCracking/App/
+^GetCracking/Core/(Renderer|SVGPath|VNode|Motion)\.swift$
+^GetCracking/Resources/
+^Config/
+# the parity notes themselves
+^\.parity/
