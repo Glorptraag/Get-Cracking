@@ -46,7 +46,7 @@ enum DoorStyle {
 }
 
 struct ArchShape: Shape {
-    func path(in r: CGRect) -> Path {
+    nonisolated func path(in r: CGRect) -> Path {
         var p = Path()
         let radius = r.width / 2
         p.move(to: CGPoint(x: r.minX, y: r.maxY))

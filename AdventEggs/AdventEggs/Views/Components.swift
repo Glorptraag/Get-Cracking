@@ -67,9 +67,10 @@ struct Snowfall: View {
                     let seed = Double(i)
                     let r = 1.2 + hash01(seed * 1.3) * 3.2
                     let speed = 16 + hash01(seed * 2.7) * 34
-                    let x0 = hash01(seed * 3.1) * size.width
-                    let y = (hash01(seed * 4.9) * span + t * speed).truncatingRemainder(dividingBy: span) - 10
-                    let x = x0 + sin(t * 0.7 + seed) * 12
+                    let x0 = CGFloat(hash01(seed * 3.1)) * size.width
+                    let fall = (hash01(seed * 4.9) * Double(span) + t * speed).truncatingRemainder(dividingBy: Double(span))
+                    let y = CGFloat(fall) - 10
+                    let x = x0 + CGFloat(sin(t * 0.7 + seed)) * 12
                     let flake = Draw.circle(x, y, r)
                     ctx.fill(flake, with: .color(.white.opacity(0.5 + 0.45 * hash01(seed * 5.3))))
                 }
@@ -95,8 +96,8 @@ struct SparkleBurst: View {
                 for i in 0..<22 {
                     let a = Double(i) / 22 * 2 * .pi + hash01(Double(i)) * 0.4
                     let dist = (60 + hash01(Double(i) * 3) * 140) * (1 - pow(1 - k, 3))
-                    let x = center.x + cos(a) * dist
-                    let y = center.y + sin(a) * dist + k * k * 60
+                    let x = center.x + CGFloat(cos(a) * dist)
+                    let y = center.y + CGFloat(sin(a) * dist + k * k * 60)
                     var c = ctx
                     c.opacity = 1 - k
                     Draw.fillOut(c, Draw.twinkle(x, y, 9 + hash01(Double(i) * 7) * 6), colors[i % colors.count], 2.5)

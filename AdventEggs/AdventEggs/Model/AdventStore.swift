@@ -63,6 +63,7 @@ final class AdventStore {
         hatchedOrder = []
         hurried = []
         for k in [Keys.opened, Keys.hatched, Keys.hurried] { defaults.removeObject(forKey: k) }
+        for day in 1...25 { defaults.removeObject(forKey: Keys.earlyOpen + String(day)) }
     }
 
     // MARK: - Settings
@@ -91,7 +92,7 @@ final class AdventStore {
     func eggProgress(_ day: Int, now: Date = .now, doorOpenedAt: Date? = nil) -> Double {
         if hurried.contains(day) { return 1 }
         var start = openingDate(day, now: now)
-        if now < start, let early = doorOpenedAt { start = early }
+        if let early = doorOpenedAt, early < start { start = early }
         let elapsed = now.timeIntervalSince(start)
         return min(max(elapsed / AdventDate.eggSeconds, 0), 1)
     }

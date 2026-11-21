@@ -89,7 +89,9 @@ struct VillagePainter {
             p.move(to: CGPoint(x: left - 10, y: SceneBoard.horizon + 20))
             var x = left - 10
             while x <= right + 20 {
-                let y = base - amp * CGFloat(sin(Double(x) / 140 + Double(layer) * 2.1)) - amp * 0.4 * CGFloat(sin(Double(x) / 53))
+                let wave1 = CGFloat(sin(Double(x) / 140 + Double(layer) * 2.1))
+                let wave2 = CGFloat(sin(Double(x) / 53))
+                let y = base - amp * wave1 - amp * 0.4 * wave2
                 p.addLine(to: CGPoint(x: x, y: y))
                 x += 20
             }
