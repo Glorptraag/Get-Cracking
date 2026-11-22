@@ -55,6 +55,16 @@ The collections take turns through December, and the Nativity builds towards Chr
 
 ## Build and run
 
+The quickest way, on a Mac with Xcode 16 or later: clone, then run the setup script. It puts both branches in the clone (`main` for Get Cracking, `advent` for Advent Eggs), can create a new private GitHub repo from them (set `NEW_REPO`, needs the `gh` CLI), and builds the app for the Simulator. If the build fails, it prints the errors.
+
+```sh
+git clone -b claude/elegant-lamport-u6vacd https://github.com/Glorptraag/Get-Cracking.git ~/codebases/AdventEggs
+cd ~/codebases/AdventEggs && NEW_REPO=AdventEggs bash AdventEggs/tools/setup-and-build.sh
+```
+
+Or by hand:
+
+
 1. Open `AdventEggs/AdventEggs.xcodeproj` in **Xcode 16 or later**.
 2. Select the **AdventEggs** target, open **Signing & Capabilities**, and choose your Team. Change the bundle ID (`com.getcracking.advent`) if it's taken.
 3. Pick an iPhone or iPad simulator or a device, and press Run.
