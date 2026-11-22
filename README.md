@@ -11,6 +11,8 @@ A visual timer for little ones that doesn't use words. The countdown runs around
 - **Countdown music** (6 choices) and **hatching tunes** (Egg karaoke, 3 animal bands, 4 short jingles).
 - **Runs fully offline.** No login, no account, no network requests, and nothing leaves the device. The recordings ship with the app and are cached for offline use like everything else.
 
+**Advent Eggs**, an advent calendar spin-off with 25 painted doors and a 24-hour egg behind each one, is a native SwiftUI app in [`AdventEggs/`](AdventEggs/README.md).
+
 ## Run it
 
 Open `index.html` in a browser; it works straight from disk. To get offline install (PWA), serve the folder over http(s):
