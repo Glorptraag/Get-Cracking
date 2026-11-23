@@ -128,7 +128,7 @@ Kids Category wording rules: the words "for kids" and "for children" are fine he
 **Keywords** (100 max, commas, no spaces): `toddler,visual timer,countdown,preschool,routine,transition,tidy up,bedtime,hatch,animal,band,kids` (98)
 
 **Promotional text** (170 max, can change any time without review):
-`New: Egg karaoke. The friend who hatches sings with its own band. The timer and 12 friends are free; The Whole Nest unlocks all 40 friends and 10 worlds.` (152)
+`New: Egg karaoke. The friend who hatches sings with its own band. The timer and 12 friends are free; The Whole Nest unlocks all 40 friends and 10 worlds.` (153)
 
 **Description:**
 ```
