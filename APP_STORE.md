@@ -17,7 +17,7 @@ Facts you'll need:
 | Category | Kids, Ages 5 and Under |
 
 Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/ProductID.swift`):
-- `LegalLinks.privacyPolicy` = `https://example.com/get-cracking/privacy` → **replace** with your hosted privacy policy.
+- `LegalLinks.privacyPolicy` = `https://getcrackingkids.vercel.app/privacy.html`: the policy now ships with the web app (`privacy.html`, Glorptraag/Get-Cracking#9). Once #9 is merged and deployed, **open that link to check it works**. If your production domain is different, change it here and in App Store Connect.
 - `LegalLinks.terms` = Apple's standard EULA → fine as it is; replace only if you host your own terms.
 
 ---
@@ -83,10 +83,10 @@ Don't copy a `.storekit` file from anywhere; let Xcode write it.
 1. **Get Started** → "Do you or your third-party partners collect data from this app?" → **No, we do not collect data from this app**. Publish. The label reads **Data Not Collected**.
 2. This agrees with `GetCracking/Resources/PrivacyInfo.xcprivacy` (checked on this branch): `NSPrivacyTracking` false, no tracking domains, **no collected data types**, and one required-reason API (UserDefaults, reason `CA92.1`: the app's own settings and friend book). Nothing to change.
 3. Why it's true: no accounts, no network code, no SDKs. Photos are picked with Apple's photo picker (no photo-library permission is asked) and saved as small JPEGs in the app's own folder; they never leave the device except inside the family's own iPhone backup. Purchases go through Apple; the app only reads StoreKit's signed receipts on the device.
-4. **Privacy Policy URL**: the address where you host the policy below. Put the same URL in `LegalLinks.privacyPolicy`.
+4. **Privacy Policy URL**: `https://getcrackingkids.vercel.app/privacy.html` (the same as `LegalLinks.privacyPolicy`).
 
 ## 7. Draft privacy policy and terms (host them yourself)
-Fill in the [brackets]. Host on any page you control (a GitHub Pages site, your own domain, or a page on the web app, e.g. `[https://your-domain]/privacy`).
+The privacy policy is already written and hosted with the web app as `privacy.html`. It names the maker as Glorptraag, and points questions to the GitHub project's issues page. Change those two lines if you'd rather use a business name or an email address. The draft below is kept for reference.
 
 ### Privacy Policy (draft)
 > **Get Cracking: Privacy Policy**

@@ -399,7 +399,10 @@ final class Egg {
                   duration: 1, easing: Ease(0.3, 1.5, 0.5, 1), fill: true)
 
         let gate = Gate()
-        let ctx = ShellCtx(egg: self) { gate.open() }
+        // the friend's own keep-clear box: wide friends (an elephant's ears) need more than the default
+        let fb = critter.bounds
+        let half = fb.isEmpty ? 75 : max(75, (max(-Double(fb.minX), Double(fb.maxX)) + 4).rounded(.up))
+        let ctx = ShellCtx(egg: self, clearHalfWidth: half) { gate.open() }
         Task { @MainActor in
             await effect.run(ctx)
             gate.open()
@@ -465,11 +468,14 @@ final class ShellCtx {
     private let onRelease: @MainActor () -> Void
     let ground = 48.0
     let bounds = (left: -330.0, right: 330.0, top: -480.0, bottom: 230.0)
+    /// the friend's keep-clear box (egg-local): at least x ∈ [-75, 75], wider for a wide friend
+    let clear: (l: Double, r: Double, t: Double, b: Double)
     let reduce: Bool
 
-    init(egg: Egg, release: @escaping @MainActor () -> Void) {
+    init(egg: Egg, clearHalfWidth: Double = 75, release: @escaping @MainActor () -> Void) {
         self.egg = egg
         onRelease = release
+        clear = (l: -clearHalfWidth, r: clearHalfWidth, t: -200, b: 60)
         reduce = GC.reduceMotion
     }
 

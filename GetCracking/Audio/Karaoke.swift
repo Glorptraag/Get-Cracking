@@ -72,10 +72,15 @@ enum Karaoke {
         "celesta": { k, n, t, _, g, _ in k.glock(n, t, 0.9, 0.04 * g) },
     ]
 
-    /// The friend to sing: this one, or (a settings preview, a photo) any friend.
+    /// Who may sing a preview or a photo's song: set by the app to the friends this family owns
+    /// (so a settings preview never plays a locked pack friend). Empty = anyone.
+    nonisolated(unsafe) static var previewPool: [String] = []
+
+    /// The friend to sing: this one, or (a settings preview, a photo) a friend from the owned pool.
     static func pick(_ friend: String?) -> String {
         if let f = friend, KaraokeData.friends[f] != nil { return f }
-        return GC.pick(KaraokeData.friends.keys.sorted())
+        let pool = previewPool.filter { KaraokeData.friends[$0] != nil }
+        return GC.pick(pool.isEmpty ? KaraokeData.friends.keys.sorted() : pool)
     }
 
     /// Arrange the song for this friend and hand it to the synth; returns its

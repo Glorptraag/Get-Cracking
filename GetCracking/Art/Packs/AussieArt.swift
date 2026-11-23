@@ -55,6 +55,7 @@ enum AussieArt {
         p.ears["bilby"] = earsBilby
         p.back["galahCrest"] = backGalahCrest
         p.back["cockyCrest"] = backCockyCrest
+        p.back["paddleTail"] = backPaddleTail
         p.back["kookaTail"] = backKookaTail
         p.back["echidnaSpines"] = backEchidnaSpines
         p.back["patagium"] = backPatagium
@@ -156,6 +157,19 @@ enum AussieArt {
     }
 
     /// kookaburra: a rufous barred tail cocked up behind
+    /// platypus: a broad, flat, furry paddle tail sticking out behind, low down
+    private static func backPaddleTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.tailColor ?? d.body
+        let pd = "M\(w * 0.55),\(-h * 0.14) C\(w + 6),\(-h * 0.2) \(w + 22),\(-h * 0.3) \(w + 30),\(-h * 0.22) " +
+            "C\(w + 38),\(-h * 0.14) \(w + 36),\(-h * 0.02) \(w + 26),1 C\(w + 16),4 \(w + 4),0 \(w * 0.6),-2 Z"
+        let bars = [0.0, 1.0].map { i -> VNode in
+            let n = nPath("M\(w + 10 + i * 10),\(-h * 0.22 + 4) l4,\(h * 0.17)", rcap(O, 3))
+            n.opacity = 0.18
+            return n
+        }
+        return [tail([nPath(pd, .f(c)), nGroup(bars, clip: SVGPath.parse(pd)), nPath(pd, St.o(6))])]
+    }
+
     private static func backKookaTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
         let w = k.w, h = k.h, tc = d.tailColor ?? "#c46f3c"
         let pd = "M\(w * 0.3),\(-h * 0.16) Q\(w + 4),\(-h * 0.5) \(w + 18),\(-h * 0.76) Q\(w + 34),\(-h * 0.8) \(w + 36),\(-h * 0.6) Q\(w + 22),\(-h * 0.3) \(w * 0.5),\(-h * 0.02) Z"
@@ -488,7 +502,6 @@ enum AussieArt {
             $0.nose = "wombat"; $0.noseColor = "#4f403c"; $0.mouth = "under"; $0.front = ["claws"]; $0.armColor = "#8f7868"; $0.feetColor = "#8f7868"; $0.faceY = 0.6
         },
         AnimalDef("platypus", "Platypus", "#94694a") {
-            // the web names a "paddleTail" no pack defines, so it draws no tail; kept the same here
             $0.shape = "wide"; $0.belly = "#d9b48c"; $0.back = ["paddleTail"]; $0.tailColor = "#7a5538"
             $0.muzzle = "platyBill"; $0.muzzleColor = "#6d7383"; $0.nose = "none"; $0.mouth = "none"; $0.feet = "webbed"; $0.feetColor = "#6d7383"; $0.armColor = "#7f5a3f"; $0.faceY = 0.62
         },

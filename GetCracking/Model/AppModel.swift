@@ -409,6 +409,7 @@ final class AppModel {
         // until StoreKit answers (a moment after launch), go by what it said last time
         let gate = FeatureGate(ownsWholeNest: EntitlementStore.lastKnownHasNest)
         bag = ShuffleBag(key: "gc.bag.v1", items: gate.friendPool(packsOff: s.packsOff))
+        Karaoke.previewPool = gate.friendPool(packsOff: [])
         let sb = ShuffleBag(key: "gc.scenebag.v1", items: gate.scenePool(packsOff: s.packsOff))
         sceneBag = sb
         let pending = gate.effectiveScene(s.scene) == "random" ? sb.next() : s.scene
@@ -434,6 +435,7 @@ final class AppModel {
     func applyOwnership() {
         let g = gate
         bag.setItems(g.friendPool(packsOff: settings.packsOff))
+        Karaoke.previewPool = g.friendPool(packsOff: [])
         sceneBag.setItems(g.scenePool(packsOff: settings.packsOff))
         if run == nil {
             // the next world must be one this family owns (and the one they picked, if they own it)

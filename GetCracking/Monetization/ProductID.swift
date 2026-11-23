@@ -20,6 +20,7 @@ enum ProductID {
 enum LegalLinks {
     /// Apple's standard licence agreement. Swap for your own hosted terms if you publish them.
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    /// PLACEHOLDER: replace with your hosted privacy policy.
-    static let privacyPolicy = URL(string: "https://example.com/get-cracking/privacy")!
+    /// The policy page hosted with the web app (privacy.html on main, deployed by Vercel).
+    /// Check it opens before submitting; change it here and in App Store Connect if the domain differs.
+    static let privacyPolicy = URL(string: "https://getcrackingkids.vercel.app/privacy.html")!
 }

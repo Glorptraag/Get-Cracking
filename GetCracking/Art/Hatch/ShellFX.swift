@@ -20,7 +20,7 @@ import SwiftUI
 /// After release the friend jumps from the egg's centre up to y ≈ -190 and
 /// lands at (0, ctx.ground) in ~1.1 s. Keep the friend visible:
 ///   - anything in ctx.front draws OVER the friend: by ~400 ms after
-///     release, front pieces must be clear of the box x ∈ [-75, 75],
+///     release, front pieces must be clear of ctx.clear (at least x ∈ [-75, 75], wider for a wide friend),
 ///     y ∈ [-200, 60]; move lingering pieces to ctx.back or off to the sides.
 ///   - anything in ctx.back draws behind the friend (rubble, shadows).
 ///

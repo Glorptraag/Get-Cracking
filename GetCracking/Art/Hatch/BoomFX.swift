@@ -14,7 +14,6 @@ private let BURST_S = 1.2        // inflation at the moment of bursting
 private let GRAV = 2500.0        // px/s²
 private let DT = 1.0 / 60
 private let MAX_T = 2.15         // s — every shard is done by then
-private let BOX = (l: -75.0, r: 75.0, t: -200.0, b: 60.0) // keep-clear box (front layer)
 
 // MARK: geometry
 
@@ -250,8 +249,8 @@ private func simulate(_ sh: Shard, _ v: Vel, _ depth: Double) -> Sim {
     return Sim(frames: frames, events: events, resting: resting, out: out, X: X, Y: Y, depth: depth)
 }
 
-/// do any frames after tFrom put the shard inside the keep-clear box?
-private func crossesBox(_ frames: [Frame], _ r: Double, _ tFrom: Double) -> Bool {
+/// do any frames after tFrom put the shard inside the keep-clear box (ctx.clear)?
+private func crossesBox(_ frames: [Frame], _ r: Double, _ tFrom: Double, _ BOX: (l: Double, r: Double, t: Double, b: Double)) -> Bool {
     for f in frames where f.t >= tFrom {
         if f.X + r > BOX.l && f.X - r < BOX.r && f.Y + r > BOX.t && f.Y - r < BOX.b { return true }
     }
@@ -388,7 +387,7 @@ struct BoomFX: ShellEffect {
             let fromBox = 0.38 // s after release
             var sim = simulate(s, v, max(ctx.rand(52, 70), s.y0 + 30))
             s.layer = ctx.front
-            if crossesBox(sim.frames, s.r, fromBox) || (sim.resting && abs(sim.X) - s.r < 82) {
+            if crossesBox(sim.frames, s.r, fromBox, ctx.clear) || (sim.resting && abs(sim.X) - s.r < ctx.clear.r + 7) {
                 sim = simulate(s, v, max(ctx.rand(-15, 36), s.y0 + lowest(s.pts, 0) + 4))
                 s.layer = ctx.back
             }

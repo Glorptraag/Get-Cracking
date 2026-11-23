@@ -447,9 +447,11 @@ struct NextUpSection: View {
                     }
                     .buttonStyle(PressDown())
                 }
+                // read on the main actor here: PhotosPicker's label closure is Sendable
+                let hasPhoto = model.settings.nextUp.photo != nil
                 PhotosPicker(selection: $pick, matching: .images) {
-                    Text(model.settings.nextUp.photo == nil ? "📷" : "🖼️").font(.system(size: 24)).frame(width: 46, height: 46)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(model.settings.nextUp.photo == nil ? Theme.cream : Theme.gold))
+                    Text(hasPhoto ? "🖼️" : "📷").font(.system(size: 24)).frame(width: 46, height: 46)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(hasPhoto ? Theme.gold : Theme.cream))
                         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.out, lineWidth: 3))
                 }
                 .accessibilityLabel("Use a photo")
