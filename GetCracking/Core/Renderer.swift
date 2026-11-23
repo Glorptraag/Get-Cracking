@@ -72,7 +72,7 @@ enum Renderer {
             let r: CGFloat = max(1.5, size * 0.07)
             for k in 0..<8 {
                 let a = Double(k) / 8 * 2 * .pi
-                c.draw(outline, at: CGPoint(x: at.x + r * cos(a), y: at.y + r * sin(a)), anchor: .bottomLeading)
+                c.draw(outline, at: CGPoint(x: at.x + r * CGFloat(cos(a)), y: at.y + r * CGFloat(sin(a))), anchor: .bottomLeading)
             }
             c.draw(face, at: at, anchor: .bottomLeading)
 
