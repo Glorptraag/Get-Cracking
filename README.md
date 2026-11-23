@@ -68,6 +68,8 @@ js/samples.js         loads the recorded sounds in sounds/ (falls back to synth 
 js/audio.js           Web Audio music, sfx, short end jingles, the friend's name
 js/band.js            the three animal bands: instruments, animal voices, songs; the shared song player
 js/karaoke.js         Egg karaoke: the friend sings or plays along, five world arrangements
+js/packs.js           content packs: registers a pack's friends, parts, worlds and sounds
+js/packs/*.js         one file per pack (Aussie Bush, Christmas)
 js/store.js           localStorage settings / friend book, IndexedDB photos
 js/app.js             timer state machine, gestures, settings UI
 sw.js, manifest.webmanifest, icons/   offline PWA
@@ -93,6 +95,7 @@ These use the Playwright and Chromium that come with the dev environment. No ins
 node tests/timer.test.js            # fake-clock timer stress test (~10 min)
 node tests/audio.test.js out/       # renders every tune + track to WAV and checks them
 node tests/hatch.test.js out/       # every hatch style in the real app, CPU throttled 4×
+node tests/packs.test.js out/       # every content pack in the real app (+ contact sheets)
 ```
 
 - **Timer:** finishes within 50 ms on a 5-minute timer. Every crack lands within 8 ms of its landmark. Also covers a 60-minute run, pause and resume, ±1 minute with a 5-second floor, the tap-to-hatch wait, a throttled hidden tab, and start/stop abuse.
@@ -110,6 +113,18 @@ node tests/hatch.test.js out/       # every hatch style in the real app, CPU thr
   - stopping mid-hatch is clean, and the DOM doesn't grow over 15 back-to-back hatches
   - the reduced-motion versions finish in under 1.5 s
   - in the real app, Egg karaoke is the default: the friend plays its part with its recorded sound, its extra sound and call play, the band is the recorded instruments, and the friend bops along
+
+## Content packs
+
+The 40 friends and 10 worlds are the **Classic** pack. Other packs live in `js/packs/<id>.js` and add friends, worlds and sounds with one `GC.Packs.register({...})` call, without editing the core files (the full shape is at the top of `js/packs.js`):
+
+- **friends** use the same parts as the Classic 40, plus their own: `GC.Animals.parts.<layer>[name] = (d, k) => markup` (layers: ears, back, marks, front, over, eyes, muzzle, nose, mouth, arms, feet). Each friend names its `call` (animal bands) and its `karaoke` world and stand-in voice.
+- **worlds** have the same shape as `js/scenes.js`, using the props and helpers in `GC.Scenes.kit`; new particle kinds go in `GC.Scenes.PARTICLES`.
+- **sounds**: new calls with a synth stand-in, Egg karaoke worlds, chirps and instruments. Each pack's ElevenLabs prompts live in `tools/packs/<id>.sounds.json` and `tools/packs/<id>.karaoke.json`. The pick tools only add to `sounds/index.json` when given a pack manifest, so packs never undo each other.
+
+In settings ("Who hatches?") a grown-up can switch any pack off, and then its friends and worlds leave the shuffle (Christmas only in December, say). The friend book is grouped by pack. On the web every pack is free. The App Store app (branch `ios-swiftui`) is a free download with a one-time unlock, The Whole Nest, which opens every pack now and in future; the friends and worlds marked `starter` in `js/animals.js` and `js/scenes.js` are its free set.
+
+`tests/packs.test.js` checks every pack in the real app. Each friend must render cleanly at a sensible size, have its call and karaoke world, and play through Egg karaoke and an animal band. Each world must build. A pack friend must hatch, show up in the friend book, and leave the shuffle when its pack is off. It warns about any missing recording and writes contact sheets to `out/packs-<id>.png`.
 
 ## Adding a hatch style
 
