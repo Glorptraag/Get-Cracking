@@ -220,17 +220,12 @@ Sandbox account: ASC → **Users and Access** → **Sandbox** → **Test Account
 
 ---
 
-## Parity gaps before launch
-What the web app (`main`) has that the iPhone app doesn't yet, from `.parity/PARITY.md` and `git log origin/ios-swiftui..origin/main`. Decide which must ship in 1.0; the rest can follow (every update is also a reason for parents to look at the app again).
+## Parity with the web app
+The iPhone app matches the web app (`main`) up to `0fbc670`: Egg karaoke, the egg-timer dial, the big clock, drawn icons and the plain cracks are all ported (see `.parity/PARITY.md`). Still to come, after they land on the web:
 
-| Web feature | Web commit(s) | iPhone today | Suggestion |
-|---|---|---|---|
-| **Egg karaoke**: the hatched friend sings its own song, in its own key, with a full band (now the web's default hatching song) | 464ee4e, c16c242, d0bb03b, 6364d23, 0fbc670 | Missing | Strong 1.0 candidate: it is the web's headline feature. Decide whether it's free or part of The Whole Nest (suggest free, as the default song). |
-| **Egg-timer dial** setup screen (twist ring, −/+ hold-repeat) and plain Start button | 2f810aa | Digit dials, minute slider, presets | Nice to have; the current screen works. |
-| **Big centred clock** on the timer screen | 982859f | Older time pill | Small port; good for screenshots. |
-| **Drawn icons** instead of emoji | 982859f | Emoji | Nice to have; emoji render fine on iPhone. |
-| **Plain deepening cracks** (CRACK_W_BY_STEP) | 982859f | Earlier crack style | Small port. |
-| **Content packs: pack on/off toggles and pack-grouped friend book** | 8e30287 (session branch) | Registry, gating and grouped friend book ported here; per-pack on/off toggles not yet | Port toggles when the first new pack lands. |
-| **Aussie Bush and Christmas packs** | being built on the web now | Missing | Port after they land on the web; they unlock automatically for Whole Nest owners. The description says they're "coming". |
+| Web feature | iPhone today | Plan |
+|---|---|---|
+| **Content packs: pack on/off toggles** | Registry, gating and pack-grouped friend book are in; per-pack on/off toggles not yet | Port toggles when the first new pack lands. |
+| **Aussie Bush and Christmas packs** (web draft, not on `main` yet) | Missing | Port after they land on the web; they unlock automatically for Whole Nest owners. The store text does not name them until they are in the app. |
 
-Also fixed on this branch: the iPhone app on `ios-swiftui` did not compile (the audio port's module-wide `typealias Path` hid SwiftUI's `Path`). It is renamed `PitchPath`; the CI build on this branch is the first green compile of the app.
+Also fixed on the way: the iPhone app on `ios-swiftui` did not compile (the audio port's module-wide `typealias Path` hid SwiftUI's `Path`). It is renamed `PitchPath`; the CI build on this branch is the first green compile of the app.

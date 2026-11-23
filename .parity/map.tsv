@@ -21,3 +21,5 @@ css/app.css	GetCracking/Art/Loops.swift	Visual style
 js/band.js	GetCracking/Audio/Band.swift	Animal bands
 js/samples.js	GetCracking/Audio/Sound.swift	Recorded sounds
 sounds/index.json	GetCracking/Resources/Sounds/	Recorded sounds
+js/karaoke.js	GetCracking/Audio/Karaoke.swift	Egg karaoke
+js/icons.js	GetCracking/Art/Icons.swift	Drawn icons

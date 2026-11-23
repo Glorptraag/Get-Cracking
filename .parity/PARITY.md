@@ -4,6 +4,8 @@
 
 **Never merge the SwiftUI branch.** Claude never merges `ios-swiftui` anywhere, and never merges a port PR into it: the owner reviews, builds in Xcode and merges every `parity/to-mac-*` PR themselves. (The skill calls the native side "mac"; here it is the iPhone app, iOS 17.)
 
+**Sync point.** As of 2026-11-23 everything on `main` up to `0fbc670` is ported (`WEB_SYNCED`). That port was made on `claude/peaceful-heisenberg-jgwkwu` rather than a `parity/to-mac-*` branch, because the cloud session could only push there; it is a draft PR into `ios-swiftui` like any other port.
+
 **Where these notes live.** The repo has two real branches: `main` (the web app, live on Vercel) and `ios-swiftui` (the Swift app for the App Store). These notes live in `ios-swiftui:.parity/` (outside `GetCracking/`, so they never ship in the app). Claude never commits to `ios-swiftui`, so each notes update rides in its port PR (`parity/to-mac-*`) and lands when the owner merges it. There is no `parity-state` branch on GitHub any more.
 
 The shared parity script reads its state from a `parity-state` branch, so each run builds a local, never-pushed one from the newest notes: the newest unmerged `origin/parity/to-mac-*` branch if there is one, otherwise `origin/ios-swiftui`:
@@ -23,10 +25,10 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Feature | web | mac | notes |
 |---|---|---|---|
 | Timer | done | done | state machine, pause, ±1 min with a 5 s floor, tap-to-hatch wait, keep screen awake |
-| Setup screen | done | partial | web has the egg-timer dial (twist ring, −/+ hold-repeat, arrow keys) from 2f810aa; iPhone still has digit dials, a minute slider and presets |
-| Timer screen | done | partial | web has the big centred mm:ss clock from 982859f; iPhone has the older time pill |
-| Drawn icons | done | missing | web replaced emoji with drawn icons (js/icons.js, 982859f); the iPhone app was ported before that |
-| Egg and cracking | done | partial | web has plain deepening cracks (CRACK_W_BY_STEP, 982859f); iPhone has the earlier crack style |
+| Setup screen | done | done | egg-timer dial (twist ring, −/+ hold-repeat, 15 s to 60 min, quick times 1/2/5/10/15/30), plain Start button. Ported in claude/peaceful-heisenberg-jgwkwu |
+| Timer screen | done | done | big centred m:ss clock. Ported in claude/peaceful-heisenberg-jgwkwu |
+| Drawn icons | done | done | js/icons.js → Art/Icons.swift (`IconView`). The paywall, parental gate and Whole Nest row (iPhone-only) still use a few emoji. Ported in claude/peaceful-heisenberg-jgwkwu |
+| Egg and cracking | done | done | plain deepening cracks (`EggArt.crackWByStep`). Ported in claude/peaceful-heisenberg-jgwkwu |
 | Hatch styles | done | done | Roll away, Kaboom, Crumble |
 | 40 friends | done | done | |
 | 10 worlds | done | done | |
@@ -41,9 +43,9 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Visual style | done | done | |
 | Shared helpers | done | done | |
 | Offline / install | done | n/a | PWA service worker on web; a native app is offline by nature |
-| Egg karaoke | done | missing | web 464ee4e..0fbc670: the hatched friend sings its own song with a full band (web default hatching song) |
+| Egg karaoke | done | done | web 464ee4e..0fbc670. Free and the default hatching song on both sides; 99 recordings bundled as `kara-*.mp3`. Ported in claude/peaceful-heisenberg-jgwkwu |
 | Content packs | done | partial | web 8e30287 (js/packs.js). iPhone: `Monetization/Packs.swift` registry (Classic pack with starter flags, friend book grouped by pack) in parity/to-mac-20261123-store; per-pack on/off toggles not yet. Aussie Bush and Christmas packs still to port |
-| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
+| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Animal band + jingles, 1 photo friend. Parental gate (Restore Purchases is only on the paywall, behind it), locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
 
 ## Idioms
 
@@ -60,3 +62,11 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 - Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac). Cloud runs compile-check on GitHub's macOS runner: `.github/workflows/getcracking-ios-build.yml` builds every push to a branch that touches the app (from parity/to-mac-20261123-store on), and runs `Tests/GateChecks` (StoreKit-free gate decisions).
 - Never declare a module-wide `typealias` that shadows a SwiftUI or Foundation name: the audio port's `typealias Path` hid SwiftUI's `Path` (now `PitchPath`).
 - Web `starter: true` / `pack` on friends and worlds → `Packs.swift` (`Pack.starterFriends`, `starterScenes`); `GC.Packs.register` → a new `Pack` entry in `Packs.list` plus the art. Store gating (`FeatureGate`) is iPhone-only.
+- Egg karaoke (js/karaoke.js) → `Audio/Karaoke.swift`, played through the existing celebration bus, so stop, ducking under the voice line and the room all apply. Recordings: `sounds/karaoke/<kind>/<id>.mp3` → `kara-<kind>-<id>.mp3`. The pitches from `sounds/index.json` are Swift tables in Karaoke.swift: update them by hand when recordings change.
+- Web lazy-loads a friend's karaoke recordings (`preloadFriend`) → natively all recordings decode in the background at audio start, and anything missing falls back to the synth kit.
+- Web `Sound.onSing` callback from the audio clock → sing cues are worked out when the song is arranged and handed to `Sound.shared.onSing` on the main thread (`Egg.sing` bops the friend); the render callback never dispatches.
+- Drawn icons: `js/icons.js` → `Art/Icons.swift`, drawn by the VNode renderer (`IconView(name, size:)`). `Sound.Choice.icon` and settings saved by older builds still hold emoji; `Icons.resolve` / `Icons.splitLabel` map them to icon names at display time.
+- A drawn icon inside a sentence (web `{lock}` in settings copy) → the word "lock": a Canvas icon can't sit inside a SwiftUI `Text`.
+- Dial tick sound + `navigator.vibrate` → `.sensoryFeedback(.selection)`. Arrow keys → `.accessibilityAdjustableAction`.
+- Crack width changes are instant (VNode has no stroke-width animation); the web eases them over 0.5 s.
+- Web-only, skipped: keyboard shortcuts, focus rings, the landscape layout (the app is portrait-only), the full-screen toggle.
