@@ -19,10 +19,13 @@ enum ChristmasWorld {
     static func lights(_ a: Pt, _ b: Pt, _ sag: Double, _ n: Int, _ rot: Int = 0) -> [VNode] {
         let c: Pt = ((a.0 + b.0) / 2, (a.1 + b.1) / 2 + sag)
         let pts = Array(X.along(a, c, b, n + 1).dropFirst().dropLast())
-        return [nPath("M\(a.0),\(a.1) Q\(c.0),\(c.1) \(b.0),\(b.1)", plain(O, 2))] + pts.enumerated().map { i, p in
-            nEllipse(p.0, p.1 + 4, 3.6, 4.6, St(fill: LIGHTS[(i + rot) % 4], stroke: O, width: 2))
-                .looping(Loops.twinkle(1.6 + Double((i * 7 + rot) % 5) * 0.35, delay: -Double(i) * 0.37))
+        var out: [VNode] = [nPath("M\(a.0),\(a.1) Q\(c.0),\(c.1) \(b.0),\(b.1)", plain(O, 2))]
+        for (i, p) in pts.enumerated() {
+            let td = 1.6 + Double((i * 7 + rot) % 5) * 0.35
+            out.append(nEllipse(p.0, p.1 + 4, 3.6, 4.6, St(fill: LIGHTS[(i + rot) % 4], stroke: O, width: 2))
+                .looping(Loops.twinkle(td, delay: -Double(i) * 0.37)))
         }
+        return out
     }
 
     /// a little house: snowy roof, warm window, wreath on the door, fairy lights
@@ -84,12 +87,13 @@ enum ChristmasWorld {
             nPath("M\(x - ww),\(yy) L\(x),\(yy - hh) L\(x + ww),\(yy) Q\(x),\(yy + 7 * s) \(x - ww),\(yy) Z", so(col))
         }
         let balls: [(Double, Double, String)] = [(-22, -30, X.BERRY), (18, -34, X.GOLD), (-12, -62, "#7fd8ff"), (14, -66, X.BERRY), (0, -92, X.GOLD), (-26, -8, X.GOLD), (24, -10, "#7fd8ff")]
-        return nGroup([
+        var kids: [VNode] = [
             nRect(x - 6 * s, y - 14 * s, 12 * s, 16 * s, rx: 3, so("#8a5a3b")),
             t(y - 10 * s, 40 * s, 46 * s, "#3f8a5a"), t(y - 42 * s, 32 * s, 42 * s, "#4f9a62"), t(y - 72 * s, 23 * s, 38 * s, "#5aa86c"),
-        ] + balls.map { dx, dy, c in nCircle(x + dx * s, y + dy * s, 4.6 * s, so(c, 2.5)) } + [
-            nPolygon(X.starPts(x, y - 112 * s, 12 * s, 5.5 * s), so(X.GOLD, 3.5)),
-        ]).looping(Loops.sway(7))
+        ]
+        for (dx, dy, c) in balls { kids.append(nCircle(x + dx * s, y + dy * s, 4.6 * s, so(c, 2.5))) }
+        kids.append(nPolygon(X.starPts(x, y - 112 * s, 12 * s, 5.5 * s), so(X.GOLD, 3.5)))
+        return nGroup(kids).looping(Loops.sway(7))
     }
 
     /// a gift box
@@ -169,41 +173,76 @@ enum ChristmasWorld {
     // MARK: the world
 
     static let scenes: [SceneDef] = {
-        typealias S = Scenes
         var v = SceneDef(id: "xmasvillage", name: "Christmas Village", bg: "#34406c", ring: "#ffd86b", particles: "snowflakes",
                          top: "#f4f8fb", left: "#9b7a68", right: "#7d5f50", lip: "#e6eef4")
         v.dark = true
-        v.sky = { P.stars() + bigStar(300, 58) }
-        v.ground = {
-            [nPath("M120,240 Q118,170 140,120 T120,0", rcap("#dbe5ee", 26))] +
-                [(132.0, 200.0), (124, 172), (136, 146), (128, 118)].enumerated().map { i, p in nEllipse(p.0 + Double(i % 2) * 8, p.1, 3.5, 5, .f("#c9d8e4")) } +
-                [nEllipse(44, 190, 26, 16, .f("#e3ecf4")), nEllipse(200, 44, 22, 14, .f("#e3ecf4"))]
-        }
-        v.leftSide = { r, c in
-            [nRect(0, 12, 240, 10, St.f("#dfeaf2").op(0.5))] + S.roots(r, "#6b4c3e", 2) +
-                mouseHole(76, 70, 22, 30, c) + S.pebbles(r, "#86685a", 8) + lights((4, 26), (236, 26), 12, 9, 1)
-        }
-        v.rightSide = { r, c in
-            [nRect(0, 12, 240, 10, St.f("#dfeaf2").op(0.4))] + cellar(150, 68, 52, 30, c) + S.pebbles(r, "#6b5044", 7) +
-                S.icicles() + lights((4, 30), (236, 30), 12, 9, 2)
-        }
-        v.sideCritters = {
-            [peekMouse(S.leftPt(76, 100)), stocking(S.leftPt(116, 64))] +
-                gift(S.rightPt(126, 92), 0.62, X.BERRY, X.GOLD) + gift(S.rightPt(156, 90), 0.55, "#4f9a62", "#fbfdff") +
-                gift(S.rightPt(176, 86), 0.45, "#7fb6d8", X.BERRY) + [P.candle(S.rightPt(102, 94).0, S.rightPt(102, 94).1, 0.6)]
-        }
-        v.back = {
-            [P.pine(226, 290, 0.75, "#4f8f6a", "#6aaa84", snow: true), P.pine(380, 292, 0.7, "#4f8f6a", "#6aaa84", snow: true)] +
-                church(300, 284, 1.32) +
-                house(164, 338, 1.32, "#c4674a", "#5a4660", true, false) + house(438, 340, 1.25, "#6f8fa6", "#4a3a4a", true, true) +
-                gift(246, 318, 0.8, "#f2a0b8", "#fbfdff") + lamp(360, 322, 0.85)
-        }
-        v.front = {
-            [xmasTree(100, 404, 0.62)] + gift(502, 404, 0.9, X.BERRY, X.GOLD) + gift(480, 412, 0.65, "#4f9a62", "#fbfdff") +
-                gift(204, 436, 0.6, "#7fb6d8", X.BERRY) + [P.snowman(424, 438, 0.85)]
-        }
+        v.sky = sky
+        v.ground = ground
+        v.leftSide = leftSide
+        v.rightSide = rightSide
+        v.sideCritters = sideCritters
+        v.back = back
+        v.front = front
         return [v]
     }()
+
+    private static func sky() -> [VNode] { P.stars() + bigStar(300, 58) }
+
+    private static func ground() -> [VNode] {
+        var out: [VNode] = [nPath("M120,240 Q118,170 140,120 T120,0", rcap("#dbe5ee", 26))]
+        let prints: [(Double, Double)] = [(132, 200), (124, 172), (136, 146), (128, 118)]
+        for (i, p) in prints.enumerated() { out.append(nEllipse(p.0 + Double(i % 2) * 8, p.1, 3.5, 5, .f("#c9d8e4"))) }
+        out.append(nEllipse(44, 190, 26, 16, .f("#e3ecf4")))
+        out.append(nEllipse(200, 44, 22, 14, .f("#e3ecf4")))
+        return out
+    }
+
+    private static func leftSide(_ r: RNG, _ c: String) -> [VNode] {
+        var out: [VNode] = [nRect(0, 12, 240, 10, St.f("#dfeaf2").op(0.5))]
+        out += Scenes.roots(r, "#6b4c3e", 2)
+        out += mouseHole(76, 70, 22, 30, c)
+        out += Scenes.pebbles(r, "#86685a", 8)
+        out += lights((4, 26), (236, 26), 12, 9, 1)
+        return out
+    }
+
+    private static func rightSide(_ r: RNG, _ c: String) -> [VNode] {
+        var out: [VNode] = [nRect(0, 12, 240, 10, St.f("#dfeaf2").op(0.4))]
+        out += cellar(150, 68, 52, 30, c)
+        out += Scenes.pebbles(r, "#6b5044", 7)
+        out += Scenes.icicles()
+        out += lights((4, 30), (236, 30), 12, 9, 2)
+        return out
+    }
+
+    private static func sideCritters() -> [VNode] {
+        var out: [VNode] = [peekMouse(Scenes.leftPt(76, 100)), stocking(Scenes.leftPt(116, 64))]
+        out += gift(Scenes.rightPt(126, 92), 0.62, X.BERRY, X.GOLD)
+        out += gift(Scenes.rightPt(156, 90), 0.55, "#4f9a62", "#fbfdff")
+        out += gift(Scenes.rightPt(176, 86), 0.45, "#7fb6d8", X.BERRY)
+        let cp = Scenes.rightPt(102, 94)
+        out.append(P.candle(cp.0, cp.1, 0.6))
+        return out
+    }
+
+    private static func back() -> [VNode] {
+        var out: [VNode] = [P.pine(226, 290, 0.75, "#4f8f6a", "#6aaa84", snow: true), P.pine(380, 292, 0.7, "#4f8f6a", "#6aaa84", snow: true)]
+        out += church(300, 284, 1.32)
+        out += house(164, 338, 1.32, "#c4674a", "#5a4660", true, false)
+        out += house(438, 340, 1.25, "#6f8fa6", "#4a3a4a", true, true)
+        out += gift(246, 318, 0.8, "#f2a0b8", "#fbfdff")
+        out += lamp(360, 322, 0.85)
+        return out
+    }
+
+    private static func front() -> [VNode] {
+        var out: [VNode] = [xmasTree(100, 404, 0.62)]
+        out += gift(502, 404, 0.9, X.BERRY, X.GOLD)
+        out += gift(480, 412, 0.65, "#4f9a62", "#fbfdff")
+        out += gift(204, 436, 0.6, "#7fb6d8", X.BERRY)
+        out.append(P.snowman(424, 438, 0.85))
+        return out
+    }
 
     // MARK: particles
 

@@ -154,438 +154,554 @@ enum ChristmasArt {
 
     static let parts: AnimalParts = {
         var p = AnimalParts()
-
-        // back
-        /// Christmas Tree Cookie: three tiers of branches behind the bean
-        p.back["treeTiers"] = { d, k in
-            let w = k.w, c = sh(d.body, -0.07)
-            var out: [VNode] = []
-            for (by, hw, ay) in [(-10.0, w + 30, -86.0), (-56, w + 22, -132), (-100, w + 8, -176)] {
-                out.append(nPath("M\(-hw),\(by) L0,\(ay) L\(hw),\(by) Q0,\(by + 8) \(-hw),\(by) Z", A.S(c)))
-                // icing dots and sprinkles on the tips that show
-                out += both { s in [
-                    nCircle(s * (hw - 12), by - 4, 3.4, .f(ICING)),
-                    nCircle(s * (hw - 26), by - 13, 3, St(fill: s < 0 ? BERRY : GOLD, stroke: O, width: 2)),
-                ] }
-            }
-            return out
-        }
-        /// Shortbread Star: five rounded points behind the bean, with piped icing
-        p.back["starPoints"] = { d, _ in
-            let pts = starPts(0, -78, 96, 50), icing = starPts(0, -78, 80, 43)
-            return [
-                nPolygon(pts, St(fill: O, stroke: O, width: 22, join: .round)),
-                nPolygon(pts, St(fill: d.body, stroke: d.body, width: 10, join: .round)),
-                nPolygon(icing, St(stroke: ICING, width: 4.5, cap: .round, join: .round).dashed([0.5, 9])),
-            ]
-        }
-        /// Christmas Pudding sits on a plate
-        p.back["plate"] = { _, k in
-            [nEllipse(0, -3, k.w + 22, 14, A.S("#eef3f8")), nEllipse(0, -4, k.w + 8, 8, plain("#c9d6e2", 3))]
-        }
-        /// fairy wings: a big pair and a small pair
-        p.back["fairyWings"] = { d, k in
-            let w = k.w, h = k.h, c = d.wingColor ?? "#f6c6e6", hi = sh(c, 0.45)
-            return both { s in
-                let ux = s * (w + 11), uy = -h * 0.76, lx = s * (w + 5), ly = -h * 0.38
-                return [
-                    nEllipse(ux, uy, 22, 35, A.S(c)).moved(rotAbout(s * 32, ux, uy)),
-                    nEllipse(ux + s * 3, uy - 6, 9, 18, .f(hi)).moved(rotAbout(s * 32, ux, uy)),
-                    nEllipse(lx, ly, 17, 24, A.S(c)).moved(rotAbout(s * -34, lx, ly)),
-                ]
-            }
-        }
-        /// Snowflake Fairy: icy, pointed crystal wings
-        p.back["iceWings"] = { d, k in
-            let w = k.w, h = k.h, c = d.wingColor ?? "#e6f4ff"
-            return both { s in
-                let x0 = s * (w - 14), y0 = -h * 0.62
-                let pd = "M\(x0),\(y0) L\(s * (w + 10)),\(-h * 1.06) L\(s * (w + 32)),\(-h * 0.88) L\(s * (w + 21)),\(-h * 0.6) " +
-                    "L\(s * (w + 30)),\(-h * 0.36) L\(s * (w + 10)),\(-h * 0.24) Z"
-                return [
-                    nPath(pd, A.S(c)),
-                    nPath("M\(s * (w + 2)),\(-h * 0.64) L\(s * (w + 18)),\(-h * 0.88) M\(s * (w + 2)),\(-h * 0.54) L\(s * (w + 22)),\(-h * 0.38)", rcap("#ffffff", 4)),
-                ]
-            }
-        }
-        /// Angel: soft feathered wings
-        p.back["featherWings"] = { d, k in
-            let w = k.w, h = k.h, c = d.wingColor ?? "#fffaf0"
-            return both { s in
-                func X(_ v: Double) -> Double { s * v }
-                let pd = "M\(X(w - 16)),\(-h * 0.74) Q\(X(w + 24)),\(-h * 1.16) \(X(w + 40)),\(-h * 0.92) " +
-                    "Q\(X(w + 42)),\(-h * 0.8) \(X(w + 32)),\(-h * 0.74) Q\(X(w + 40)),\(-h * 0.62) \(X(w + 28)),\(-h * 0.55) " +
-                    "Q\(X(w + 33)),\(-h * 0.42) \(X(w + 18)),\(-h * 0.38) Q\(X(w + 16)),\(-h * 0.26) \(X(w - 6)),\(-h * 0.3) Z"
-                return [
-                    nPath(pd, A.S(c)),
-                    nPath("M\(X(w + 6)),\(-h * 0.76) Q\(X(w + 18)),\(-h * 0.8) \(X(w + 28)),\(-h * 0.75) M\(X(w + 4)),\(-h * 0.56) Q\(X(w + 14)),\(-h * 0.58) \(X(w + 22)),\(-h * 0.54)",
-                          rcap(sh(c, -0.18), 3)),
-                ]
-            }
-        }
-        /// a ballerina's bun on top of the head
-        p.back["bun"] = { d, k in [nCircle(0, -k.h * 1.0, 15, A.S(d.hair ?? "#4a2f45"))] }
-        /// Mouse King's royal cape
-        p.back["cape"] = { d, k in
-            let w = k.w, h = k.h
-            return [nPath("M\(-w * 0.8),\(-h * 0.62) L\(w * 0.8),\(-h * 0.62) Q\(w * 1.25),\(-h * 0.3) \(w * 1.3),-4 Q0,10 \(-w * 1.3),-4 Q\(-w * 1.25),\(-h * 0.3) \(-w * 0.8),\(-h * 0.62) Z",
-                          A.S(d.capeColor ?? "#8c2f45"))]
-        }
-        /// Reindeer antlers
-        p.back["antlers"] = { d, k in
-            let w = k.w, h = k.h, c = d.antlerColor ?? "#e6cfa3"
-            return both { s in
-                let main = "M\(s * w * 0.26),\(-h * 0.88) C\(s * w * 0.3),\(-h * 1.16) \(s * w * 0.62),\(-h * 1.26) \(s * w * 0.96),\(-h * 1.36)"
-                return A.tube(main, c, 9) +
-                    A.tube("M\(s * w * 0.4),\(-h * 1.12) Q\(s * w * 0.3),\(-h * 1.3) \(s * w * 0.2),\(-h * 1.4)", c, 8) +
-                    A.tube("M\(s * w * 0.7),\(-h * 1.28) Q\(s * w * 0.72),\(-h * 1.42) \(s * w * 0.62),\(-h * 1.52)", c, 8) +
-                    // the two pieces join cleanly: repaint the core over the outlines where they meet
-                    [nPath(main, rcap(c, 9))]
-            }
-        }
-        /// Robin: a little tail tipped up behind
-        p.back["robinTail"] = { d, k in
-            let w = k.w, h = k.h
-            return [nGroup([nPath("M\(w * 0.6),\(-h * 0.18) Q\(w + 4),\(-h * 0.44) \(w + 14),\(-h * 0.56) Q\(w + 26),\(-h * 0.62) \(w + 30),\(-h * 0.5) Q\(w + 36),\(-h * 0.42) \(w + 28),\(-h * 0.36) Q\(w + 14),\(-h * 0.2) \(w * 0.75),\(-h * 0.06) Z",
-                                  A.S(sh(d.body, -0.12)))]).looping(Loops.wag, idle: true)]
-        }
-        /// Christmas Beetle: short antennae with little fan-shaped clubs
-        p.back["fanAntennae"] = { d, k in
-            let w = k.w, h = k.h, c = d.antennaColor ?? O
-            return both { s in
-                let x = s * w * 0.86, y = -h * 1.2
-                return [nPath("M\(s * w * 0.4),\(-h * 0.9) Q\(s * w * 0.5),\(-h * 1.14) \(x),\(y)", rcap(O, 5))] +
-                    [-40.0, 0, 40].map { a in nEllipse(x + s * 2, y - 7, 4.5, 9, A.S4(c)).moved(rotAbout(s * 30 + a, x, y)) }
-            }
-        }
-
-        // marks (clipped inside the body)
-        /// Gingerbread Pal: a piped icing hairline
-        p.marks["gingerIcing"] = { _, k in [piped(beanPts(k.w, k.h, 0.86, 44), 2.6, ICING, 3.6)] }
-        /// Christmas Tree Cookie: icing garlands and sprinkles
-        p.marks["treeIcing"] = { _, k in
-            let w = k.w, h = k.h
-            let g1 = piped(along((-w * 1.05, -h * 0.3), (0, -h * 0.06), (w * 1.05, -h * 0.3), 10), 2.6)
-            let g2 = piped(along((-w * 0.8, -h * 0.84), (0, -h * 0.68), (w * 0.8, -h * 0.84), 8), 2.6)
-            let spr: [(Double, Double, String)] = [(-0.62, 0.17, BERRY), (0.58, 0.15, GOLD), (-0.18, 0.08, "#6fb3c9"), (0.24, 0.24, "#f2a0b8"), (-0.84, 0.5, GOLD), (0.84, 0.56, BERRY),
-                                                   (-0.3, 0.95, "#f2a0b8"), (0.34, 0.97, "#6fb3c9"), (0.02, 1.02, GOLD)]
-            return [g1, g2] + spr.enumerated().map { i, e in
-                nEllipse(e.0 * w, -e.1 * h, 2.4, 5, .f(e.2)).moved(rotAbout(Double((i * 47) % 180 - 90), e.0 * w, -e.1 * h))
-            }
-        }
-        /// Shortbread Star: sugar sparkles baked on
-        p.marks["sugar"] = { _, k in
-            [(-0.62, 0.3), (0.6, 0.32), (-0.2, 0.14), (0.26, 0.2), (-0.72, 0.7), (0.74, 0.74), (-0.3, 0.96), (0.32, 0.94), (0, 0.32), (-0.5, 0.88), (0.52, 0.86)]
-                .map { x, y in nCircle(x * k.w, -y * k.h, 2.3, St.f(ICING).op(0.9)) }
-        }
-        /// Christmas Pudding: custard poured over the top, and currants
-        p.marks["custard"] = { _, k in
-            let w = k.w, h = k.h
-            let top = -h * 0.8
-            let drips: [(Double, Double)] = [(-w - 6, 0), (-w * 0.72, 14), (-w * 0.42, 4), (-w * 0.12, 12), (w * 0.2, 2), (w * 0.5, 15), (w * 0.8, 3), (w + 6, 8)]
-            var pd = "M\(-w - 8),\(-h * 1.3) L\(-w - 8),\(top)"
-            for i in 1..<drips.count {
-                let x0 = drips[i - 1].0, (x1, dp) = drips[i]
-                pd += " Q\((x0 + x1) / 2),\(top + dp * 1.6) \(x1),\(top + (i % 2 == 1 ? 2 : -2))"
-            }
-            pd += " L\(w + 8),\(-h * 1.3) Z"
-            let currants: [(Double, Double)] = [(-0.76, 0.3), (0.72, 0.28), (-0.34, 0.13), (0.38, 0.12), (0, 0.26), (-0.86, 0.56), (0.88, 0.6), (-0.56, 0.1), (0.6, 0.48)]
-            return currants.enumerated().map { i, c in
-                nEllipse(c.0 * w, -c.1 * h, 4.5, 3.4, .f("#3a1f18")).moved(rotAbout(Double(i * 37), c.0 * w, -c.1 * h))
-            } + [
-                nPath(pd, .f("#fdf3d0")),
-                nPath("M\(-w * 0.55),\(-h * 0.94) Q\(-w * 0.3),\(-h * 1.04) 0,\(-h * 1.02)", rcap("#ffffff", 5)),
-            ]
-        }
-        /// Nutcracker: white hair, painted face, chin-strap beard, belt, white trousers
-        p.marks["nutcracker"] = { d, k in
-            let w = k.w, h = k.h, fy = faceY(d, h)
-            let hair = "#f5f0e6"
-            return [nRect(-w - 10, -h * 1.3, 2 * w + 20, h * 0.68, .f(hair))] +
-                both { s in [nCircle(s * (w - 2), -h * 0.66, 17, .f(hair))] } + [
-                    nEllipse(0, fy + 2, w * 0.68, 29, .f(d.skin ?? "#f6d2b4")),
-                    nPath("M\(-w * 0.74),\(fy - 8) Q\(-w * 0.8),\(fy + 36) 0,\(fy + 40) Q\(w * 0.8),\(fy + 36) \(w * 0.74),\(fy - 8) " +
-                        "L\(w * 0.56),\(fy - 2) Q\(w * 0.5),\(fy + 26) 0,\(fy + 28) Q\(-w * 0.5),\(fy + 26) \(-w * 0.56),\(fy - 2) Z", .f(hair)),
-                    nRect(-w - 10, -h * 0.21, 2 * w + 20, h * 0.21 + 4, .f(hair)),
-                    nRect(-w - 10, -h * 0.29, 2 * w + 20, 12, .f("#2d2a3a")),
-                    nRect(-8, -h * 0.29 - 2, 16, 16, rx: 3, St(fill: GOLD, stroke: O, width: 3)),
-                ]
-        }
+        p.back["treeTiers"] = backTreeTiers
+        p.back["starPoints"] = backStarPoints
+        p.back["plate"] = backPlate
+        p.back["fairyWings"] = backFairyWings
+        p.back["iceWings"] = backIceWings
+        p.back["featherWings"] = backFeatherWings
+        p.back["bun"] = backBun
+        p.back["cape"] = backCape
+        p.back["antlers"] = backAntlers
+        p.back["robinTail"] = backRobinTail
+        p.back["fanAntennae"] = backFanAntennae
+        p.marks["gingerIcing"] = marksGingerIcing
+        p.marks["treeIcing"] = marksTreeIcing
+        p.marks["sugar"] = marksSugar
+        p.marks["custard"] = marksCustard
+        p.marks["nutcracker"] = marksNutcracker
         /// hair and a face, for the people
         p.marks["person"] = personHead
-        /// a tutu at the waist
-        p.marks["tutu"] = { d, k in
-            let w = k.w, h = k.h, y0 = -h * 0.32, y1 = -h * 0.15, n = 7, c = d.tutu ?? "#e6c8f2"
-            var pd = "M\(-w - 6),\(y0) L\(w + 6),\(y0) L\(w + 6),\(y1)"
-            for i in 1...n {
-                let x = w + 6 - ((2 * w + 12) * Double(i)) / Double(n)
-                pd += " Q\(x + (w + 6) / Double(n)),\(y1 + 12) \(x),\(y1)"
-            }
-            var out = [nPath(pd + " Z", .f(c)), nPath("M\(-w - 6),\(y0) L\(w + 6),\(y0)", plain(sh(c, -0.2), 3))]
-            for (i, x) in [-0.6, -0.2, 0.2, 0.6].enumerated() {
-                if d.tutuFlakes {
-                    out += flake(x * w, (y0 + y1) / 2 + 1, 5.5, "#ffffff", 2.2)
-                } else {
-                    out.append(nCircle(x * w, (y0 + y1) / 2 + Double(i % 2) * 3, 2.6, St.f("#ffffff").op(0.85)))
-                }
-            }
-            return out
-        }
-        /// Angel: a gold hem on the robe
-        p.marks["hem"] = { _, k in
-            let w = k.w, h = k.h
-            return [
-                nPath("M\(-w - 6),\(-h * 0.13) Q0,\(-h * 0.06) \(w + 6),\(-h * 0.13) L\(w + 6),4 L\(-w - 6),4 Z", .f(GOLD)),
-                nPath("M\(-w - 6),\(-h * 0.09) Q0,\(-h * 0.02) \(w + 6),\(-h * 0.09)", rcap("#fff3c0", 2.5).dashed([0.5, 7])),
-            ]
-        }
-        /// Robin: the orange-red breast and face, edged in soft grey
-        p.marks["robin"] = { d, k in
-            let w = k.w, h = k.h
-            return [
-                nEllipse(0, -h * 0.47, w * 0.74, h * 0.37, plain("#b9c2cc", 8)),
-                nEllipse(0, -h * 0.47, w * 0.74, h * 0.37, .f(d.breast ?? "#ec6a3c")),
-                nEllipse(0, -h * 0.04, w * 0.6, h * 0.17, .f("#f6efe6")),
-            ]
-        }
-        /// Snowman: a soft blue shadow on the snowball
-        p.marks["snowShade"] = { d, k in
-            let w = k.w, h = k.h
-            return [nEllipse(w * 0.2, -h * 0.44, w * 1.05, h * 0.52, .f("#dde9f3")), nEllipse(-w * 0.06, -h * 0.52, w * 1.02, h * 0.5, .f(d.body))]
-        }
-        /// Christmas Beetle: a shiny green-gold head plate, wing-case seam and ribs
-        p.marks["beetle"] = { d, k in
-            let w = k.w, h = k.h, m = sh(d.body, -0.18)
-            return [
-                nEllipse(0, -h * 1.06, w * 0.86, h * 0.25, .f(d.capColor ?? "#7f9a3a")),
-                nEllipse(-w * 0.32, -h * 0.92, 14, 5, St.f("#ffffff").op(0.45)).moved(rotAbout(-18, -w * 0.32, -h * 0.92)),
-            ] + both { s in [
-                nPath("M\(s * w * 0.86),\(-h * 0.76) Q\(s * w * 1.0),\(-h * 0.4) \(s * w * 0.74),\(-h * 0.08)", rcap(m, 3.5)),
-                nPath("M\(s * w * 0.72),\(-h * 0.84) Q\(s * w * 0.82),\(-h * 0.7) \(s * w * 0.84),\(-h * 0.56)", rcap("#ffffff", 5).so(0.5)),
-            ] }
-        }
-
-        // mouth
-        /// a white piped icing smile
-        p.mouth["icingSmile"] = { d, k in
-            let my = faceY(d, k.h) + 15
-            let pd = "M-10,\(my) Q0,\(my + 10) 10,\(my)"
-            return [nPath(pd, rcap(O, 9)), nPath(pd, rcap(ICING, 4))]
-        }
-        /// the Nutcracker's big toothy grin
-        p.mouth["nutGrin"] = { d, k in
-            let my = faceY(d, k.h) + 15
-            let pd = "M-12,\(my - 3) L12,\(my - 3) Q12,\(my + 10) 0,\(my + 10) Q-12,\(my + 10) -12,\(my - 3) Z"
-            return [
-                nPath(pd, .f("#8c2f3a")),
-                nRect(-11, my - 3, 22, 5.5, .f("#ffffff")),
-                nPath("M-4,\(my - 3) L-4,\(my + 2.5) M4,\(my - 3) L4,\(my + 2.5)", plain(O, 2)),
-                nPath(pd, St.o(4.5)),
-            ]
-        }
-        /// Snowman: a smile of little coals
-        p.mouth["coal"] = { d, k in
-            let my = faceY(d, k.h) + 19
-            return [-12.0, -6, 0, 6, 12].map { x in nCircle(x, my + 5 * (1 - (x / 12) * (x / 12)), 2.8, .f(O)) }
-        }
-
-        // nose
-        /// Snowman's carrot
-        p.nose["carrot"] = { d, k in
-            let y = faceY(d, k.h) + 8
-            return [
-                nPath("M-3,\(y - 4) Q2,\(y - 6) 4,\(y - 3) L27,\(y + 5) L3,\(y + 5) Q-4,\(y + 3) -3,\(y - 4) Z", A.S4("#f29a3c")),
-                nPath("M9,\(y - 1) L10,\(y + 3) M16,\(y + 1) L16.5,\(y + 4)", rcap(O, 2)),
-            ]
-        }
-
-        // arms
-        /// Gingerbread Pal: stubby cookie arms out to the sides, iced at the ends
-        p.arms["gingerArms"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                [A.arm(s, [nGroup([
-                    nEllipse(0, 0, 13, 20, A.S(d.body)),
-                    piped([(-8, 8), (-4, 8), (0, 8), (4, 8), (8, 8)], 3, ICING, 3.2),
-                ], svgMove(s * (w + 1), -h * 0.3, rot: s * -48))])]
-            }
-        }
-        /// holds a wand in the right hand; the left one waves
-        p.arms["wand"] = { d, k in
-            let w = k.w, h = k.h
-            let tip: Pt = (w + 24, -h * 0.86)
-            let top = d.wandTop == "flake" ? flake(tip.0, tip.1, 15, "#ffffff", 4.5) : [nPolygon(starPts(tip.0, tip.1, 16, 7.5), A.S4(GOLD))]
-            return [A.arm(-1, [paw(d, k, -1)]),
-                    nGroup(A.tube("M\(w - 4),\(-h * 0.36) L\(tip.0),\(tip.1)", "#f6e7c2", 4) + top + [paw(d, k, 1)])]
-        }
-        /// both hands together in front, holding something
-        p.arms["hold"] = { d, k in
-            both { s in [nEllipse(s * 20, -k.h * 0.29, 8, 9, A.S4(d.skin ?? "#e5b48c"))] }
-        }
-        /// Mouse King holds a sceptre
-        p.arms["sceptre"] = { d, k in
-            let w = k.w, h = k.h
-            let top: Pt = (w + 14, -h * 0.82)
-            return [A.arm(-1, [paw(d, k, -1)]),
-                    nGroup(A.tube("M\(w - 8),\(-h * 0.2) L\(top.0),\(top.1)", GOLD, 5) + [
-                        nCircle(top.0, top.1, 9, A.S4(BERRY)),
-                        nCircle(top.0 - 3, top.1 - 3, 2.5, St.f("#ffffff").op(0.8)),
-                        paw(d, k, 1),
-                    ])]
-        }
-        /// Snowman's twig arms
-        p.arms["twigs"] = { _, k in
-            let w = k.w, h = k.h, c = "#8a5a3b"
-            return both { s in
-                [A.arm(s, A.tube("M\(s * (w - 8)),\(-h * 0.48) L\(s * (w + 24)),\(-h * 0.8)", c, 5) +
-                    A.tube("M\(s * (w + 12)),\(-h * 0.68) L\(s * (w + 28)),\(-h * 0.66)", c, 4) +
-                    A.tube("M\(s * (w + 24)),\(-h * 0.8) L\(s * (w + 25)),\(-h * 0.91) M\(s * (w + 24)),\(-h * 0.8) L\(s * (w + 33)),\(-h * 0.86)", c, 3.5))]
-            }
-        }
-
-        // feet
-        /// Gingerbread Pal: cookie feet with icing zigzags
-        p.feet["gingerFeet"] = { d, k in
-            both { s in
-                [nGroup([
-                    nEllipse(0, 0, 17, 11, A.S(d.body)),
-                    piped([(-9, -1), (-4.5, -1), (0, -1), (4.5, -1), (9, -1)], 3, ICING, 3.2),
-                ], tr(s * k.w * 0.42, -6))]
-            }
-        }
-
-        // front
-        /// a gold star held in front (the 'hold' arms are drawn over it)
-        p.front["heldStar"] = { _, k in
-            let y = -k.h * 0.3
-            return [nPolygon(starPts(0, y - 2, 18, 8.5), A.S4(GOLD)), nCircle(-4, y - 6, 2.4, St.f("#ffffff").op(0.8))]
-        }
-        /// Christmas Beetle: a middle pair of legs
-        p.front["midLegs"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in A.tube("M\(s * (w - 6)),\(-h * 0.5) L\(s * (w + 12)),\(-h * 0.46) L\(s * (w + 16)),\(-h * 0.36)", d.armColor ?? O, 5) }
-        }
-        /// Gingerbread Pal: gumdrop buttons
-        p.front["gumdrops"] = { _, k in
-            let h = k.h
-            return [(BERRY, 0.27), (HOLLY, 0.14)].flatMap { e -> [VNode] in
-                let (c, y) = e
-                return [
-                    nPath("M-7.5,\(-h * y + 5) Q-8,\(-h * y - 8) 0,\(-h * y - 8) Q8,\(-h * y - 8) 7.5,\(-h * y + 5) Q0,\(-h * y + 7) -7.5,\(-h * y + 5) Z", A.S4(c)),
-                    nCircle(-2.5, -h * y - 3, 1.4, St.f("#ffffff").op(0.8)),
-                    nCircle(2.5, -h * y + 1, 1.2, St.f("#ffffff").op(0.8)),
-                ]
-            }
-        }
-        /// Reindeer: a red harness with jingle bells
-        p.front["bellCollar"] = { _, k in
-            let w = k.w, h = k.h
-            let a: Pt = (-w * 0.84, -h * 0.34), c: Pt = (0, -h * 0.12), b: Pt = (w * 0.84, -h * 0.34)
-            let pts = along(a, c, b, 8)
-            return A.tube("M\(a.0),\(a.1) Q\(c.0),\(c.1) \(b.0),\(b.1)", "#d6423f", 8) +
-                [2, 4, 6].flatMap { i in bell(pts[i].0, pts[i].1 + 7, 7.5) }
-        }
-        /// Snowman: a red knitted scarf with a dangling end
-        p.front["scarf"] = { _, k in
-            let w = k.w, h = k.h, c = "#e8604f", st = "#fdfaf3"
-            let pd = "M\(-w * 0.95),\(-h * 0.4) Q0,\(-h * 0.22) \(w * 0.95),\(-h * 0.4) L\(w * 0.98),\(-h * 0.29) Q0,\(-h * 0.1) \(-w * 0.98),\(-h * 0.29) Z"
-            let tail = "M\(w * 0.36),\(-h * 0.26) L\(w * 0.62),\(-h * 0.25) L\(w * 0.66),\(-h * 0.04) L\(w * 0.4),\(-h * 0.03) Z"
-            var out = [nPath(tail, A.S(c)), nPath("M\(w * 0.4),\(-h * 0.11) L\(w * 0.65),\(-h * 0.12)", plain(st, 5))]
-            out += [0.42, 0.5, 0.58].map { x in nPath("M\(w * x + 2),\(-h * 0.03) L\(w * x + 3),\(h * 0.02)", rcap(O, 3.5)) }
-            out.append(nPath(pd, A.S(c)))
-            out += [-0.5, 0, 0.5].map { x in
-                let yt = -h * 0.4 + (1 - x * x) * h * 0.09, yb = -h * 0.29 + (1 - x * x) * h * 0.095
-                return nPath("M\(x * w - 4),\(yt + 3) L\(x * w - 4),\(yb - 3) M\(x * w + 4),\(yt + 3) L\(x * w + 4),\(yb - 3)", rcap(st, 3.5))
-            }
-            return out
-        }
-        /// Snowman: coal buttons
-        p.front["coalButtons"] = { _, k in
-            [0.2, 0.07].flatMap { y in [nCircle(0, -k.h * y, 5.5, .f(O)), nCircle(-1.6, -k.h * y - 1.6, 1.5, St.f("#ffffff").op(0.5))] }
-        }
-        /// Mouse King: an ermine collar
-        p.front["ermine"] = { _, k in
-            let w = k.w, h = k.h
-            let pd = "M\(-w * 0.9),\(-h * 0.46) Q0,\(-h * 0.3) \(w * 0.9),\(-h * 0.46) Q\(w * 0.94),\(-h * 0.34) \(w * 0.82),\(-h * 0.3) Q0,\(-h * 0.12) \(-w * 0.82),\(-h * 0.3) Q\(-w * 0.94),\(-h * 0.34) \(-w * 0.9),\(-h * 0.46) Z"
-            return [nPath(pd, A.S(WHITE))] + [(-0.6, 0.36), (-0.22, 0.26), (0.2, 0.26), (0.58, 0.36)].map { x, y in
-                nPath("M\(x * w),\(-h * y - 4) L\(x * w - 3),\(-h * y + 3) L\(x * w + 3),\(-h * y + 3) Z", St(fill: "#2e2a2b", stroke: "#2e2a2b", width: 2, join: .round))
-            }
-        }
-
-        // over (drawn last, on top of everything)
-        /// a gold star on top of the tree
-        p.over["treeStar"] = { _, _ in [nPolygon(starPts(0, -178, 20, 9), A.S4(GOLD)), nCircle(-4, -182, 2.4, St.f("#ffffff").op(0.8))] }
-        /// a sprig of holly on the head
-        p.over["hollyTop"] = { _, k in [holly(0, -k.h * 0.97, 1)] }
-        p.over["hollySide"] = { _, k in [holly(k.w * 0.42, -k.h * 0.9, 0.9, 24)] }
-        /// the Nutcracker's tall shako hat with a plume
-        p.over["shako"] = { _, k in
-            let yb = -k.h * 0.8, top = yb - 54, navy = "#2d2a3a"
-            return [
-                nEllipse(0, top - 12, 9, 14, A.S4("#ffffff")),
-                nCircle(0, top - 3, 5, St(fill: BERRY, stroke: O, width: 2.5)),
-                nPath("M-27,\(yb) L-31,\(top + 2) Q0,\(top - 6) 31,\(top + 2) L27,\(yb) Z", A.S(navy)),
-                nPath("M-28,\(yb - 14) L28,\(yb - 14) L28,\(yb - 6) L-28,\(yb - 6) Z", .f(GOLD)),
-                nPolygon(starPts(0, top + 22, 11, 5), St(fill: GOLD, stroke: O, width: 3, join: .round)),
-                nEllipse(0, yb, 36, 8, A.S(navy)),
-            ]
-        }
-        /// a little tiara
-        p.over["tiara"] = { d, k in
-            let yb = -k.h * 0.87
-            let pts = points([(-0.36, 0), (-0.26, -12), (-0.12, -6), (0, -22), (0.12, -6), (0.26, -12), (0.36, 0)], k.w, yb)
-            return [nPolygon(pts, A.S4(d.tiara ?? GOLD)), nCircle(0, yb - 8, 4, St(fill: d.gem ?? "#f28ab8", stroke: O, width: 2.5))]
-        }
-        /// Snowflake Fairy: a crown of icicles with a snowflake
-        p.over["iceCrown"] = { _, k in
-            let yb = -k.h * 0.87
-            let pts = points([(-0.42, 0), (-0.36, -14), (-0.24, -4), (-0.14, -20), (-0.05, -6), (0.05, -6), (0.14, -20), (0.24, -4), (0.36, -14), (0.42, 0)], k.w, yb)
-            return [nPolygon(pts, A.S4("#dff1ff"))] + flake(0, yb - 14, 10, "#ffffff", 3.4)
-        }
-        /// a golden halo
-        p.over["halo"] = { _, k in
-            let cy = -k.h * 1.1
-            return [nEllipse(0, cy, 30, 8.5, plain(O, 12)), nEllipse(0, cy, 30, 8.5, plain(GOLD, 5))]
-        }
-        /// a crown
-        p.over["crown"] = { _, k in
-            let w = k.w, yb = -k.h * 0.86
-            let pts = points([(-0.48, 0), (-0.52, -32), (-0.25, -14), (0, -38), (0.25, -14), (0.52, -32), (0.48, 0)], w, yb)
-            var out = [nPolygon(pts, A.S(GOLD)), nRect(-w * 0.5, yb - 6, w, 7, .f("#d9952a"))]
-            out += [(0.0, -12.0, BERRY, 5.0), (-0.3, -8, "#4f7fc0", 3.6), (0.3, -8, HOLLY, 3.6)].map { x, y, c, r in
-                nCircle(x * w, yb + y, r, St(fill: c, stroke: O, width: 2.5))
-            }
-            out += [-0.52, 0, 0.52].enumerated().map { i, x in nCircle(x * w, yb + (i == 1 ? -38 : -32), 4, St(fill: GOLD, stroke: O, width: 2.5)) }
-            return out
-        }
-        /// twinkles around the friend
-        p.over["sparkles"] = { d, k in
-            let w = k.w, h = k.h, c = d.sparkleColor ?? "#ffe27a"
-            return [(-w - 26, -h * 0.98, 10.0), (-w - 34, -h * 0.4, 8), (w + 34, -h * 0.4, 8), (w * 0.62, -h * 1.18, 9)].map { x, y, r in twinkle(x, y, r, c) }
-        }
-        /// a black top hat with a holly band
-        p.over["topHat"] = { _, k in
-            let yb = -k.h * 0.93, navy = "#2d2a3a"
-            return [nGroup([
-                nPath("M-24,\(yb) L-24,\(yb - 40) Q0,\(yb - 45) 24,\(yb - 40) L24,\(yb) Z", A.S(navy)),
-                nRect(-24, yb - 13, 48, 9, .f("#e8604f")),
-                nEllipse(0, yb, 38, 8, A.S(navy)),
-                holly(14, yb - 10, 0.55, 10),
-            ], rotAbout(-8, 0, yb))]
-        }
-        /// a little red Christmas hat, tipped to one side
-        p.over["xmasHat"] = { _, k in
-            let yb = -k.h * 0.95
-            return [nGroup([
-                nPath("M-24,\(yb) Q-14,\(yb - 34) 6,\(yb - 46) Q26,\(yb - 52) 34,\(yb - 34) Q20,\(yb - 34) 20,\(yb) Z", A.S("#d6423f")),
-                nCircle(36, yb - 32, 8, A.S(WHITE)),
-                nRect(-28, yb - 7, 54, 14, rx: 7, A.S(WHITE)),
-            ], svgMove(16, yb + 2, rot: 22, scale: 0.78).translatedBy(x: 0, y: -yb))]
-        }
-        /// a snowflake hair clip
-        p.over["flakeClip"] = { _, k in flake(-k.w * 0.5, -k.h * 0.82, 9, "#ffffff", 3.4) }
+        p.marks["tutu"] = marksTutu
+        p.marks["hem"] = marksHem
+        p.marks["robin"] = marksRobin
+        p.marks["snowShade"] = marksSnowShade
+        p.marks["beetle"] = marksBeetle
+        p.mouth["icingSmile"] = mouthIcingSmile
+        p.mouth["nutGrin"] = mouthNutGrin
+        p.mouth["coal"] = mouthCoal
+        p.nose["carrot"] = noseCarrot
+        p.arms["gingerArms"] = armsGingerArms
+        p.arms["wand"] = armsWand
+        p.arms["hold"] = armsHold
+        p.arms["sceptre"] = armsSceptre
+        p.arms["twigs"] = armsTwigs
+        p.feet["gingerFeet"] = feetGingerFeet
+        p.front["heldStar"] = frontHeldStar
+        p.front["midLegs"] = frontMidLegs
+        p.front["gumdrops"] = frontGumdrops
+        p.front["bellCollar"] = frontBellCollar
+        p.front["scarf"] = frontScarf
+        p.front["coalButtons"] = frontCoalButtons
+        p.front["ermine"] = frontErmine
+        p.over["treeStar"] = overTreeStar
+        p.over["hollyTop"] = overHollyTop
+        p.over["hollySide"] = overHollySide
+        p.over["shako"] = overShako
+        p.over["tiara"] = overTiara
+        p.over["iceCrown"] = overIceCrown
+        p.over["halo"] = overHalo
+        p.over["crown"] = overCrown
+        p.over["sparkles"] = overSparkles
+        p.over["topHat"] = overTopHat
+        p.over["xmasHat"] = overXmasHat
+        p.over["flakeClip"] = overFlakeClip
         return p
     }()
+
+    // MARK: the parts, one function each
+
+    // back
+    /// Christmas Tree Cookie: three tiers of branches behind the bean
+    private static func backTreeTiers(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, c = sh(d.body, -0.07)
+        var out: [VNode] = []
+        let tiers: [(Double, Double, Double)] = [(-10, w + 30, -86), (-56, w + 22, -132), (-100, w + 8, -176)]
+        for (by, hw, ay) in tiers {
+            out.append(nPath("M\(-hw),\(by) L0,\(ay) L\(hw),\(by) Q0,\(by + 8) \(-hw),\(by) Z", A.S(c)))
+            // icing dots and sprinkles on the tips that show
+            out += both { s in [
+                nCircle(s * (hw - 12), by - 4, 3.4, .f(ICING)),
+                nCircle(s * (hw - 26), by - 13, 3, St(fill: s < 0 ? BERRY : GOLD, stroke: O, width: 2)),
+            ] }
+        }
+        return out
+    }
+
+    /// Shortbread Star: five rounded points behind the bean, with piped icing
+    private static func backStarPoints(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let pts = starPts(0, -78, 96, 50), icing = starPts(0, -78, 80, 43)
+        return [
+            nPolygon(pts, St(fill: O, stroke: O, width: 22, join: .round)),
+            nPolygon(pts, St(fill: d.body, stroke: d.body, width: 10, join: .round)),
+            nPolygon(icing, St(stroke: ICING, width: 4.5, cap: .round, join: .round).dashed([0.5, 9])),
+        ]
+    }
+
+    /// Christmas Pudding sits on a plate
+    private static func backPlate(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [nEllipse(0, -3, k.w + 22, 14, A.S("#eef3f8")), nEllipse(0, -4, k.w + 8, 8, plain("#c9d6e2", 3))]
+    }
+
+    /// fairy wings: a big pair and a small pair
+    private static func backFairyWings(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.wingColor ?? "#f6c6e6", hi = sh(c, 0.45)
+        return both { s in
+            let ux = s * (w + 11), uy = -h * 0.76, lx = s * (w + 5), ly = -h * 0.38
+            return [
+                nEllipse(ux, uy, 22, 35, A.S(c)).moved(rotAbout(s * 32, ux, uy)),
+                nEllipse(ux + s * 3, uy - 6, 9, 18, .f(hi)).moved(rotAbout(s * 32, ux, uy)),
+                nEllipse(lx, ly, 17, 24, A.S(c)).moved(rotAbout(s * -34, lx, ly)),
+            ]
+        }
+    }
+
+    /// Snowflake Fairy: icy, pointed crystal wings
+    private static func backIceWings(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.wingColor ?? "#e6f4ff"
+        return both { s in
+            let x0 = s * (w - 14), y0 = -h * 0.62
+            let pd = "M\(x0),\(y0) L\(s * (w + 10)),\(-h * 1.06) L\(s * (w + 32)),\(-h * 0.88) L\(s * (w + 21)),\(-h * 0.6) " +
+                "L\(s * (w + 30)),\(-h * 0.36) L\(s * (w + 10)),\(-h * 0.24) Z"
+            return [
+                nPath(pd, A.S(c)),
+                nPath("M\(s * (w + 2)),\(-h * 0.64) L\(s * (w + 18)),\(-h * 0.88) M\(s * (w + 2)),\(-h * 0.54) L\(s * (w + 22)),\(-h * 0.38)", rcap("#ffffff", 4)),
+            ]
+        }
+    }
+
+    /// Angel: soft feathered wings
+    private static func backFeatherWings(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.wingColor ?? "#fffaf0"
+        return both { s in
+            func X(_ v: Double) -> Double { s * v }
+            let pd = "M\(X(w - 16)),\(-h * 0.74) Q\(X(w + 24)),\(-h * 1.16) \(X(w + 40)),\(-h * 0.92) " +
+                "Q\(X(w + 42)),\(-h * 0.8) \(X(w + 32)),\(-h * 0.74) Q\(X(w + 40)),\(-h * 0.62) \(X(w + 28)),\(-h * 0.55) " +
+                "Q\(X(w + 33)),\(-h * 0.42) \(X(w + 18)),\(-h * 0.38) Q\(X(w + 16)),\(-h * 0.26) \(X(w - 6)),\(-h * 0.3) Z"
+            return [
+                nPath(pd, A.S(c)),
+                nPath("M\(X(w + 6)),\(-h * 0.76) Q\(X(w + 18)),\(-h * 0.8) \(X(w + 28)),\(-h * 0.75) M\(X(w + 4)),\(-h * 0.56) Q\(X(w + 14)),\(-h * 0.58) \(X(w + 22)),\(-h * 0.54)",
+                      rcap(sh(c, -0.18), 3)),
+            ]
+        }
+    }
+
+    /// a ballerina's bun on top of the head
+    private static func backBun(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [nCircle(0, -k.h * 1.0, 15, A.S(d.hair ?? "#4a2f45"))]
+    }
+
+    /// Mouse King's royal cape
+    private static func backCape(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [nPath("M\(-w * 0.8),\(-h * 0.62) L\(w * 0.8),\(-h * 0.62) Q\(w * 1.25),\(-h * 0.3) \(w * 1.3),-4 Q0,10 \(-w * 1.3),-4 Q\(-w * 1.25),\(-h * 0.3) \(-w * 0.8),\(-h * 0.62) Z",
+                      A.S(d.capeColor ?? "#8c2f45"))]
+    }
+
+    /// Reindeer antlers
+    private static func backAntlers(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.antlerColor ?? "#e6cfa3"
+        return both { s in
+            let main = "M\(s * w * 0.26),\(-h * 0.88) C\(s * w * 0.3),\(-h * 1.16) \(s * w * 0.62),\(-h * 1.26) \(s * w * 0.96),\(-h * 1.36)"
+            return A.tube(main, c, 9) +
+                A.tube("M\(s * w * 0.4),\(-h * 1.12) Q\(s * w * 0.3),\(-h * 1.3) \(s * w * 0.2),\(-h * 1.4)", c, 8) +
+                A.tube("M\(s * w * 0.7),\(-h * 1.28) Q\(s * w * 0.72),\(-h * 1.42) \(s * w * 0.62),\(-h * 1.52)", c, 8) +
+                // the two pieces join cleanly: repaint the core over the outlines where they meet
+                [nPath(main, rcap(c, 9))]
+        }
+    }
+
+    /// Robin: a little tail tipped up behind
+    private static func backRobinTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [nGroup([nPath("M\(w * 0.6),\(-h * 0.18) Q\(w + 4),\(-h * 0.44) \(w + 14),\(-h * 0.56) Q\(w + 26),\(-h * 0.62) \(w + 30),\(-h * 0.5) Q\(w + 36),\(-h * 0.42) \(w + 28),\(-h * 0.36) Q\(w + 14),\(-h * 0.2) \(w * 0.75),\(-h * 0.06) Z",
+                              A.S(sh(d.body, -0.12)))]).looping(Loops.wag, idle: true)]
+    }
+
+    /// Christmas Beetle: short antennae with little fan-shaped clubs
+    private static func backFanAntennae(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.antennaColor ?? O
+        return both { s in
+            let x = s * w * 0.86, y = -h * 1.2
+            return [nPath("M\(s * w * 0.4),\(-h * 0.9) Q\(s * w * 0.5),\(-h * 1.14) \(x),\(y)", rcap(O, 5))] +
+                [-40.0, 0, 40].map { a in nEllipse(x + s * 2, y - 7, 4.5, 9, A.S4(c)).moved(rotAbout(s * 30 + a, x, y)) }
+        }
+    }
+
+    // marks (clipped inside the body)
+    /// Gingerbread Pal: a piped icing hairline
+    private static func marksGingerIcing(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [piped(beanPts(k.w, k.h, 0.86, 44), 2.6, ICING, 3.6)]
+    }
+
+    /// Christmas Tree Cookie: icing garlands and sprinkles
+    private static func marksTreeIcing(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let g1 = piped(along((-w * 1.05, -h * 0.3), (0, -h * 0.06), (w * 1.05, -h * 0.3), 10), 2.6)
+        let g2 = piped(along((-w * 0.8, -h * 0.84), (0, -h * 0.68), (w * 0.8, -h * 0.84), 8), 2.6)
+        let spr: [(Double, Double, String)] = [(-0.62, 0.17, BERRY), (0.58, 0.15, GOLD), (-0.18, 0.08, "#6fb3c9"), (0.24, 0.24, "#f2a0b8"), (-0.84, 0.5, GOLD), (0.84, 0.56, BERRY),
+                                               (-0.3, 0.95, "#f2a0b8"), (0.34, 0.97, "#6fb3c9"), (0.02, 1.02, GOLD)]
+        var out: [VNode] = [g1, g2]
+        for (i, e) in spr.enumerated() {
+            let x = e.0 * w, y = -e.1 * h
+            out.append(nEllipse(x, y, 2.4, 5, .f(e.2)).moved(rotAbout(Double((i * 47) % 180 - 90), x, y)))
+        }
+        return out
+    }
+
+    /// Shortbread Star: sugar sparkles baked on
+    private static func marksSugar(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let pts: [(Double, Double)] = [(-0.62, 0.3), (0.6, 0.32), (-0.2, 0.14), (0.26, 0.2), (-0.72, 0.7), (0.74, 0.74), (-0.3, 0.96), (0.32, 0.94), (0, 0.32), (-0.5, 0.88), (0.52, 0.86)]
+        return pts.map { p in nCircle(p.0 * k.w, -p.1 * k.h, 2.3, St.f(ICING).op(0.9)) }
+    }
+
+    /// Christmas Pudding: custard poured over the top, and currants
+    private static func marksCustard(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let top = -h * 0.8
+        let drips: [(Double, Double)] = [(-w - 6, 0), (-w * 0.72, 14), (-w * 0.42, 4), (-w * 0.12, 12), (w * 0.2, 2), (w * 0.5, 15), (w * 0.8, 3), (w + 6, 8)]
+        var pd = "M\(-w - 8),\(-h * 1.3) L\(-w - 8),\(top)"
+        for i in 1..<drips.count {
+            let x0 = drips[i - 1].0, (x1, dp) = drips[i]
+            pd += " Q\((x0 + x1) / 2),\(top + dp * 1.6) \(x1),\(top + (i % 2 == 1 ? 2 : -2))"
+        }
+        pd += " L\(w + 8),\(-h * 1.3) Z"
+        let currants: [(Double, Double)] = [(-0.76, 0.3), (0.72, 0.28), (-0.34, 0.13), (0.38, 0.12), (0, 0.26), (-0.86, 0.56), (0.88, 0.6), (-0.56, 0.1), (0.6, 0.48)]
+        var out: [VNode] = []
+        for (i, c) in currants.enumerated() {
+            let x = c.0 * w, y = -c.1 * h
+            out.append(nEllipse(x, y, 4.5, 3.4, .f("#3a1f18")).moved(rotAbout(Double(i * 37), x, y)))
+        }
+        out.append(nPath(pd, .f("#fdf3d0")))
+        out.append(nPath("M\(-w * 0.55),\(-h * 0.94) Q\(-w * 0.3),\(-h * 1.04) 0,\(-h * 1.02)", rcap("#ffffff", 5)))
+        return out
+    }
+
+    /// Nutcracker: white hair, painted face, chin-strap beard, belt, white trousers
+    private static func marksNutcracker(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, fy = faceY(d, h)
+        let hair = "#f5f0e6"
+        var out: [VNode] = [nRect(-w - 10, -h * 1.3, 2 * w + 20, h * 0.68, .f(hair))]
+        out += both { s in [nCircle(s * (w - 2), -h * 0.66, 17, .f(hair))] }
+        let beard = "M\(-w * 0.74),\(fy - 8) Q\(-w * 0.8),\(fy + 36) 0,\(fy + 40) Q\(w * 0.8),\(fy + 36) \(w * 0.74),\(fy - 8) " +
+            "L\(w * 0.56),\(fy - 2) Q\(w * 0.5),\(fy + 26) 0,\(fy + 28) Q\(-w * 0.5),\(fy + 26) \(-w * 0.56),\(fy - 2) Z"
+        return out + [
+                nEllipse(0, fy + 2, w * 0.68, 29, .f(d.skin ?? "#f6d2b4")),
+                nPath(beard, .f(hair)),
+                nRect(-w - 10, -h * 0.21, 2 * w + 20, h * 0.21 + 4, .f(hair)),
+                nRect(-w - 10, -h * 0.29, 2 * w + 20, 12, .f("#2d2a3a")),
+                nRect(-8, -h * 0.29 - 2, 16, 16, rx: 3, St(fill: GOLD, stroke: O, width: 3)),
+            ]
+    }
+
+    /// a tutu at the waist
+    private static func marksTutu(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, y0 = -h * 0.32, y1 = -h * 0.15, n = 7, c = d.tutu ?? "#e6c8f2"
+        var pd = "M\(-w - 6),\(y0) L\(w + 6),\(y0) L\(w + 6),\(y1)"
+        for i in 1...n {
+            let x = w + 6 - ((2 * w + 12) * Double(i)) / Double(n)
+            pd += " Q\(x + (w + 6) / Double(n)),\(y1 + 12) \(x),\(y1)"
+        }
+        var out = [nPath(pd + " Z", .f(c)), nPath("M\(-w - 6),\(y0) L\(w + 6),\(y0)", plain(sh(c, -0.2), 3))]
+        for (i, x) in [-0.6, -0.2, 0.2, 0.6].enumerated() {
+            if d.tutuFlakes {
+                out += flake(x * w, (y0 + y1) / 2 + 1, 5.5, "#ffffff", 2.2)
+            } else {
+                out.append(nCircle(x * w, (y0 + y1) / 2 + Double(i % 2) * 3, 2.6, St.f("#ffffff").op(0.85)))
+            }
+        }
+        return out
+    }
+
+    /// Angel: a gold hem on the robe
+    private static func marksHem(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [
+            nPath("M\(-w - 6),\(-h * 0.13) Q0,\(-h * 0.06) \(w + 6),\(-h * 0.13) L\(w + 6),4 L\(-w - 6),4 Z", .f(GOLD)),
+            nPath("M\(-w - 6),\(-h * 0.09) Q0,\(-h * 0.02) \(w + 6),\(-h * 0.09)", rcap("#fff3c0", 2.5).dashed([0.5, 7])),
+        ]
+    }
+
+    /// Robin: the orange-red breast and face, edged in soft grey
+    private static func marksRobin(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [
+            nEllipse(0, -h * 0.47, w * 0.74, h * 0.37, plain("#b9c2cc", 8)),
+            nEllipse(0, -h * 0.47, w * 0.74, h * 0.37, .f(d.breast ?? "#ec6a3c")),
+            nEllipse(0, -h * 0.04, w * 0.6, h * 0.17, .f("#f6efe6")),
+        ]
+    }
+
+    /// Snowman: a soft blue shadow on the snowball
+    private static func marksSnowShade(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [nEllipse(w * 0.2, -h * 0.44, w * 1.05, h * 0.52, .f("#dde9f3")), nEllipse(-w * 0.06, -h * 0.52, w * 1.02, h * 0.5, .f(d.body))]
+    }
+
+    /// Christmas Beetle: a shiny green-gold head plate, wing-case seam and ribs
+    private static func marksBeetle(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, m = sh(d.body, -0.18)
+        let out: [VNode] = [
+            nEllipse(0, -h * 1.06, w * 0.86, h * 0.25, .f(d.capColor ?? "#7f9a3a")),
+            nEllipse(-w * 0.32, -h * 0.92, 14, 5, St.f("#ffffff").op(0.45)).moved(rotAbout(-18, -w * 0.32, -h * 0.92)),
+        ]
+        return out + both { s in [
+            nPath("M\(s * w * 0.86),\(-h * 0.76) Q\(s * w * 1.0),\(-h * 0.4) \(s * w * 0.74),\(-h * 0.08)", rcap(m, 3.5)),
+            nPath("M\(s * w * 0.72),\(-h * 0.84) Q\(s * w * 0.82),\(-h * 0.7) \(s * w * 0.84),\(-h * 0.56)", rcap("#ffffff", 5).so(0.5)),
+        ] }
+    }
+
+    // mouth
+    /// a white piped icing smile
+    private static func mouthIcingSmile(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let my = faceY(d, k.h) + 15
+        let pd = "M-10,\(my) Q0,\(my + 10) 10,\(my)"
+        return [nPath(pd, rcap(O, 9)), nPath(pd, rcap(ICING, 4))]
+    }
+
+    /// the Nutcracker's big toothy grin
+    private static func mouthNutGrin(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let my = faceY(d, k.h) + 15
+        let pd = "M-12,\(my - 3) L12,\(my - 3) Q12,\(my + 10) 0,\(my + 10) Q-12,\(my + 10) -12,\(my - 3) Z"
+        return [
+            nPath(pd, .f("#8c2f3a")),
+            nRect(-11, my - 3, 22, 5.5, .f("#ffffff")),
+            nPath("M-4,\(my - 3) L-4,\(my + 2.5) M4,\(my - 3) L4,\(my + 2.5)", plain(O, 2)),
+            nPath(pd, St.o(4.5)),
+        ]
+    }
+
+    /// Snowman: a smile of little coals
+    private static func mouthCoal(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let my = faceY(d, k.h) + 19
+        return [-12.0, -6, 0, 6, 12].map { x in nCircle(x, my + 5 * (1 - (x / 12) * (x / 12)), 2.8, .f(O)) }
+    }
+
+    // nose
+    /// Snowman's carrot
+    private static func noseCarrot(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let y = faceY(d, k.h) + 8
+        return [
+            nPath("M-3,\(y - 4) Q2,\(y - 6) 4,\(y - 3) L27,\(y + 5) L3,\(y + 5) Q-4,\(y + 3) -3,\(y - 4) Z", A.S4("#f29a3c")),
+            nPath("M9,\(y - 1) L10,\(y + 3) M16,\(y + 1) L16.5,\(y + 4)", rcap(O, 2)),
+        ]
+    }
+
+    // arms
+    /// Gingerbread Pal: stubby cookie arms out to the sides, iced at the ends
+    private static func armsGingerArms(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            [A.arm(s, [nGroup([
+                nEllipse(0, 0, 13, 20, A.S(d.body)),
+                piped([(-8, 8), (-4, 8), (0, 8), (4, 8), (8, 8)], 3, ICING, 3.2),
+            ], svgMove(s * (w + 1), -h * 0.3, rot: s * -48))])]
+        }
+    }
+
+    /// holds a wand in the right hand; the left one waves
+    private static func armsWand(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let tip: Pt = (w + 24, -h * 0.86)
+        let top = d.wandTop == "flake" ? flake(tip.0, tip.1, 15, "#ffffff", 4.5) : [nPolygon(starPts(tip.0, tip.1, 16, 7.5), A.S4(GOLD))]
+        return [A.arm(-1, [paw(d, k, -1)]),
+                nGroup(A.tube("M\(w - 4),\(-h * 0.36) L\(tip.0),\(tip.1)", "#f6e7c2", 4) + top + [paw(d, k, 1)])]
+    }
+
+    /// both hands together in front, holding something
+    private static func armsHold(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        both { s in [nEllipse(s * 20, -k.h * 0.29, 8, 9, A.S4(d.skin ?? "#e5b48c"))] }
+    }
+
+    /// Mouse King holds a sceptre
+    private static func armsSceptre(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let top: Pt = (w + 14, -h * 0.82)
+        return [A.arm(-1, [paw(d, k, -1)]),
+                nGroup(A.tube("M\(w - 8),\(-h * 0.2) L\(top.0),\(top.1)", GOLD, 5) + [
+                    nCircle(top.0, top.1, 9, A.S4(BERRY)),
+                    nCircle(top.0 - 3, top.1 - 3, 2.5, St.f("#ffffff").op(0.8)),
+                    paw(d, k, 1),
+                ])]
+    }
+
+    /// Snowman's twig arms
+    private static func armsTwigs(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = "#8a5a3b"
+        return both { s in
+            [A.arm(s, A.tube("M\(s * (w - 8)),\(-h * 0.48) L\(s * (w + 24)),\(-h * 0.8)", c, 5) +
+                A.tube("M\(s * (w + 12)),\(-h * 0.68) L\(s * (w + 28)),\(-h * 0.66)", c, 4) +
+                A.tube("M\(s * (w + 24)),\(-h * 0.8) L\(s * (w + 25)),\(-h * 0.91) M\(s * (w + 24)),\(-h * 0.8) L\(s * (w + 33)),\(-h * 0.86)", c, 3.5))]
+        }
+    }
+
+    // feet
+    /// Gingerbread Pal: cookie feet with icing zigzags
+    private static func feetGingerFeet(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        both { s in
+            [nGroup([
+                nEllipse(0, 0, 17, 11, A.S(d.body)),
+                piped([(-9, -1), (-4.5, -1), (0, -1), (4.5, -1), (9, -1)], 3, ICING, 3.2),
+            ], tr(s * k.w * 0.42, -6))]
+        }
+    }
+
+    // front
+    /// a gold star held in front (the 'hold' arms are drawn over it)
+    private static func frontHeldStar(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let y = -k.h * 0.3
+        return [nPolygon(starPts(0, y - 2, 18, 8.5), A.S4(GOLD)), nCircle(-4, y - 6, 2.4, St.f("#ffffff").op(0.8))]
+    }
+
+    /// Christmas Beetle: a middle pair of legs
+    private static func frontMidLegs(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in A.tube("M\(s * (w - 6)),\(-h * 0.5) L\(s * (w + 12)),\(-h * 0.46) L\(s * (w + 16)),\(-h * 0.36)", d.armColor ?? O, 5) }
+    }
+
+    /// Gingerbread Pal: gumdrop buttons
+    private static func frontGumdrops(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let h = k.h
+        let drops: [(String, Double)] = [(BERRY, 0.27), (HOLLY, 0.14)]
+        return drops.flatMap { e -> [VNode] in
+            let (c, y) = e
+            return [
+                nPath("M-7.5,\(-h * y + 5) Q-8,\(-h * y - 8) 0,\(-h * y - 8) Q8,\(-h * y - 8) 7.5,\(-h * y + 5) Q0,\(-h * y + 7) -7.5,\(-h * y + 5) Z", A.S4(c)),
+                nCircle(-2.5, -h * y - 3, 1.4, St.f("#ffffff").op(0.8)),
+                nCircle(2.5, -h * y + 1, 1.2, St.f("#ffffff").op(0.8)),
+            ]
+        }
+    }
+
+    /// Reindeer: a red harness with jingle bells
+    private static func frontBellCollar(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let a: Pt = (-w * 0.84, -h * 0.34), c: Pt = (0, -h * 0.12), b: Pt = (w * 0.84, -h * 0.34)
+        let pts = along(a, c, b, 8)
+        return A.tube("M\(a.0),\(a.1) Q\(c.0),\(c.1) \(b.0),\(b.1)", "#d6423f", 8) +
+            [2, 4, 6].flatMap { i in bell(pts[i].0, pts[i].1 + 7, 7.5) }
+    }
+
+    /// Snowman: a red knitted scarf with a dangling end
+    private static func frontScarf(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = "#e8604f", st = "#fdfaf3"
+        let pd = "M\(-w * 0.95),\(-h * 0.4) Q0,\(-h * 0.22) \(w * 0.95),\(-h * 0.4) L\(w * 0.98),\(-h * 0.29) Q0,\(-h * 0.1) \(-w * 0.98),\(-h * 0.29) Z"
+        let tail = "M\(w * 0.36),\(-h * 0.26) L\(w * 0.62),\(-h * 0.25) L\(w * 0.66),\(-h * 0.04) L\(w * 0.4),\(-h * 0.03) Z"
+        var out = [nPath(tail, A.S(c)), nPath("M\(w * 0.4),\(-h * 0.11) L\(w * 0.65),\(-h * 0.12)", plain(st, 5))]
+        out += [0.42, 0.5, 0.58].map { x in nPath("M\(w * x + 2),\(-h * 0.03) L\(w * x + 3),\(h * 0.02)", rcap(O, 3.5)) }
+        out.append(nPath(pd, A.S(c)))
+        out += [-0.5, 0, 0.5].map { x in
+            let yt = -h * 0.4 + (1 - x * x) * h * 0.09, yb = -h * 0.29 + (1 - x * x) * h * 0.095
+            return nPath("M\(x * w - 4),\(yt + 3) L\(x * w - 4),\(yb - 3) M\(x * w + 4),\(yt + 3) L\(x * w + 4),\(yb - 3)", rcap(st, 3.5))
+        }
+        return out
+    }
+
+    /// Snowman: coal buttons
+    private static func frontCoalButtons(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [0.2, 0.07].flatMap { y in [nCircle(0, -k.h * y, 5.5, .f(O)), nCircle(-1.6, -k.h * y - 1.6, 1.5, St.f("#ffffff").op(0.5))] }
+    }
+
+    /// Mouse King: an ermine collar
+    private static func frontErmine(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let pd = "M\(-w * 0.9),\(-h * 0.46) Q0,\(-h * 0.3) \(w * 0.9),\(-h * 0.46) Q\(w * 0.94),\(-h * 0.34) \(w * 0.82),\(-h * 0.3) Q0,\(-h * 0.12) \(-w * 0.82),\(-h * 0.3) Q\(-w * 0.94),\(-h * 0.34) \(-w * 0.9),\(-h * 0.46) Z"
+        return [nPath(pd, A.S(WHITE))] + [(-0.6, 0.36), (-0.22, 0.26), (0.2, 0.26), (0.58, 0.36)].map { x, y in
+            nPath("M\(x * w),\(-h * y - 4) L\(x * w - 3),\(-h * y + 3) L\(x * w + 3),\(-h * y + 3) Z", St(fill: "#2e2a2b", stroke: "#2e2a2b", width: 2, join: .round))
+        }
+    }
+
+    // over (drawn last, on top of everything)
+    /// a gold star on top of the tree
+    private static func overTreeStar(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [nPolygon(starPts(0, -178, 20, 9), A.S4(GOLD)), nCircle(-4, -182, 2.4, St.f("#ffffff").op(0.8))]
+    }
+
+    /// a sprig of holly on the head
+    private static func overHollyTop(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [holly(0, -k.h * 0.97, 1)]
+    }
+
+    private static func overHollySide(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [holly(k.w * 0.42, -k.h * 0.9, 0.9, 24)]
+    }
+
+    /// the Nutcracker's tall shako hat with a plume
+    private static func overShako(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let yb = -k.h * 0.8, top = yb - 54, navy = "#2d2a3a"
+        return [
+            nEllipse(0, top - 12, 9, 14, A.S4("#ffffff")),
+            nCircle(0, top - 3, 5, St(fill: BERRY, stroke: O, width: 2.5)),
+            nPath("M-27,\(yb) L-31,\(top + 2) Q0,\(top - 6) 31,\(top + 2) L27,\(yb) Z", A.S(navy)),
+            nPath("M-28,\(yb - 14) L28,\(yb - 14) L28,\(yb - 6) L-28,\(yb - 6) Z", .f(GOLD)),
+            nPolygon(starPts(0, top + 22, 11, 5), St(fill: GOLD, stroke: O, width: 3, join: .round)),
+            nEllipse(0, yb, 36, 8, A.S(navy)),
+        ]
+    }
+
+    /// a little tiara
+    private static func overTiara(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let yb = -k.h * 0.87
+        let pts = points([(-0.36, 0), (-0.26, -12), (-0.12, -6), (0, -22), (0.12, -6), (0.26, -12), (0.36, 0)], k.w, yb)
+        return [nPolygon(pts, A.S4(d.tiara ?? GOLD)), nCircle(0, yb - 8, 4, St(fill: d.gem ?? "#f28ab8", stroke: O, width: 2.5))]
+    }
+
+    /// Snowflake Fairy: a crown of icicles with a snowflake
+    private static func overIceCrown(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let yb = -k.h * 0.87
+        let pts = points([(-0.42, 0), (-0.36, -14), (-0.24, -4), (-0.14, -20), (-0.05, -6), (0.05, -6), (0.14, -20), (0.24, -4), (0.36, -14), (0.42, 0)], k.w, yb)
+        return [nPolygon(pts, A.S4("#dff1ff"))] + flake(0, yb - 14, 10, "#ffffff", 3.4)
+    }
+
+    /// a golden halo
+    private static func overHalo(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let cy = -k.h * 1.1
+        return [nEllipse(0, cy, 30, 8.5, plain(O, 12)), nEllipse(0, cy, 30, 8.5, plain(GOLD, 5))]
+    }
+
+    /// a crown
+    private static func overCrown(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, yb = -k.h * 0.86
+        let pts = points([(-0.48, 0), (-0.52, -32), (-0.25, -14), (0, -38), (0.25, -14), (0.52, -32), (0.48, 0)], w, yb)
+        var out = [nPolygon(pts, A.S(GOLD)), nRect(-w * 0.5, yb - 6, w, 7, .f("#d9952a"))]
+        out += [(0.0, -12.0, BERRY, 5.0), (-0.3, -8, "#4f7fc0", 3.6), (0.3, -8, HOLLY, 3.6)].map { x, y, c, r in
+            nCircle(x * w, yb + y, r, St(fill: c, stroke: O, width: 2.5))
+        }
+        out += [-0.52, 0, 0.52].enumerated().map { i, x in nCircle(x * w, yb + (i == 1 ? -38 : -32), 4, St(fill: GOLD, stroke: O, width: 2.5)) }
+        return out
+    }
+
+    /// twinkles around the friend
+    private static func overSparkles(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.sparkleColor ?? "#ffe27a"
+        return [(-w - 26, -h * 0.98, 10.0), (-w - 34, -h * 0.4, 8), (w + 34, -h * 0.4, 8), (w * 0.62, -h * 1.18, 9)].map { x, y, r in twinkle(x, y, r, c) }
+    }
+
+    /// a black top hat with a holly band
+    private static func overTopHat(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let yb = -k.h * 0.93, navy = "#2d2a3a"
+        return [nGroup([
+            nPath("M-24,\(yb) L-24,\(yb - 40) Q0,\(yb - 45) 24,\(yb - 40) L24,\(yb) Z", A.S(navy)),
+            nRect(-24, yb - 13, 48, 9, .f("#e8604f")),
+            nEllipse(0, yb, 38, 8, A.S(navy)),
+            holly(14, yb - 10, 0.55, 10),
+        ], rotAbout(-8, 0, yb))]
+    }
+
+    /// a little red Christmas hat, tipped to one side
+    private static func overXmasHat(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let yb = -k.h * 0.95
+        return [nGroup([
+            nPath("M-24,\(yb) Q-14,\(yb - 34) 6,\(yb - 46) Q26,\(yb - 52) 34,\(yb - 34) Q20,\(yb - 34) 20,\(yb) Z", A.S("#d6423f")),
+            nCircle(36, yb - 32, 8, A.S(WHITE)),
+            nRect(-28, yb - 7, 54, 14, rx: 7, A.S(WHITE)),
+        ], svgMove(16, yb + 2, rot: 22, scale: 0.78).translatedBy(x: 0, y: -yb))]
+    }
+
+    /// a snowflake hair clip
+    private static func overFlakeClip(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        flake(-k.w * 0.5, -k.h * 0.82, 9, "#ffffff", 3.4)
+    }
 
     // MARK: the 13 friends (web order)
 

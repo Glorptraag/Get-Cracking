@@ -49,345 +49,411 @@ enum AussieArt {
 
     static let parts: AnimalParts = {
         var p = AnimalParts()
-
-        // ears
-        /// joey: tall pointed kangaroo ears, set wide
-        p.ears["roo"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                let cx = s * w * 0.5
-                return [nGroup([
-                    nPath("M\(cx - 15),\(-h * 0.86) C\(cx - 19),\(-h * 1.08) \(cx - 5),\(-h * 1.26) \(cx),\(-h * 1.31) C\(cx + 5),\(-h * 1.26) \(cx + 19),\(-h * 1.08) \(cx + 15),\(-h * 0.86) Z", A.S(d.body)),
-                    nPath("M\(cx - 7),\(-h * 0.9) C\(cx - 9),\(-h * 1.06) \(cx - 3),\(-h * 1.17) \(cx),\(-h * 1.21) C\(cx + 3),\(-h * 1.17) \(cx + 9),\(-h * 1.06) \(cx + 7),\(-h * 0.9) Z", .f(d.earInner ?? d.body)),
-                ], rotAbout(s * 16, cx, -h * 0.88))]
-            }
-        }
-        /// wombat: small, rounded, a little pointed
-        p.ears["wombat"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                let x = s * w * 0.6, y = -h * 0.9
-                return [
-                    nPath("M\(x - s * 16),\(y + 8) Q\(x - s * 8),\(y - 24) \(x + s * 8),\(y - 22) Q\(x + s * 20),\(y - 8) \(x + s * 18),\(y + 12) Z", A.S(d.body)),
-                    nPath("M\(x - s * 7),\(y + 4) Q\(x - s * 2),\(y - 14) \(x + s * 7),\(y - 12) Q\(x + s * 12),\(y - 4) \(x + s * 10),\(y + 6) Z", .f(d.earInner ?? d.body)),
-                ]
-            }
-        }
-        /// sugar glider: big, thin, upright ovals
-        p.ears["glider"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                [nGroup([
-                    nEllipse(s * w * 0.66, -h * 0.98, 17, 25, A.S(d.body)),
-                    nEllipse(s * w * 0.66, -h * 0.97, 9, 16, .f(d.earInner ?? d.body)),
-                ], rotAbout(s * 24, s * w * 0.66, -h * 0.98))]
-            }
-        }
-        /// bilby: very long rabbit-like ears splayed in a V, pointed at the tips
-        p.ears["bilby"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                let cx = s * w * 0.3
-                return [nGroup([
-                    nPath("M\(cx - 17),\(-h * 0.84) C\(cx - 24),\(-h * 1.12) \(cx - 8),\(-h * 1.44) \(cx),\(-h * 1.5) C\(cx + 8),\(-h * 1.44) \(cx + 24),\(-h * 1.12) \(cx + 17),\(-h * 0.84) Z", A.S(d.body)),
-                    nPath("M\(cx - 8),\(-h * 0.9) C\(cx - 12),\(-h * 1.12) \(cx - 4),\(-h * 1.34) \(cx),\(-h * 1.39) C\(cx + 4),\(-h * 1.34) \(cx + 12),\(-h * 1.12) \(cx + 8),\(-h * 0.9) Z", .f(d.earInner ?? d.body)),
-                ], rotAbout(s * 24, cx, -h * 0.86))]
-            }
-        }
-
-        // back
-        /// galah: a short, rounded pale crest
-        p.back["galahCrest"] = { d, k in
-            let h = k.h, st = A.S4(d.crestColor ?? "#fde1e8")
-            return [leaf(-4, -h * 0.9, -112, 34, 13, st), leaf(4, -h * 0.92, -82, 36, 13, st), leaf(10, -h * 0.9, -58, 28, 11, st)]
-        }
-        /// cockatoo: a tall fan of sulphur-yellow feathers
-        p.back["cockyCrest"] = { d, k in
-            let st = A.S4(d.crestColor ?? "#ffd84a")
-            return [(-14.0, -122.0, 46.0), (-6, -102, 62), (4, -82, 66), (12, -62, 56), (18, -44, 40)].map { x, a, L in
-                leaf(x, -k.h * 0.9, a, L, 12, st)
-            }
-        }
-        /// kookaburra: a rufous barred tail cocked up behind
-        p.back["kookaTail"] = { d, k in
-            let w = k.w, h = k.h, tc = d.tailColor ?? "#c46f3c"
-            let pd = "M\(w * 0.3),\(-h * 0.16) Q\(w + 4),\(-h * 0.5) \(w + 18),\(-h * 0.76) Q\(w + 34),\(-h * 0.8) \(w + 36),\(-h * 0.6) Q\(w + 22),\(-h * 0.3) \(w * 0.5),\(-h * 0.02) Z"
-            let bars = [0.45, 0.65, 0.85].map { q in
-                nPath("M\(w * 0.3 + 30 * q + 6),\(-h * (0.1 + 0.64 * q) - 16) l28,18", plain(sh(tc, -0.35), 5.5))
-            }
-            return [tail([nPath(pd, .f(tc)), nGroup(bars, clip: SVGPath.parse(pd)), nPath(pd, St.o(6))])]
-        }
-        /// echidna: cream spines with dark tips, all over the back
-        p.back["echidnaSpines"] = { d, k in
-            let w = k.w, h = k.h, n = 13
-            var out: [VNode] = []
-            for i in 0..<n {
-                let a = -196 + Double(i) * 212 / Double(n - 1)
-                let r = a * .pi / 180
-                let bx = cos(r) * w * 0.8, by = -h * 0.52 + sin(r) * h * 0.42
-                out += spine(bx, by, a, i % 2 == 1 ? 38 : 44, 10, d.spineColor ?? "#f4e2b2", d.spineTip ?? "#4f3a2c")
-            }
-            return out
-        }
-        /// sugar glider: the furry gliding membrane, stretched from wrist to ankle
-        p.back["patagium"] = { d, k in
-            let w = k.w, h = k.h, c = d.wingColor ?? d.body
-            return both { s in
-                [nPath("M\(s * w * 0.7),\(-h * 0.62) L\(s * (w + 30)),\(-h * 0.5) " +
-                    "Q\(s * (w + 22)),\(-h * 0.36) \(s * (w + 30)),\(-h * 0.22) Q\(s * (w + 20)),\(-h * 0.12) \(s * (w + 22)),\(-h * 0.02) " +
-                    "L\(s * w * 0.5),-6 Z", A.S(c))]
-            }
-        }
-        /// frill-neck lizard: the big umbrella frill around its head
-        p.back["frill"] = { d, k in
-            let w = k.w, h = k.h
-            let cx = 0.0, cy = -h * 0.6, n = 11
-            func angle(_ i: Int) -> Double { (-205 + Double(i) * 230 / Double(n * 2)) * .pi / 180 }
-            func ring(_ R: Double, _ inner: Double) -> [Pt] {
-                (0...(n * 2)).map { i in
-                    let a = angle(i), rr = i % 2 == 1 ? R * inner : R
-                    return (cx + cos(a) * rr, cy + sin(a) * rr * 0.92)
-                }
-            }
-            let outer = ring(w + 36, 0.88), mid = ring(w + 14, 0.94)
-            var out = [nPolygon(outer + [(cx, cy)], A.S(d.frillColor ?? "#f07d4e")), nPolygon(mid + [(cx, cy)], .f(d.frillInner ?? "#ffcf66"))]
-            for i in stride(from: 0, through: n * 2, by: 2) {
-                let a = angle(i)
-                out.append(nPath("M\(cx + cos(a) * (w - 4)),\(cy + sin(a) * (w - 4) * 0.92) L\(cx + cos(a) * (w + 30)),\(cy + sin(a) * (w + 30) * 0.92)",
-                                 rcap(d.frillRib ?? "#cf5a35", 4)))
-            }
-            return out
-        }
-        /// frill-neck lizard: a long tail curling along the ground
-        p.back["lizardTail"] = { d, k in
-            let w = k.w, h = k.h
-            return [tail(A.tube("M\(w * 0.5),-12 C\(w + 20),-4 \(w + 40),-10 \(w + 46),\(-h * 0.2) C\(w + 50),\(-h * 0.3) \(w + 40),\(-h * 0.36) \(w + 34),\(-h * 0.3)", d.body, 12))]
-        }
-        /// bilby: a thin black tail with a white crested tip
-        p.back["bilbyTail"] = { _, k in
-            let w = k.w, h = k.h
-            return [tail(A.tube("M\(w * 0.5),-14 C\(w + 18),-10 \(w + 26),-24 \(w + 30),\(-h * 0.34)", "#4a4352", 7) +
-                A.tube("M\(w + 28),\(-h * 0.28) C\(w + 31),\(-h * 0.38) \(w + 32),\(-h * 0.46) \(w + 30),\(-h * 0.54)", "#fdfaf3", 11))]
-        }
-        /// mole cricket: short, soft antennae with a little curl
-        p.back["cricketAntennae"] = { d, k in
-            let w = k.w, h = k.h
-            return both { s in
-                let pd = "M\(s * w * 0.16),\(-h * 0.92) Q\(s * w * 0.2),\(-h * 1.14) \(s * w * 0.48),\(-h * 1.16) Q\(s * w * 0.62),\(-h * 1.16) \(s * w * 0.6),\(-h * 1.08)"
-                return [nPath(pd, rcap(O, 11)), nPath(pd, rcap(d.antennaColor ?? O, 4))]
-            }
-        }
-
-        // marks (clipped inside the body)
-        /// galah: pale pink cap, grey wings wrapped round the flanks
-        p.marks["galah"] = { d, k in
-            let w = k.w, h = k.h, g = d.greyColor ?? "#b7bcc6"
-            return [nEllipse(0, -h * 1.04, w * 0.78, h * 0.24, .f(d.capColor ?? d.body))] +
-                both { s in [nEllipse(s * w * 1.02, -h * 0.3, w * 0.42, h * 0.44, .f(g))] } +
-                [nEllipse(0, 6, w * 0.7, h * 0.1, .f(g))]
-        }
-        /// kookaburra: brown wings on the flanks, a streaky crown and the dark eye stripe
-        p.marks["kooka"] = { d, k in
-            let w = k.w, h = k.h, fy = k.fy, ex = k.ex
-            let br = d.wingColor ?? "#9a6a47", crown = d.crownColor ?? "#d9bf9c"
-            var out = both { s in [nEllipse(s * w * 1.0, -h * 0.36, w * 0.4, h * 0.5, .f(br))] }
-            out.append(nEllipse(0, -h * 1.02, w * 0.62, h * 0.2, .f(crown)))
-            out += [-14.0, 0, 14].map { x in nPath("M\(x),\(-h * 0.98) L\(x * 1.2),\(-h * 0.86)", rcap(sh(crown, -0.3), 4)) }
-            out += both { s in
-                [nPath("M\(s * (w * ex + 2)),\(fy - 1) Q\(s * (w * 0.72)),\(fy - 5) \(s * (w + 6)),\(fy + 4) L\(s * (w + 6)),\(fy + 15) Q\(s * w * 0.72),\(fy + 7) \(s * (w * ex + 2)),\(fy + 8) Z",
-                       .f(d.stripeColor ?? "#6e4a33"))]
-            }
-            return out
-        }
-        /// emu chick: long cream and brown stripes, a spotty head
-        p.marks["emu"] = { d, k in
-            let w = k.w, h = k.h, fy = k.fy, c = d.markColor ?? "#7a5640"
-            func stripe(_ x: Double, _ top: Double, _ wd: Double) -> VNode {
-                nPath("M\(x),\(top) C\(x + 6),\(top * 0.66) \(x - 6),\(top * 0.33) \(x),4", rcap(c, wd))
-            }
-            return both { s in [stripe(s * w * 0.5, -h * 0.9, 10), stripe(s * w * 0.94, -h * 0.74, 16)] } +
-                [nPath("M0,\(-h * 1.02) L0,\(fy - 20)", rcap(c, 8))] +
-                [(-0.3, 0.86), (0.3, 0.86), (-0.42, 0.74), (0.42, 0.74)].map { x, y in nCircle(x * w, -y * h, 4, .f(c)) }
-        }
-        /// sugar glider: the dark stripe down the forehead and dark rings round the eyes
-        p.marks["glider"] = { d, k in
-            let w = k.w, h = k.h, fy = k.fy, ex = k.ex, c = d.markColor ?? "#4f4c5c"
-            return [nPath("M-7,\(-h * 1.02) L7,\(-h * 1.02) L3,\(fy + 2) Q0,\(fy + 5) -3,\(fy + 2) Z", .f(c))] +
-                both { s in [
-                    nEllipse(s * w * ex, fy, 14, 15, .f(c)),
-                    nPath("M\(s * w * ex),\(fy - 10) Q\(s * w * 0.6),\(fy - 26) \(s * w * 0.72),\(-h * 0.86)", rcap(c, 9)),
-                ] }
-        }
-        /// mole cricket: the velvety helmet (pronotum) and soft tummy bands
-        p.marks["cricket"] = { d, k in
-            let w = k.w, h = k.h, c = d.markColor ?? "#8c5d3c", belly = d.belly ?? d.body
-            return [
-                nPath("M\(-w - 6),\(-h * 0.74) Q0,\(-h * 0.84) \(w + 6),\(-h * 0.74) L\(w + 6),\(-h * 1.2) L\(-w - 6),\(-h * 1.2) Z", .f(c)),
-                nPath("M\(-w * 0.46),\(-h * 0.9) Q0,\(-h * 0.98) \(w * 0.46),\(-h * 0.9)", rcap(sh(c, 0.22), 6)),
-                nPath("M0,\(-h * 0.98) L0,\(-h * 0.8)", rcap(sh(c, -0.25), 3.5)),
-            ] + [0.2, 0.09].enumerated().map { i, y in
-                let xx = w * (0.36 - Double(i) * 0.06)
-                return nPath("M\(-xx),\(-h * y) Q0,\(-h * y + 6) \(xx),\(-h * y)", rcap(sh(belly, -0.12), 3.5))
-            }
-        }
-
-        // front
-        /// joey: mum's pouch, with the joey peeking out of it
-        p.front["pouch"] = { d, k in
-            let w = k.w, h = k.h, c = d.pouchColor ?? "#cf9764"
-            // a soft fur pocket: its opening is a smile, high at the sides
-            let pd = "M\(-w - 6),\(-h * 0.46) C\(-w - 14),\(-h * 0.12) \(-w * 0.62),4 0,4 C\(w * 0.62),4 \(w + 14),\(-h * 0.12) \(w + 6),\(-h * 0.46) " +
-                "C\(w * 0.5),\(-h * 0.3) \(-w * 0.5),\(-h * 0.3) \(-w - 6),\(-h * 0.46) Z"
-            let shade = "M\(-w + 2),\(-h * 0.5) C\(-w * 0.4),\(-h * 0.36) \(w * 0.4),\(-h * 0.36) \(w - 2),\(-h * 0.5) L\(w + 6),\(-h * 0.46) C\(w * 0.5),\(-h * 0.3) \(-w * 0.5),\(-h * 0.3) \(-w - 6),\(-h * 0.46) Z"
-            return [
-                nPath(shade, .f(sh(d.body, -0.18))),
-                nPath(pd, A.S(c)),
-                nPath("M\(-w + 2),\(-h * 0.39) C\(-w * 0.4),\(-h * 0.27) \(w * 0.4),\(-h * 0.27) \(w - 2),\(-h * 0.39)", rcap(sh(c, 0.35), 5)),
-            ]
-        }
-        /// echidna: a few short spines on top of the head
-        p.front["headSpines"] = { d, k in
-            let h = k.h, c = d.spineColor ?? "#f4e2b2", t = d.spineTip ?? "#4f3a2c"
-            return spine(-14, -h * 0.9, -108, 22, 6, c, t) + spine(0, -h * 0.93, -90, 25, 6, c, t) + spine(14, -h * 0.9, -72, 22, 6, c, t)
-        }
-        /// emu chick: a little fuzz on top
-        p.front["fuzz"] = { d, k in
-            let h = k.h, st = A.S4(d.markColor ?? "#7a5640")
-            return [leaf(-3, -h * 0.94, -118, 18, 6, st), leaf(0, -h * 0.95, -88, 22, 6, st), leaf(3, -h * 0.94, -60, 18, 6, st)]
-        }
-
-        // eyes
-        /// a parrot's eye: the friendly dot eye with a bare pale ring round it
-        p.eyes["ringDot"] = { d, k in
-            both { s in
-                let x = s * k.w * k.ex, fy = k.fy
-                return [nCircle(x, fy, 11, .f(d.eyeRing ?? "#fde1e8")), nEllipse(x, fy, 6.5, 8, .f(O)), nCircle(x - 2, fy - 3, 2.5, .f("#ffffff"))]
-            }
-        }
-
+        p.ears["roo"] = earsRoo
+        p.ears["wombat"] = earsWombat
+        p.ears["glider"] = earsGlider
+        p.ears["bilby"] = earsBilby
+        p.back["galahCrest"] = backGalahCrest
+        p.back["cockyCrest"] = backCockyCrest
+        p.back["kookaTail"] = backKookaTail
+        p.back["echidnaSpines"] = backEchidnaSpines
+        p.back["patagium"] = backPatagium
+        p.back["frill"] = backFrill
+        p.back["lizardTail"] = backLizardTail
+        p.back["bilbyTail"] = backBilbyTail
+        p.back["cricketAntennae"] = backCricketAntennae
+        p.marks["galah"] = marksGalah
+        p.marks["kooka"] = marksKooka
+        p.marks["emu"] = marksEmu
+        p.marks["glider"] = marksGlider
+        p.marks["cricket"] = marksCricket
+        p.front["pouch"] = frontPouch
+        p.front["headSpines"] = frontHeadSpines
+        p.front["fuzz"] = frontFuzz
+        p.eyes["ringDot"] = eyesRingDot
         // muzzle
         p.muzzle["parrotBeak"] = parrotBeak
-        /// kookaburra: the big kingfisher beak, dark on top, pale below
-        p.muzzle["kookaBeak"] = { d, k in
-            let fy = k.fy
-            return [
-                nPath("M12,\(fy + 13) C-4,\(fy + 17) -26,\(fy + 22) -42,\(fy + 28) C-26,\(fy + 34) -4,\(fy + 32) 12,\(fy + 25) Z", A.S4(d.beakLow ?? "#efe3cc")),
-                nPath("M14,\(fy + 1) C0,\(fy - 3) -30,\(fy + 6) -48,\(fy + 24) C-28,\(fy + 20) -4,\(fy + 20) 14,\(fy + 17) Q19,\(fy + 9) 14,\(fy + 1) Z", A.S4(d.beakTop ?? "#4f4540")),
-                nPath("M4,\(fy + 5) Q-12,\(fy + 5) -24,\(fy + 12)", rcap("#ffffff", 3.5).so(0.35)),
-            ]
-        }
-        /// platypus: the wide, soft duck bill
-        p.muzzle["platyBill"] = { d, k in
-            let fy = k.fy, c = d.muzzleColor ?? "#6d7383"
-            return [
-                nPath("M-31,\(fy + 14) C-33,\(fy + 2) 33,\(fy + 2) 31,\(fy + 14) C33,\(fy + 30) -33,\(fy + 30) -31,\(fy + 14) Z", A.S4(c)),
-                nPath("M-20,\(fy + 19) Q0,\(fy + 24) 20,\(fy + 19)", rcap(sh(c, -0.35), 3)),
-                nEllipse(-6, fy + 10, 2.4, 3, .f(O)), nEllipse(6, fy + 10, 2.4, 3, .f(O)),
-                nEllipse(-16, fy + 9, 6, 2.4, St.f("#ffffff").op(0.3)),
-            ]
-        }
-        /// echidna: a long thin snout
-        p.muzzle["echidnaSnout"] = { d, k in
-            let fy = k.fy
-            return A.tube("M0,\(fy + 6) C0,\(fy + 20) 0,\(fy + 30) -3,\(fy + 38)", d.muzzleColor ?? "#4f3f36", 13) +
-                [nEllipse(-3, fy + 39, 4.5, 3, .f(O))]
-        }
-        /// bilby: a long pointy snout with a pink nose
-        p.muzzle["bilbySnout"] = { d, k in
-            let fy = k.fy
-            return [
-                nPath("M-15,\(fy + 6) Q0,\(fy - 2) 15,\(fy + 6) Q8,\(fy + 24) 2,\(fy + 32) Q0,\(fy + 34) -2,\(fy + 32) Q-8,\(fy + 24) -15,\(fy + 6) Z", A.S4(d.muzzleColor ?? "#ece4ee")),
-                nEllipse(0, fy + 30, 7, 5.5, A.S4(d.noseColor ?? "#f28fab")),
-            ]
-        }
-
-        // nose
-        /// wombat: the big, square, leathery nose
-        p.nose["wombat"] = { d, k in
-            let fy = k.fy, c = d.noseColor ?? "#4f403c"
-            return [
-                nRect(-18, fy + 3, 36, 24, rx: 11, A.S4(c)),
-                nPath("M-9,\(fy + 17) q3,-5 6,0 M3,\(fy + 17) q3,-5 6,0", rcap(sh(c, -0.5), 3)),
-                nEllipse(-7, fy + 8, 6, 2.5, St.f("#ffffff").op(0.35)),
-            ]
-        }
-        /// lizard: two little nostrils
-        p.nose["nostrils"] = { _, k in [nCircle(-5, k.fy + 9, 2.2, .f(O)), nCircle(5, k.fy + 9, 2.2, .f(O))] }
-
-        // mouth
-        /// under the wombat's big nose
-        p.mouth["under"] = { _, k in
-            let my = k.fy + 33
-            return [nPath("M-7,\(my) Q-3.5,\(my + 5) 0,\(my) Q3.5,\(my + 5) 7,\(my)", St.line(O, 4))]
-        }
-        /// a lizard's wide grin
-        p.mouth["grin"] = { _, k in
-            let my = k.fy + 18
-            return [nPath("M-20,\(my - 3) Q0,\(my + 11) 20,\(my - 3)", rcap(O, 4))]
-        }
-
-        // arms
-        /// joey: little paws resting on the rim of the pouch
-        p.arms["rimPaws"] = { d, k in
-            let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
-            return both { s in
-                [A.arm(s, [
-                    nEllipse(s * w * 0.5, -h * 0.36, 12, 9, A.S(c)),
-                    nPath("M\(s * w * 0.5 - 4),\(-h * 0.36 + 2) l0,5 M\(s * w * 0.5 + 4),\(-h * 0.36 + 2) l0,5", rcap(O, 2.5)),
-                ])]
-            }
-        }
-        /// kookaburra: brown wings with the blue shoulder patch
-        p.arms["kookaWing"] = { d, k in
-            let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
-            return both { s in
-                [A.arm(s, [nPath("M\(s * (w - 12)),\(-h * 0.62) Q\(s * (w + 18)),\(-h * 0.48) \(s * (w - 2)),\(-h * 0.16) Q\(s * (w - 18)),\(-h * 0.34) \(s * (w - 12)),\(-h * 0.62) Z", A.S(c))] +
-                    [(-0.52, 3.5), (-0.45, 3), (-0.4, 3.2)].enumerated().map { i, yr in
-                        nCircle(s * (w - 6 + Double(i) * 3), h * yr.0, yr.1, .f(d.blueColor ?? "#7fb6e0"))
-                    })]
-            }
-        }
-        /// sugar glider: paws out at the corners of its gliding membrane
-        p.arms["gliderPaws"] = { d, k in
-            let c = d.armColor ?? sh(d.body, -0.06)
-            return both { s in [A.arm(s, [nEllipse(s * (k.w + 28), -k.h * 0.5, 9, 8, A.S(c))])] }
-        }
-        /// mole cricket: big, soft, shovel-shaped digging hands
-        p.arms["shovels"] = { d, k in
-            let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
-            // a broad digging hand: a wide palm and three fat, rounded fingers fanned outwards
-            return both { s in
-                let fingers = [-42.0, 0, 42].map { a -> VNode in
-                    let r = a * .pi / 180, cx = s * (8 + cos(r) * 17), cy = sin(r) * 17
-                    return nEllipse(cx, cy, 11, 7.5, A.S(c)).moved(rotAbout(s * a, cx, cy))
-                }
-                return [A.arm(s, [nGroup(fingers + [
-                    nEllipse(s * 4, 0, 17, 15, A.S(c)),
-                    nPath("M\(s * -6),-7 Q\(s * 3),-11 \(s * 12),-6", rcap(sh(c, 0.3), 3.5)),
-                ], svgMove(s * (w - 4), -h * 0.34, rot: s * 38))])]
-            }
-        }
-
-        // feet
-        /// emu chick: big three-toed feet
-        p.feet["bigBird"] = { d, k in
-            let c = d.feetColor ?? "#8f8994"
-            return both { s in
-                let x = s * k.w * 0.34
-                let pd = "M\(x - 15),4 L\(x),-12 L\(x + 15),4 M\(x),-12 L\(x),6"
-                return [nPath(pd, St.line(O, 14)), nPath(pd, St.line(c, 6))]
-            }
-        }
-        /// platypus: webbed feet
-        p.feet["webbed"] = { d, k in
-            let c = d.feetColor ?? "#6d7383"
-            return both { s in
-                let x = s * k.w * 0.42
-                return [nPath("M\(x - 18),-2 Q\(x - 20),-14 \(x),-14 Q\(x + 20),-14 \(x + 18),-2 Q\(x + 12),4 \(x + 6),0 Q\(x),5 \(x - 6),0 Q\(x - 12),4 \(x - 18),-2 Z", A.S(c))]
-            }
-        }
+        p.muzzle["kookaBeak"] = muzzleKookaBeak
+        p.muzzle["platyBill"] = muzzlePlatyBill
+        p.muzzle["echidnaSnout"] = muzzleEchidnaSnout
+        p.muzzle["bilbySnout"] = muzzleBilbySnout
+        p.nose["wombat"] = noseWombat
+        p.nose["nostrils"] = noseNostrils
+        p.mouth["under"] = mouthUnder
+        p.mouth["grin"] = mouthGrin
+        p.arms["rimPaws"] = armsRimPaws
+        p.arms["kookaWing"] = armsKookaWing
+        p.arms["gliderPaws"] = armsGliderPaws
+        p.arms["shovels"] = armsShovels
+        p.feet["bigBird"] = feetBigBird
+        p.feet["webbed"] = feetWebbed
         return p
     }()
+
+    // MARK: the parts, one function each
+
+    // ears
+    /// joey: tall pointed kangaroo ears, set wide
+    private static func earsRoo(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            let cx = s * w * 0.5
+            return [nGroup([
+                nPath("M\(cx - 15),\(-h * 0.86) C\(cx - 19),\(-h * 1.08) \(cx - 5),\(-h * 1.26) \(cx),\(-h * 1.31) C\(cx + 5),\(-h * 1.26) \(cx + 19),\(-h * 1.08) \(cx + 15),\(-h * 0.86) Z", A.S(d.body)),
+                nPath("M\(cx - 7),\(-h * 0.9) C\(cx - 9),\(-h * 1.06) \(cx - 3),\(-h * 1.17) \(cx),\(-h * 1.21) C\(cx + 3),\(-h * 1.17) \(cx + 9),\(-h * 1.06) \(cx + 7),\(-h * 0.9) Z", .f(d.earInner ?? d.body)),
+            ], rotAbout(s * 16, cx, -h * 0.88))]
+        }
+    }
+
+    /// wombat: small, rounded, a little pointed
+    private static func earsWombat(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            let x = s * w * 0.6, y = -h * 0.9
+            return [
+                nPath("M\(x - s * 16),\(y + 8) Q\(x - s * 8),\(y - 24) \(x + s * 8),\(y - 22) Q\(x + s * 20),\(y - 8) \(x + s * 18),\(y + 12) Z", A.S(d.body)),
+                nPath("M\(x - s * 7),\(y + 4) Q\(x - s * 2),\(y - 14) \(x + s * 7),\(y - 12) Q\(x + s * 12),\(y - 4) \(x + s * 10),\(y + 6) Z", .f(d.earInner ?? d.body)),
+            ]
+        }
+    }
+
+    /// sugar glider: big, thin, upright ovals
+    private static func earsGlider(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            [nGroup([
+                nEllipse(s * w * 0.66, -h * 0.98, 17, 25, A.S(d.body)),
+                nEllipse(s * w * 0.66, -h * 0.97, 9, 16, .f(d.earInner ?? d.body)),
+            ], rotAbout(s * 24, s * w * 0.66, -h * 0.98))]
+        }
+    }
+
+    /// bilby: very long rabbit-like ears splayed in a V, pointed at the tips
+    private static func earsBilby(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            let cx = s * w * 0.3
+            return [nGroup([
+                nPath("M\(cx - 17),\(-h * 0.84) C\(cx - 24),\(-h * 1.12) \(cx - 8),\(-h * 1.44) \(cx),\(-h * 1.5) C\(cx + 8),\(-h * 1.44) \(cx + 24),\(-h * 1.12) \(cx + 17),\(-h * 0.84) Z", A.S(d.body)),
+                nPath("M\(cx - 8),\(-h * 0.9) C\(cx - 12),\(-h * 1.12) \(cx - 4),\(-h * 1.34) \(cx),\(-h * 1.39) C\(cx + 4),\(-h * 1.34) \(cx + 12),\(-h * 1.12) \(cx + 8),\(-h * 0.9) Z", .f(d.earInner ?? d.body)),
+            ], rotAbout(s * 24, cx, -h * 0.86))]
+        }
+    }
+
+    // back
+    /// galah: a short, rounded pale crest
+    private static func backGalahCrest(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let h = k.h, st = A.S4(d.crestColor ?? "#fde1e8")
+        return [leaf(-4, -h * 0.9, -112, 34, 13, st), leaf(4, -h * 0.92, -82, 36, 13, st), leaf(10, -h * 0.9, -58, 28, 11, st)]
+    }
+
+    /// cockatoo: a tall fan of sulphur-yellow feathers
+    private static func backCockyCrest(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let st = A.S4(d.crestColor ?? "#ffd84a")
+        return [(-14.0, -122.0, 46.0), (-6, -102, 62), (4, -82, 66), (12, -62, 56), (18, -44, 40)].map { x, a, L in
+            leaf(x, -k.h * 0.9, a, L, 12, st)
+        }
+    }
+
+    /// kookaburra: a rufous barred tail cocked up behind
+    private static func backKookaTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, tc = d.tailColor ?? "#c46f3c"
+        let pd = "M\(w * 0.3),\(-h * 0.16) Q\(w + 4),\(-h * 0.5) \(w + 18),\(-h * 0.76) Q\(w + 34),\(-h * 0.8) \(w + 36),\(-h * 0.6) Q\(w + 22),\(-h * 0.3) \(w * 0.5),\(-h * 0.02) Z"
+        let bars = [0.45, 0.65, 0.85].map { q in
+            nPath("M\(w * 0.3 + 30 * q + 6),\(-h * (0.1 + 0.64 * q) - 16) l28,18", plain(sh(tc, -0.35), 5.5))
+        }
+        return [tail([nPath(pd, .f(tc)), nGroup(bars, clip: SVGPath.parse(pd)), nPath(pd, St.o(6))])]
+    }
+
+    /// echidna: cream spines with dark tips, all over the back
+    private static func backEchidnaSpines(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, n = 13
+        var out: [VNode] = []
+        for i in 0..<n {
+            let a = -196 + Double(i) * 212 / Double(n - 1)
+            let r = a * .pi / 180
+            let bx = cos(r) * w * 0.8, by = -h * 0.52 + sin(r) * h * 0.42
+            out += spine(bx, by, a, i % 2 == 1 ? 38 : 44, 10, d.spineColor ?? "#f4e2b2", d.spineTip ?? "#4f3a2c")
+        }
+        return out
+    }
+
+    /// sugar glider: the furry gliding membrane, stretched from wrist to ankle
+    private static func backPatagium(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.wingColor ?? d.body
+        return both { s in
+            [nPath("M\(s * w * 0.7),\(-h * 0.62) L\(s * (w + 30)),\(-h * 0.5) " +
+                "Q\(s * (w + 22)),\(-h * 0.36) \(s * (w + 30)),\(-h * 0.22) Q\(s * (w + 20)),\(-h * 0.12) \(s * (w + 22)),\(-h * 0.02) " +
+                "L\(s * w * 0.5),-6 Z", A.S(c))]
+        }
+    }
+
+    /// frill-neck lizard: the big umbrella frill around its head
+    private static func backFrill(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        let cx = 0.0, cy = -h * 0.6, n = 11
+        func angle(_ i: Int) -> Double { (-205 + Double(i) * 230 / Double(n * 2)) * .pi / 180 }
+        func ring(_ R: Double, _ inner: Double) -> [Pt] {
+            (0...(n * 2)).map { i in
+                let a = angle(i), rr = i % 2 == 1 ? R * inner : R
+                return (cx + cos(a) * rr, cy + sin(a) * rr * 0.92)
+            }
+        }
+        let outer = ring(w + 36, 0.88), mid = ring(w + 14, 0.94)
+        var out = [nPolygon(outer + [(cx, cy)], A.S(d.frillColor ?? "#f07d4e")), nPolygon(mid + [(cx, cy)], .f(d.frillInner ?? "#ffcf66"))]
+        for i in stride(from: 0, through: n * 2, by: 2) {
+            let a = angle(i)
+            out.append(nPath("M\(cx + cos(a) * (w - 4)),\(cy + sin(a) * (w - 4) * 0.92) L\(cx + cos(a) * (w + 30)),\(cy + sin(a) * (w + 30) * 0.92)",
+                             rcap(d.frillRib ?? "#cf5a35", 4)))
+        }
+        return out
+    }
+
+    /// frill-neck lizard: a long tail curling along the ground
+    private static func backLizardTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [tail(A.tube("M\(w * 0.5),-12 C\(w + 20),-4 \(w + 40),-10 \(w + 46),\(-h * 0.2) C\(w + 50),\(-h * 0.3) \(w + 40),\(-h * 0.36) \(w + 34),\(-h * 0.3)", d.body, 12))]
+    }
+
+    /// bilby: a thin black tail with a white crested tip
+    private static func backBilbyTail(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return [tail(A.tube("M\(w * 0.5),-14 C\(w + 18),-10 \(w + 26),-24 \(w + 30),\(-h * 0.34)", "#4a4352", 7) +
+            A.tube("M\(w + 28),\(-h * 0.28) C\(w + 31),\(-h * 0.38) \(w + 32),\(-h * 0.46) \(w + 30),\(-h * 0.54)", "#fdfaf3", 11))]
+    }
+
+    /// mole cricket: short, soft antennae with a little curl
+    private static func backCricketAntennae(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h
+        return both { s in
+            let pd = "M\(s * w * 0.16),\(-h * 0.92) Q\(s * w * 0.2),\(-h * 1.14) \(s * w * 0.48),\(-h * 1.16) Q\(s * w * 0.62),\(-h * 1.16) \(s * w * 0.6),\(-h * 1.08)"
+            return [nPath(pd, rcap(O, 11)), nPath(pd, rcap(d.antennaColor ?? O, 4))]
+        }
+    }
+
+    // marks (clipped inside the body)
+    /// galah: pale pink cap, grey wings wrapped round the flanks
+    private static func marksGalah(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, g = d.greyColor ?? "#b7bcc6"
+        return [nEllipse(0, -h * 1.04, w * 0.78, h * 0.24, .f(d.capColor ?? d.body))] +
+            both { s in [nEllipse(s * w * 1.02, -h * 0.3, w * 0.42, h * 0.44, .f(g))] } +
+            [nEllipse(0, 6, w * 0.7, h * 0.1, .f(g))]
+    }
+
+    /// kookaburra: brown wings on the flanks, a streaky crown and the dark eye stripe
+    private static func marksKooka(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, fy = k.fy, ex = k.ex
+        let br = d.wingColor ?? "#9a6a47", crown = d.crownColor ?? "#d9bf9c"
+        var out = both { s in [nEllipse(s * w * 1.0, -h * 0.36, w * 0.4, h * 0.5, .f(br))] }
+        out.append(nEllipse(0, -h * 1.02, w * 0.62, h * 0.2, .f(crown)))
+        out += [-14.0, 0, 14].map { x in nPath("M\(x),\(-h * 0.98) L\(x * 1.2),\(-h * 0.86)", rcap(sh(crown, -0.3), 4)) }
+        out += both { s in
+            [nPath("M\(s * (w * ex + 2)),\(fy - 1) Q\(s * (w * 0.72)),\(fy - 5) \(s * (w + 6)),\(fy + 4) L\(s * (w + 6)),\(fy + 15) Q\(s * w * 0.72),\(fy + 7) \(s * (w * ex + 2)),\(fy + 8) Z",
+                   .f(d.stripeColor ?? "#6e4a33"))]
+        }
+        return out
+    }
+
+    /// emu chick: long cream and brown stripes, a spotty head
+    private static func marksEmu(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, fy = k.fy, c = d.markColor ?? "#7a5640"
+        func stripe(_ x: Double, _ top: Double, _ wd: Double) -> VNode {
+            nPath("M\(x),\(top) C\(x + 6),\(top * 0.66) \(x - 6),\(top * 0.33) \(x),4", rcap(c, wd))
+        }
+        return both { s in [stripe(s * w * 0.5, -h * 0.9, 10), stripe(s * w * 0.94, -h * 0.74, 16)] } +
+            [nPath("M0,\(-h * 1.02) L0,\(fy - 20)", rcap(c, 8))] +
+            [(-0.3, 0.86), (0.3, 0.86), (-0.42, 0.74), (0.42, 0.74)].map { x, y in nCircle(x * w, -y * h, 4, .f(c)) }
+    }
+
+    /// sugar glider: the dark stripe down the forehead and dark rings round the eyes
+    private static func marksGlider(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, fy = k.fy, ex = k.ex, c = d.markColor ?? "#4f4c5c"
+        return [nPath("M-7,\(-h * 1.02) L7,\(-h * 1.02) L3,\(fy + 2) Q0,\(fy + 5) -3,\(fy + 2) Z", .f(c))] +
+            both { s in [
+                nEllipse(s * w * ex, fy, 14, 15, .f(c)),
+                nPath("M\(s * w * ex),\(fy - 10) Q\(s * w * 0.6),\(fy - 26) \(s * w * 0.72),\(-h * 0.86)", rcap(c, 9)),
+            ] }
+    }
+
+    /// mole cricket: the velvety helmet (pronotum) and soft tummy bands
+    private static func marksCricket(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.markColor ?? "#8c5d3c", belly = d.belly ?? d.body
+        return [
+            nPath("M\(-w - 6),\(-h * 0.74) Q0,\(-h * 0.84) \(w + 6),\(-h * 0.74) L\(w + 6),\(-h * 1.2) L\(-w - 6),\(-h * 1.2) Z", .f(c)),
+            nPath("M\(-w * 0.46),\(-h * 0.9) Q0,\(-h * 0.98) \(w * 0.46),\(-h * 0.9)", rcap(sh(c, 0.22), 6)),
+            nPath("M0,\(-h * 0.98) L0,\(-h * 0.8)", rcap(sh(c, -0.25), 3.5)),
+        ] + [0.2, 0.09].enumerated().map { i, y in
+            let xx = w * (0.36 - Double(i) * 0.06)
+            return nPath("M\(-xx),\(-h * y) Q0,\(-h * y + 6) \(xx),\(-h * y)", rcap(sh(belly, -0.12), 3.5))
+        }
+    }
+
+    // front
+    /// joey: mum's pouch, with the joey peeking out of it
+    private static func frontPouch(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.pouchColor ?? "#cf9764"
+        // a soft fur pocket: its opening is a smile, high at the sides
+        let pd = "M\(-w - 6),\(-h * 0.46) C\(-w - 14),\(-h * 0.12) \(-w * 0.62),4 0,4 C\(w * 0.62),4 \(w + 14),\(-h * 0.12) \(w + 6),\(-h * 0.46) " +
+            "C\(w * 0.5),\(-h * 0.3) \(-w * 0.5),\(-h * 0.3) \(-w - 6),\(-h * 0.46) Z"
+        let shade = "M\(-w + 2),\(-h * 0.5) C\(-w * 0.4),\(-h * 0.36) \(w * 0.4),\(-h * 0.36) \(w - 2),\(-h * 0.5) L\(w + 6),\(-h * 0.46) C\(w * 0.5),\(-h * 0.3) \(-w * 0.5),\(-h * 0.3) \(-w - 6),\(-h * 0.46) Z"
+        return [
+            nPath(shade, .f(sh(d.body, -0.18))),
+            nPath(pd, A.S(c)),
+            nPath("M\(-w + 2),\(-h * 0.39) C\(-w * 0.4),\(-h * 0.27) \(w * 0.4),\(-h * 0.27) \(w - 2),\(-h * 0.39)", rcap(sh(c, 0.35), 5)),
+        ]
+    }
+
+    /// echidna: a few short spines on top of the head
+    private static func frontHeadSpines(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let h = k.h, c = d.spineColor ?? "#f4e2b2", t = d.spineTip ?? "#4f3a2c"
+        return spine(-14, -h * 0.9, -108, 22, 6, c, t) + spine(0, -h * 0.93, -90, 25, 6, c, t) + spine(14, -h * 0.9, -72, 22, 6, c, t)
+    }
+
+    /// emu chick: a little fuzz on top
+    private static func frontFuzz(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let h = k.h, st = A.S4(d.markColor ?? "#7a5640")
+        return [leaf(-3, -h * 0.94, -118, 18, 6, st), leaf(0, -h * 0.95, -88, 22, 6, st), leaf(3, -h * 0.94, -60, 18, 6, st)]
+    }
+
+    // eyes
+    /// a parrot's eye: the friendly dot eye with a bare pale ring round it
+    private static func eyesRingDot(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        both { s in
+            let x = s * k.w * k.ex, fy = k.fy
+            return [nCircle(x, fy, 11, .f(d.eyeRing ?? "#fde1e8")), nEllipse(x, fy, 6.5, 8, .f(O)), nCircle(x - 2, fy - 3, 2.5, .f("#ffffff"))]
+        }
+    }
+
+    /// kookaburra: the big kingfisher beak, dark on top, pale below
+    private static func muzzleKookaBeak(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let fy = k.fy
+        return [
+            nPath("M12,\(fy + 13) C-4,\(fy + 17) -26,\(fy + 22) -42,\(fy + 28) C-26,\(fy + 34) -4,\(fy + 32) 12,\(fy + 25) Z", A.S4(d.beakLow ?? "#efe3cc")),
+            nPath("M14,\(fy + 1) C0,\(fy - 3) -30,\(fy + 6) -48,\(fy + 24) C-28,\(fy + 20) -4,\(fy + 20) 14,\(fy + 17) Q19,\(fy + 9) 14,\(fy + 1) Z", A.S4(d.beakTop ?? "#4f4540")),
+            nPath("M4,\(fy + 5) Q-12,\(fy + 5) -24,\(fy + 12)", rcap("#ffffff", 3.5).so(0.35)),
+        ]
+    }
+
+    /// platypus: the wide, soft duck bill
+    private static func muzzlePlatyBill(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let fy = k.fy, c = d.muzzleColor ?? "#6d7383"
+        return [
+            nPath("M-31,\(fy + 14) C-33,\(fy + 2) 33,\(fy + 2) 31,\(fy + 14) C33,\(fy + 30) -33,\(fy + 30) -31,\(fy + 14) Z", A.S4(c)),
+            nPath("M-20,\(fy + 19) Q0,\(fy + 24) 20,\(fy + 19)", rcap(sh(c, -0.35), 3)),
+            nEllipse(-6, fy + 10, 2.4, 3, .f(O)), nEllipse(6, fy + 10, 2.4, 3, .f(O)),
+            nEllipse(-16, fy + 9, 6, 2.4, St.f("#ffffff").op(0.3)),
+        ]
+    }
+
+    /// echidna: a long thin snout
+    private static func muzzleEchidnaSnout(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let fy = k.fy
+        return A.tube("M0,\(fy + 6) C0,\(fy + 20) 0,\(fy + 30) -3,\(fy + 38)", d.muzzleColor ?? "#4f3f36", 13) +
+            [nEllipse(-3, fy + 39, 4.5, 3, .f(O))]
+    }
+
+    /// bilby: a long pointy snout with a pink nose
+    private static func muzzleBilbySnout(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let fy = k.fy
+        return [
+            nPath("M-15,\(fy + 6) Q0,\(fy - 2) 15,\(fy + 6) Q8,\(fy + 24) 2,\(fy + 32) Q0,\(fy + 34) -2,\(fy + 32) Q-8,\(fy + 24) -15,\(fy + 6) Z", A.S4(d.muzzleColor ?? "#ece4ee")),
+            nEllipse(0, fy + 30, 7, 5.5, A.S4(d.noseColor ?? "#f28fab")),
+        ]
+    }
+
+    // nose
+    /// wombat: the big, square, leathery nose
+    private static func noseWombat(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let fy = k.fy, c = d.noseColor ?? "#4f403c"
+        return [
+            nRect(-18, fy + 3, 36, 24, rx: 11, A.S4(c)),
+            nPath("M-9,\(fy + 17) q3,-5 6,0 M3,\(fy + 17) q3,-5 6,0", rcap(sh(c, -0.5), 3)),
+            nEllipse(-7, fy + 8, 6, 2.5, St.f("#ffffff").op(0.35)),
+        ]
+    }
+
+    /// lizard: two little nostrils
+    private static func noseNostrils(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        [nCircle(-5, k.fy + 9, 2.2, .f(O)), nCircle(5, k.fy + 9, 2.2, .f(O))]
+    }
+
+    // mouth
+    /// under the wombat's big nose
+    private static func mouthUnder(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let my = k.fy + 33
+        return [nPath("M-7,\(my) Q-3.5,\(my + 5) 0,\(my) Q3.5,\(my + 5) 7,\(my)", St.line(O, 4))]
+    }
+
+    /// a lizard's wide grin
+    private static func mouthGrin(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let my = k.fy + 18
+        return [nPath("M-20,\(my - 3) Q0,\(my + 11) 20,\(my - 3)", rcap(O, 4))]
+    }
+
+    // arms
+    /// joey: little paws resting on the rim of the pouch
+    private static func armsRimPaws(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
+        return both { s in
+            [A.arm(s, [
+                nEllipse(s * w * 0.5, -h * 0.36, 12, 9, A.S(c)),
+                nPath("M\(s * w * 0.5 - 4),\(-h * 0.36 + 2) l0,5 M\(s * w * 0.5 + 4),\(-h * 0.36 + 2) l0,5", rcap(O, 2.5)),
+            ])]
+        }
+    }
+
+    /// kookaburra: brown wings with the blue shoulder patch
+    private static func armsKookaWing(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
+        return both { s in
+            [A.arm(s, [nPath("M\(s * (w - 12)),\(-h * 0.62) Q\(s * (w + 18)),\(-h * 0.48) \(s * (w - 2)),\(-h * 0.16) Q\(s * (w - 18)),\(-h * 0.34) \(s * (w - 12)),\(-h * 0.62) Z", A.S(c))] +
+                [(-0.52, 3.5), (-0.45, 3), (-0.4, 3.2)].enumerated().map { i, yr in
+                    nCircle(s * (w - 6 + Double(i) * 3), h * yr.0, yr.1, .f(d.blueColor ?? "#7fb6e0"))
+                })]
+        }
+    }
+
+    /// sugar glider: paws out at the corners of its gliding membrane
+    private static func armsGliderPaws(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let c = d.armColor ?? sh(d.body, -0.06)
+        return both { s in [A.arm(s, [nEllipse(s * (k.w + 28), -k.h * 0.5, 9, 8, A.S(c))])] }
+    }
+
+    /// mole cricket: big, soft, shovel-shaped digging hands
+    private static func armsShovels(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let w = k.w, h = k.h, c = d.armColor ?? sh(d.body, -0.06)
+        // a broad digging hand: a wide palm and three fat, rounded fingers fanned outwards
+        return both { s in
+            let fingers = [-42.0, 0, 42].map { a -> VNode in
+                let r = a * .pi / 180, cx = s * (8 + cos(r) * 17), cy = sin(r) * 17
+                return nEllipse(cx, cy, 11, 7.5, A.S(c)).moved(rotAbout(s * a, cx, cy))
+            }
+            return [A.arm(s, [nGroup(fingers + [
+                nEllipse(s * 4, 0, 17, 15, A.S(c)),
+                nPath("M\(s * -6),-7 Q\(s * 3),-11 \(s * 12),-6", rcap(sh(c, 0.3), 3.5)),
+            ], svgMove(s * (w - 4), -h * 0.34, rot: s * 38))])]
+        }
+    }
+
+    // feet
+    /// emu chick: big three-toed feet
+    private static func feetBigBird(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let c = d.feetColor ?? "#8f8994"
+        return both { s in
+            let x = s * k.w * 0.34
+            let pd = "M\(x - 15),4 L\(x),-12 L\(x + 15),4 M\(x),-12 L\(x),6"
+            return [nPath(pd, St.line(O, 14)), nPath(pd, St.line(c, 6))]
+        }
+    }
+
+    /// platypus: webbed feet
+    private static func feetWebbed(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
+        let c = d.feetColor ?? "#6d7383"
+        return both { s in
+            let x = s * k.w * 0.42
+            return [nPath("M\(x - 18),-2 Q\(x - 20),-14 \(x),-14 Q\(x + 20),-14 \(x + 18),-2 Q\(x + 12),4 \(x + 6),0 Q\(x),5 \(x - 6),0 Q\(x - 12),4 \(x - 18),-2 Z", A.S(c))]
+        }
+    }
 
     // MARK: the 12 friends (web order)
 
