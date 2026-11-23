@@ -63,7 +63,7 @@ enum ShellFX {
 
 /// Fallback / reference effect: the halves just split and slide apart.
 struct ClassicFX: ShellEffect {
-    let id = "classic", name = "Split", icon = "🥚"
+    let id = "classic", name = "Split", icon = "egg"
     var hidden: Bool { true }
 
     func run(_ ctx: ShellCtx) async {

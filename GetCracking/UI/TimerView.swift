@@ -9,8 +9,11 @@ struct TimerView: View {
     @State private var touching = false
     @State private var lockProgress = 0.0
     @State private var againProgress = 0.0
+    @State private var againTilt = 0.0
     @State private var hintBob = false
     @State private var timePulse = false
+    @State private var pausedDim = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let s = model.settings
@@ -37,14 +40,14 @@ struct TimerView: View {
                 // the pointing finger, at the egg's lower right
                 if run.showTapHint {
                     let p = CGPoint(x: Scenes.egg.x + 15, y: Scenes.egg.y - 48).applying(m)
-                    Text("👆")
-                        .font(.system(size: 54))
+                    IconView("tap", size: 64)
                         .shadow(color: Theme.out, radius: 0, x: 0, y: 3)
                         .rotationEffect(.degrees(hintBob ? -8 : 0))
                         .offset(y: hintBob ? -14 : 0)
-                        .position(x: p.x + 27, y: p.y + 27)
+                        .position(x: p.x + 32, y: p.y + 32)
                         .allowsHitTesting(false)
                         .onAppear {
+                            if reduceMotion { return }
                             withAnimation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true)) { hintBob = true }
                         }
                         .onDisappear { hintBob = false }
@@ -52,7 +55,10 @@ struct TimerView: View {
             }
         }
         .ignoresSafeArea()
-        .overlay(alignment: .top) { topPills(s) }
+        .overlay(alignment: .top) {
+            GeometryReader { g in topPills(s, width: g.size.width) }
+                .allowsHitTesting(false)
+        }
         .overlay(alignment: .bottom) { bottomBar(s) }
         .persistentSystemOverlays(.hidden)
         .onChange(of: run.timeBump) { _, _ in
@@ -73,8 +79,11 @@ struct TimerView: View {
 
     // MARK: top
 
-    private func topPills(_ s: Settings) -> some View {
-        ZStack(alignment: .top) {
+    private func topPills(_ s: Settings, width: CGFloat) -> some View {
+        // the clock: big and centred at the top (56–100 pt, 17 % of the width)
+        let clockSize: CGFloat = min(100, max(56, width * 0.17))
+        let paused = run.phase == .paused
+        return ZStack(alignment: .top) {
             Text(run.hatchText)
                 .font(Theme.hand(40))
                 .foregroundStyle(Theme.out)
@@ -90,20 +99,29 @@ struct TimerView: View {
                 .padding(.horizontal, 70)
                 .allowsHitTesting(false)
 
-            if s.showNumbers && (run.phase == .running || run.phase == .paused) {
+            if s.showNumbers && (run.phase == .running || paused) {
                 Text(run.timeText)
-                    .font(Theme.round(18, .semibold))
+                    .font(Theme.digits(clockSize))
                     .monospacedDigit()
-                    .foregroundStyle(Theme.out)
-                    .padding(.horizontal, 12).padding(.vertical, 2)
-                    .toy(Theme.pill, radius: 20, border: 3, depth: 3)
-                    .opacity(0.7)
+                    .tracking(-0.01 * clockSize)
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, 0.45 * clockSize)
+                    .toy(Theme.cream, radius: clockSize, border: 6, depth: 7)
                     .scaleEffect(timePulse ? 1.25 : 1)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 14)
+                    // paused: the clock breathes (or just dims, with Reduce Motion)
+                    .opacity(paused ? (reduceMotion ? 0.6 : (pausedDim ? 0.5 : 1)) : 1)
                     .padding(.top, 6)
-                    .allowsHitTesting(false)
                     .accessibilityHidden(true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+        .onChange(of: paused) { _, on in
+            if on && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { pausedDim = true }
+            } else {
+                withAnimation(.easeOut(duration: 0.2)) { pausedDim = false }
             }
         }
     }
@@ -141,33 +159,35 @@ struct TimerView: View {
     }
 
     private func lockButton(_ s: Settings) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle().fill(Theme.cream.opacity(0.78))
-                Circle().strokeBorder(Theme.out, lineWidth: 4)
-                Text("🔒").font(.system(size: 24))
-                Circle()
-                    .trim(from: 0, to: lockProgress)
-                    .stroke(Theme.gold, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .padding(-9)
-            }
-            .frame(width: 58, height: 58)
-            .background(Circle().fill(Theme.out).offset(y: 4))
-            .opacity(lockProgress > 0 || run.trayOpen ? 1 : 0.55)
-            .holdable(s.holdSeconds, progress: $lockProgress, onTap: {
-                if s.longPressStop { run.flashLockTip() } else { run.openTray() }
-            }, onHold: { run.openTray() })
-            .accessibilityLabel("Grown-ups: hold to open controls")
-            .accessibilityAddTraits(.isButton)
-
+        ZStack {
+            Circle().fill(Theme.cream.opacity(0.78))
+            Circle().strokeBorder(Theme.out, lineWidth: 4)
+            IconView("lock", size: 32)
+            Circle()
+                .trim(from: 0, to: lockProgress)
+                .stroke(Theme.gold, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .padding(-9)
+        }
+        .frame(width: 58, height: 58)
+        .background(Circle().fill(Theme.out).offset(y: 4))
+        .opacity(lockProgress > 0 || run.trayOpen ? 1 : 0.55)
+        .holdable(s.holdSeconds, progress: $lockProgress, onTap: {
+            if s.longPressStop { run.flashLockTip() } else { run.openTray() }
+        }, onHold: { run.openTray() })
+        .accessibilityLabel("Grown-ups: hold to open controls")
+        .accessibilityAddTraits(.isButton)
+        // the tip sits above the lock, so it never hides behind the − / + / pause buttons
+        .overlay(alignment: .bottomLeading) {
             Text("Grown-ups: press & hold")
-                .font(Theme.hand(18))
+                .font(Theme.hand(19))
                 .foregroundStyle(Theme.cream)
-                .padding(.horizontal, 12).padding(.vertical, 4)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.out.opacity(0.82)))
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 13).padding(.top, 5).padding(.bottom, 6)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Theme.out.opacity(0.88)))
                 .opacity(run.showLockTip ? 1 : 0)
-                .offset(x: run.showLockTip ? 0 : -8)
+                .offset(x: -2, y: run.showLockTip ? -72 : -64)
                 .animation(.easeOut(duration: 0.25), value: run.showLockTip)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
@@ -181,28 +201,42 @@ struct TimerView: View {
         if live {
             HStack(spacing: 10) {
                 if s.showAdjust {
-                    roundButton("−1", "One minute less") { run.adjust(-60) }
-                    roundButton("+1", "One minute more") { run.adjust(60) }
+                    roundButton("One minute less", text: "−1") { run.adjust(-60) }
+                    roundButton("One minute more", text: "+1") { run.adjust(60) }
                 }
                 if s.showPause {
-                    roundButton(run.phase == .paused ? "▶" : "❚❚", run.phase == .paused ? "Resume" : "Pause") { run.togglePause() }
+                    // the icon and the spoken label both follow the state
+                    roundButton(run.phase == .paused ? "Resume" : "Pause", icon: run.phase == .paused ? "play" : "pause") { run.togglePause() }
                 }
             }
         }
     }
 
-    private func roundButton(_ label: String, _ a11y: String, _ action: @escaping () -> Void) -> some View {
+    /// A round on-screen control: a drawn icon, or a short text like "+1".
+    private func roundButton(_ a11y: String, icon: String? = nil, text: String = "", _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(label).font(Theme.round(20, .bold)).frame(width: 60, height: 60)
+            glyph(icon: icon, text: text, textSize: 21)
+                .frame(width: 62, height: 62)
         }
-        .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 30))
+        .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 31))
         .accessibilityLabel(a11y)
+    }
+
+    @ViewBuilder
+    private func glyph(icon: String?, text: String, textSize: CGFloat) -> some View {
+        if let icon {
+            IconView(icon, size: 30)
+        } else {
+            Text(text).font(Theme.round(textSize, .bold)).lineLimit(1).minimumScaleFactor(0.6)
+        }
     }
 
     private func againButton(_ s: Settings) -> some View {
         HStack(spacing: 10) {
-            Text("🥚").font(.system(size: 26))
+            IconView("egg", size: 34)
             Text("Hold for a new egg").font(Theme.hand(20)).foregroundStyle(Theme.out)
+                .lineLimit(1)
+                .fixedSize()
         }
         .padding(.leading, 16).padding(.trailing, 22)
         .frame(height: 60)
@@ -218,9 +252,21 @@ struct TimerView: View {
                 Capsule().strokeBorder(Theme.out, lineWidth: 4)
             }
         )
-        .holdable(s.holdSeconds, progress: $againProgress) { model.stopToSetup() }
+        .rotationEffect(.degrees(againTilt))
+        // a quick tap wiggles, so it never feels like nothing happened
+        .holdable(s.holdSeconds, progress: $againProgress, onTap: { wiggleAgain() }, onHold: { model.stopToSetup() })
         .accessibilityLabel("Hold for a new egg")
         .accessibilityAddTraits(.isButton)
+    }
+
+    private func wiggleAgain() {
+        if reduceMotion { return }
+        let tilts: [Double] = [-3, 3, -2, 0]
+        for (i, deg) in tilts.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08 * Double(i)) {
+                withAnimation(.easeInOut(duration: 0.08)) { againTilt = deg }
+            }
+        }
     }
 
     private func nextCard(_ s: Settings) -> some View {
@@ -230,7 +276,8 @@ struct TimerView: View {
                 if let img = PhotoStore.image(s.nextUp.photo) {
                     Image(uiImage: img).resizable().scaledToFill()
                 } else {
-                    Text(s.nextUp.icon.isEmpty ? "⭐" : s.nextUp.icon).font(.system(size: 36))
+                    // a name from the icon picker (or an emoji saved by an older build)
+                    IconView(Icons.resolve(s.nextUp.icon), size: 46)
                 }
             }
             .frame(width: 64, height: 64)
@@ -238,7 +285,7 @@ struct TimerView: View {
             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.out, lineWidth: 4))
             VStack(alignment: .leading, spacing: 0) {
                 Text("Next up").font(Theme.hand(16)).opacity(0.7)
-                Text(s.nextUp.text).font(Theme.hand(28)).lineLimit(2)
+                Text(s.nextUp.text).font(Theme.hand(28)).lineLimit(1).minimumScaleFactor(0.6)
             }
             .foregroundStyle(Theme.out)
         }
@@ -253,17 +300,18 @@ struct TimerView: View {
     private var tray: some View {
         let live = run.phase == .running || run.phase == .paused
         let canHatch = live || run.phase == .ready
-        return VStack(spacing: 10) {
+        return VStack(spacing: 14) {
             Text("Grown-up controls").font(Theme.hand(22)).foregroundStyle(Theme.out)
+                .padding(.top, 4)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                 if live {
-                    trayButton(run.phase == .paused ? "▶" : "❚❚", run.phase == .paused ? "Resume" : "Pause") { run.togglePause() }
-                    trayButton("−1", "Minute") { run.adjust(-60) }
-                    trayButton("+1", "Minute") { run.adjust(60) }
+                    trayButton(run.phase == .paused ? "Resume" : "Pause", icon: run.phase == .paused ? "play" : "pause") { run.togglePause() }
+                    trayButton("Minute", text: "−1", a11y: "One minute less") { run.adjust(-60) }
+                    trayButton("Minute", text: "+1", a11y: "One minute more") { run.adjust(60) }
                 }
-                if canHatch { trayButton("🐣", "Hatch now") { run.hatchNow() } }
-                trayButton("🔁", "New egg") { model.restartSame() }
-                trayButton("■", "Stop", danger: true) { model.stopToSetup() }
+                if canHatch { trayButton("Hatch now", icon: "hatch") { run.hatchNow() } }
+                trayButton("New egg", icon: "again") { model.restartSame() }
+                trayButton("Stop", icon: "stop", danger: true) { model.stopToSetup() }
             }
         }
         .padding(.top, 14).padding(.horizontal, 16).padding(.bottom, 18)
@@ -271,12 +319,11 @@ struct TimerView: View {
         .toy(Theme.paper, radius: 26, border: 5, depth: 7)
         .overlay(alignment: .topTrailing) {
             Button { run.closeTray() } label: {
-                Text("✕").font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.out)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(Theme.cream))
-                    .overlay(Circle().strokeBorder(Theme.out, lineWidth: 3))
+                IconView("close", size: 28)
+                    .frame(width: 46, height: 46)
             }
-            .padding(8)
+            .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 23, border: 4, depth: 3))
+            .padding(.top, 6).padding(.trailing, 8)
             .accessibilityLabel("Close")
         }
         .padding(.horizontal, 12)
@@ -284,18 +331,21 @@ struct TimerView: View {
         .allowsHitTesting(run.trayOpen)
     }
 
-    private func trayButton(_ icon: String, _ label: String, danger: Bool = false, _ action: @escaping () -> Void) -> some View {
+    private func trayButton(_ label: String, icon: String? = nil, text: String = "", a11y: String? = nil,
+                            danger: Bool = false, _ action: @escaping () -> Void) -> some View {
         Button {
             run.armTray()
             action()
         } label: {
             VStack(spacing: 4) {
-                Text(icon).font(Theme.round(24, .bold))
-                Text(label).font(Theme.hand(17))
+                glyph(icon: icon, text: text, textSize: 24)
+                    .frame(height: 30)
+                Text(label).font(Theme.hand(17)).lineLimit(1).minimumScaleFactor(0.6)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 74)
         }
         .buttonStyle(ToyButtonStyle(fill: danger ? Theme.danger : Theme.cream, radius: 16))
+        .accessibilityLabel(a11y ?? label)
     }
 }

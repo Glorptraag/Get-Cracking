@@ -15,10 +15,10 @@ struct SheetView: View {
                     .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Button { dismiss() } label: {
-                    Text("✕").font(.system(size: 20, weight: .bold)).foregroundStyle(Theme.out)
-                        .frame(width: 46, height: 46)
+                    IconView("close", size: 29)
+                        .frame(width: 48, height: 48)
                 }
-                .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 23, border: 4, depth: 3))
+                .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 24, border: 4, depth: 3))
                 .accessibilityLabel("Close")
             }
             .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 8)
@@ -85,6 +85,8 @@ struct SheetSection<Content: View>: View {
 struct Option: Identifiable {
     let id: String
     let label: String
+    /// the name of a drawn icon (Art/Icons.swift) shown before the label
+    var icon: String? = nil
 }
 
 /// A row of chunky choice chips.
@@ -99,11 +101,18 @@ struct OptionChips: View {
         FlowLayout(spacing: 8) {
             ForEach(options) { o in
                 let isLocked = locked.contains(o.id)
+                // a label that still starts with an emoji gets its drawn icon instead
+                let parts = Icons.splitLabel(o.label)
+                let icon = o.icon ?? parts.icon
                 Button { onPick(o.id) } label: {
-                    Text(isLocked ? "\(o.label) 🔒" : o.label).font(Theme.round(15, .semibold))
-                        .padding(.horizontal, 14).padding(.vertical, 6)
-                        .frame(minHeight: 44)
-                        .opacity(isLocked ? 0.7 : 1)
+                    HStack(spacing: 6) {
+                        if let icon { IconView(icon, size: 26).padding(.leading, -4) }
+                        Text(parts.text).font(Theme.round(15, .semibold))
+                        if isLocked { IconView("lock", size: 20) }
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 6)
+                    .frame(minHeight: 44)
+                    .opacity(isLocked ? 0.7 : 1)
                 }
                 .buttonStyle(ToyButtonStyle(fill: o.id == selected ? Theme.gold : Theme.cream, radius: 14))
                 .accessibilityAddTraits(o.id == selected ? .isSelected : [])
@@ -142,7 +151,7 @@ struct WorldSection: View {
         SheetSection(title: "World", hint: "Where the egg sits. Surprise me picks a different one each time.") {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)], spacing: 10) {
                 card(id: "random", name: "Surprise me") {
-                    Text("🎲").font(.system(size: 40))
+                    IconView("dice", size: 54)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Theme.pill)
                 }
@@ -187,7 +196,7 @@ struct SoundSection: View {
     var body: some View {
         @Bindable var model = model
         SheetSection(title: "Countdown music", hint: "Plays quietly while the timer runs. Tap one to hear a sample.") {
-            OptionChips(options: Sound.music.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
+            OptionChips(options: Sound.music.map { Option(id: $0.id, label: $0.name, icon: Icons.resolve($0.icon)) },
                         selected: model.settings.music) { id in
                 model.settings.music = id
                 Sound.shared.setVolume(model.settings.volume)
@@ -224,7 +233,7 @@ struct StyleSection: View {
 
     var body: some View {
         SheetSection(title: "Hatch style", hint: "What the shell does when the egg hatches. Tap a style to watch it, or tap the egg to replay.") {
-            OptionChips(options: [Option(id: "random", label: "🎲 Surprise me")] + ShellFX.list.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
+            OptionChips(options: [Option(id: "random", label: "Surprise me", icon: "dice")] + ShellFX.list.map { Option(id: $0.id, label: $0.name, icon: $0.icon) },
                         selected: model.settings.hatchStyle) { id in
                 model.settings.hatchStyle = id
                 preview.play(id, volume: model.settings.volume, pool: model.gate.friendPool)
@@ -286,7 +295,7 @@ struct HatchSection: View {
         let gate = model.gate
         let photosLeft = gate.photosLeft(liveCount: model.photos.count)
         SheetSection(title: "Who hatches?", hint: "Friends come in a shuffled order: no repeats until every friend has hatched. Photos you add can hatch too and never leave this device." + (photosLeft == nil ? "" : " One photo friend is free; The Whole Nest adds as many as you like.")) {
-            OptionChips(options: [Option(id: "animals", label: "🐾 Animals"), Option(id: "photos", label: "📷 My photos"), Option(id: "both", label: "🎁 Both")],
+            OptionChips(options: [Option(id: "animals", label: "Animals", icon: "paw"), Option(id: "photos", label: "My photos", icon: "camera"), Option(id: "both", label: "Both", icon: "gift")],
                         selected: model.settings.hatchWho) { model.settings.hatchWho = $0 }
             FlowLayout(spacing: 10) {
                 ForEach(model.photos) { p in
@@ -296,25 +305,28 @@ struct HatchSection: View {
                         .overlay(Circle().strokeBorder(Theme.out, lineWidth: 4))
                         .overlay(alignment: .topTrailing) {
                             Button { model.removePhoto(p) } label: {
-                                Text("✕").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.out)
-                                    .frame(width: 28, height: 28)
+                                IconView("close", size: 24)
+                                    .frame(width: 34, height: 34)
                                     .background(Circle().fill(Color.white))
                                     .overlay(Circle().strokeBorder(Theme.out, lineWidth: 3))
+                                    // a bigger target than the little badge itself
+                                    .padding(5)
+                                    .contentShape(Circle())
                             }
-                            .offset(x: 2, y: -2)
+                            .offset(x: 15, y: -15)
                             .accessibilityLabel("Remove photo")
                         }
                 }
                 if gate.canAddPhoto(liveCount: model.photos.count) {
                     PhotosPicker(selection: $picks, maxSelectionCount: min(12, photosLeft ?? 12), matching: .images) {
-                        Text("＋").font(.system(size: 30)).foregroundStyle(Theme.out)
+                        IconView("plus", size: 34)
                             .frame(width: 78, height: 78)
                             .overlay(Circle().strokeBorder(Theme.out, style: StrokeStyle(lineWidth: 4, dash: [8, 6])))
                     }
                     .accessibilityLabel("Add photos")
                 } else {
                     Button { model.askForNest(.photoLimit) } label: {
-                        Text("＋").font(.system(size: 30)).foregroundStyle(Theme.out).opacity(0.5)
+                        IconView("plus", size: 34).opacity(0.5)
                             .frame(width: 78, height: 78)
                             .overlay(Circle().strokeBorder(Theme.out, style: StrokeStyle(lineWidth: 4, dash: [8, 6])))
                             .overlay(alignment: .bottomTrailing) { LockBadge() }
@@ -340,7 +352,7 @@ struct HatchSection: View {
             Text("Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.")
                 .font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
                 .fixedSize(horizontal: false, vertical: true)
-            OptionChips(options: [Option(id: "tap", label: "👆 Wait for a tap"), Option(id: "auto", label: "🐣 Hatch by itself")],
+            OptionChips(options: [Option(id: "tap", label: "Wait for a tap", icon: "tap"), Option(id: "auto", label: "Hatch by itself", icon: "hatch")],
                         selected: model.settings.hatchMode) { model.settings.hatchMode = $0 }
         }
     }
@@ -353,8 +365,8 @@ struct ScreenSection: View {
 
     var body: some View {
         @Bindable var model = model
-        SheetSection(title: "Timer screen", hint: "Pause, ±1 minute and Stop are always available behind the 🔒 in the bottom corner. The options below put extra buttons on screen.") {
-            ToggleRow(label: "Long-press 🔒 for grown-up controls", sub: "A quick tap does nothing, so little fingers can't stop the timer", isOn: $model.settings.longPressStop)
+        SheetSection(title: "Timer screen", hint: "Pause, ±1 minute and Stop are always available behind the lock in the bottom corner. The options below put extra buttons on screen.") {
+            ToggleRow(label: "Long-press the lock for grown-up controls", sub: "A quick tap does nothing, so little fingers can't stop the timer", isOn: $model.settings.longPressStop)
             HStack {
                 Text("Hold for").font(Theme.round(16, .semibold))
                 Spacer()
@@ -366,7 +378,7 @@ struct ScreenSection: View {
             }
             ToggleRow(label: "Show pause button", sub: "Always on screen (one tap)", isOn: $model.settings.showPause)
             ToggleRow(label: "Show −1 / +1 minute buttons", sub: "Always on screen (one tap)", isOn: $model.settings.showAdjust)
-            ToggleRow(label: "Show numbers", sub: "Small clock in the corner for grown-ups", isOn: $model.settings.showNumbers)
+            ToggleRow(label: "Show the clock", sub: "Big minutes and seconds at the top of the screen", isOn: $model.settings.showNumbers)
         }
     }
 }
@@ -376,8 +388,6 @@ struct ScreenSection: View {
 struct NextUpSection: View {
     @Environment(AppModel.self) private var model
     @State private var pick: PhotosPickerItem?
-
-    private let icons = ["🧸", "🛁", "🥣", "🧦", "🦷", "📚", "🛏️", "🚗", "🧩", "🎨", "🍎", "🧥", "🖍️", "🚽", "🏃", "⭐"]
 
     var body: some View {
         @Bindable var model = model
@@ -392,21 +402,24 @@ struct NextUpSection: View {
                     if t.count > 40 { model.settings.nextUp.text = String(t.prefix(40)) }
                 }
             FlowLayout(spacing: 6) {
-                ForEach(icons, id: \.self) { ic in
-                    let on = model.settings.nextUp.photo == nil && model.settings.nextUp.icon == ic
+                ForEach(Icons.nextUp, id: \.self) { ic in
+                    // an emoji saved by an older build counts as the icon that replaced it
+                    let on = model.settings.nextUp.photo == nil && Icons.resolve(model.settings.nextUp.icon) == ic
                     Button {
                         if let old = model.settings.nextUp.photo { PhotoStore.remove(old) }
                         model.settings.nextUp.photo = nil
                         model.settings.nextUp.icon = ic
                     } label: {
-                        Text(ic).font(.system(size: 24)).frame(width: 46, height: 46)
+                        IconView(ic, size: 34).frame(width: 48, height: 48)
                             .background(RoundedRectangle(cornerRadius: 12).fill(on ? Theme.gold : Theme.cream))
                             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.out, lineWidth: 3))
                     }
                     .buttonStyle(PressDown())
+                    .accessibilityLabel(ic)
+                    .accessibilityAddTraits(on ? .isSelected : [])
                 }
                 PhotosPicker(selection: $pick, matching: .images) {
-                    Text(model.settings.nextUp.photo == nil ? "📷" : "🖼️").font(.system(size: 24)).frame(width: 46, height: 46)
+                    IconView(model.settings.nextUp.photo == nil ? "camera" : "picture", size: 34).frame(width: 48, height: 48)
                         .background(RoundedRectangle(cornerRadius: 12).fill(model.settings.nextUp.photo == nil ? Theme.cream : Theme.gold))
                         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.out, lineWidth: 3))
                 }
@@ -479,11 +492,19 @@ struct AboutSection: View {
         SheetSection(title: "About", hint: "Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.") {
             FlowLayout(spacing: 8) {
                 Button { confirmBook = true } label: {
-                    Text("🧹 Reset friend book").font(Theme.round(15, .semibold)).padding(.horizontal, 14).frame(minHeight: 44)
+                    HStack(spacing: 6) {
+                        IconView("broom", size: 26).padding(.leading, -4)
+                        Text("Reset friend book").font(Theme.round(15, .semibold))
+                    }
+                    .padding(.horizontal, 14).frame(minHeight: 44)
                 }
                 .buttonStyle(ToyButtonStyle())
                 Button { confirmSettings = true } label: {
-                    Text("↺ Reset settings").font(Theme.round(15, .semibold)).padding(.horizontal, 14).frame(minHeight: 44)
+                    HStack(spacing: 6) {
+                        IconView("reset", size: 26).padding(.leading, -4)
+                        Text("Reset settings").font(Theme.round(15, .semibold))
+                    }
+                    .padding(.horizontal, 14).frame(minHeight: 44)
                 }
                 .buttonStyle(ToyButtonStyle())
             }

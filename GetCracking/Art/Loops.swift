@@ -31,7 +31,6 @@ enum Loops {
         F(at: 0.75, ops: trs(sx: 1.05, sy: 0.95)),
     ])
     static let spin = Loop(duration: 30, ease: .linear, frames: [F(at: 0, ops: [.rotate(0)]), F(at: 1, ops: [.rotate(360)])])
-    static let glowThrob = Loop(duration: 1.4, frames: [F(at: 0.5, opacity: 0.5)])
     static let halo = Loop(duration: 1.3, frames: [F(at: 0, opacity: 0.35), F(at: 0.5, opacity: 0.75), F(at: 1, opacity: 0.35)])
     static func blink(_ d: Double, delay: Double = 0) -> Loop {
         Loop(duration: d, delay: delay, ease: .ease, origin: .box(0.5, 0.5), frames: [

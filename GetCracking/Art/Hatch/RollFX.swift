@@ -141,7 +141,7 @@ private struct Sample {
 }
 
 struct RollFX: ShellEffect {
-    let id = "roll", name = "Roll away", icon = "🛞"
+    let id = "roll", name = "Roll away", icon = "roll"
 
     /// Animate a piece along fn(t ms); if `shadow` is given it follows on the ground at depth g.
     private func track(_ ctx: ShellCtx, _ pc: Piece, _ R: Region, _ dur: Double, _ fn: @escaping (Double) -> Sample,

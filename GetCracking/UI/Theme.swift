@@ -11,8 +11,6 @@ enum Theme {
     static let tealDark = Color(hex: "#4b9bab")
     static let gold = Color(hex: "#e0a43c")
     static let ink = Color(hex: "#4a3418")
-    static let clay = Color(hex: "#d98a64")
-    static let clayDark = Color(hex: "#b8694a")
     static let leaf = Color(hex: "#a9d36b")
     static let leafDark = Color(hex: "#7fb04a")
     static let berry = Color(hex: "#c9483f")
@@ -28,6 +26,9 @@ enum Theme {
         default: return .custom("Fredoka-Regular", size: size)
         }
     }
+    /// big clock digits (Fredoka Bold) at an exact size: the clock and the dial
+    /// are sized from the screen, so they don't also grow with Dynamic Type
+    static func digits(_ size: CGFloat) -> Font { .custom("Fredoka-Bold", fixedSize: size) }
 }
 
 /// The toy look: fill, dark border, and a solid dark "shadow" offset below.
