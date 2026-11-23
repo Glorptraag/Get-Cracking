@@ -215,7 +215,7 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 | 7 | Offline launch | Owned; airplane mode; force-quit; relaunch | Still unlocked (StoreKit's receipts are on the device) |
 | 8 | Ask to Buy | In Xcode with `Products.storekit`: **Editor → Enable Ask To Buy**, buy | "Waiting for a grown-up to approve"; approve in **Debug → StoreKit → Manage Transactions** → everything unlocks by itself |
 | 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Egg karaoke |
-| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → Restore Purchases | Unlocked without paying |
+| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → The Whole Nest → gate → Restore Purchases | Unlocked without paying |
 | 11 | Foreground refresh | Refund in Transaction Manager while the app is in the background, then bring it back | Locks return without a relaunch |
 
 Sandbox account: ASC → **Users and Access** → **Sandbox** → **Test Accounts** → **+**, Australian storefront. On the iPhone: **Settings → Developer → Sandbox Apple Account** (or Settings → App Store → Sandbox Account, depending on iOS version).
