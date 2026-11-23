@@ -41,7 +41,7 @@ Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/
 6. **Family Sharing**: **Turn On**. Read the warning: it can't be undone. (On purpose: the paywall tells parents it's on.)
 7. **App Store Localization** → **Add Localization** → English (Australia) and English (U.S.):
    - Display Name: `The Whole Nest`
-   - Description (max 55 characters): `Every friend, world and song, plus every new pack.` (51)
+   - Description (max 55 characters): `Every friend, world and song, plus every new pack.` (50)
 8. **Review Information**:
    - Screenshot: a screenshot of the paywall (step 9 below shows how to reach it in the simulator). At least 640×920 px.
    - Review Notes: paste the "App Review notes" from section 10.
@@ -128,7 +128,7 @@ Kids Category wording rules: the words "for kids" and "for children" are fine he
 **Keywords** (100 max, commas, no spaces): `toddler,visual timer,countdown,preschool,routine,transition,tidy up,bedtime,hatch,animal,band,kids` (98)
 
 **Promotional text** (170 max, can change any time without review):
-`New: The Whole Nest. One payment unlocks all 40 friends, 10 worlds and every hatching song, plus every new pack as it arrives. The timer and 12 friends stay free.` (160)
+`New: The Whole Nest. One payment unlocks all 40 friends, 10 worlds and every hatching song, plus every new pack as it arrives. The timer and 12 friends stay free.` (162)
 
 **Description:**
 ```
