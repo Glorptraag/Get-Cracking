@@ -24,7 +24,8 @@ const src = [path.join(__dirname, '..', 'js', 'animals.js')]
   .concat(fs.existsSync(packDir) ? fs.readdirSync(packDir).filter((f) => f.endsWith('.js')).map((f) => path.join(packDir, f)) : [])
   .map((f) => fs.readFileSync(f, 'utf8')).join('\n');
 const oa = args.indexOf('--only'), only = oa > 0 ? args[oa + 1].split(',') : null;
-const names = [...src.matchAll(/\{ id: '([a-z0-9]+)', name: '([^']+)'(?:[^\n]*?say: '((?:[^'\\]|\\.)+)')?/g)]
+// a friend is a one-line { id, name, ... body: ... } (worlds and packs also have an id and a name, but no body)
+const names = [...src.matchAll(/\{ id: '([a-z0-9]+)', name: '([^']+)'(?=[^\n]*\bbody: )(?:[^\n]*?say: '((?:[^'\\]|\\.)+)')?/g)]
   .map((m) => ({ id: m[1], name: m[2], say: m[3] && m[3].replace(/\\'/g, "'") }))
   .filter((a) => !only || only.includes(a.id));
 // "an Owl", "an Elephant", but "a Unicorn" (it starts with a "you" sound)

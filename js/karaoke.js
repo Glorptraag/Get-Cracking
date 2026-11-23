@@ -142,7 +142,9 @@
   };
 
   /** chirp kinds a pack adds for its world: CHIRPS[name] = (p, k, t, chord, hi, out).
-   * Play only chord notes (+ p.key) so it stays in key, e.g. p.inst('glock', hi[0], t, 0.6, 0.6, out). */
+   * Play only chord notes so it stays in key. p.inst adds the song's key itself, so pass it
+   * chord notes (e.g. p.inst('glock', chord[0] + 24, t, 0.6, 0.6, out)); hi already includes
+   * the key and is for k.say.* voices, which don't add it. */
   const CHIRPS = {};
 
   function makePlayer(s, k, friendId) {
