@@ -5,7 +5,7 @@ import Foundation
 ///
 /// Bill of Rights (MONETIZATION.md): the timer and every timer setting,
 /// countdown music, hatch styles, the starter friends and worlds, the short
-/// jingles and the first animal band are free forever. Photos already added
+/// jingles, Egg karaoke and the first animal band are free forever. Photos already added
 /// stay and keep hatching; friends already in the friend book stay visible.
 struct FeatureGate: Equatable {
     let ownsWholeNest: Bool

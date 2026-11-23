@@ -36,7 +36,7 @@ Why:
 | Countdown music (6 tracks) | Core | All | All | n/a | `[Judgment]` |
 | Friends | Expansion | 12 starters: chick, duckling, bunny, kitten, puppy, piglet, fox, owl, frog, penguin, elephant, dino | All 40 | Locked tap in the friend book; friend-book banner | `[Judgment]` matches web `starter: true` |
 | Worlds | Expansion | 3: Sunny Meadow, Mossy Forest, Lily Pond | All 10 | Locked tap in the world picker | `[Judgment]` matches web `starter: true` |
-| Hatching songs | Expansion | Animal band + 4 jingles (Ta-da, Chimes, Birdsong, Bubbles) | + Jungle jam, Farmyard hoedown, every later band | Locked tap in the song picker | `[Judgment]` |
+| Hatching songs | Expansion | Egg karaoke (the default) + Animal band + 4 jingles (Ta-da, Chimes, Birdsong, Bubbles) | + Jungle jam, Farmyard hoedown, every later band | Locked tap in the song picker | `[Judgment]` |
 | Photo friends | Volume (taster) | 1 (live count: removing it frees the slot) | Unlimited | Locked "+" after one photo | `[Judgment]` |
 | Content packs (Aussie Bush, Christmas, future) | Expansion | Not included (a pack can be marked `isFree`) | All, now and later | Pack friends and worlds show locks like Classic ones | `[Judgment]` owner decision |
 | Friend book | Identity | Shows every friend; locked ones as silhouettes with a small lock | Same, no locks | n/a | `[Judgment]` never blank, never a pitch |
@@ -46,13 +46,13 @@ Implementation: `GetCracking/Monetization/FeatureGate.swift` (every decision), `
 ## Bill of Rights
 Always free, never moved behind the unlock:
 - The whole timer and every timer setting, hatch styles, countdown music.
-- The 12 starter friends, 3 starter worlds, the first animal band and the short jingles, one photo friend.
+- The 12 starter friends, 3 starter worlds, Egg karaoke, the first animal band and the short jingles, one photo friend.
 - The friend book itself.
 
 Downgrade rule (refund, or leaving a Family Sharing group):
 - Photos the family added stay and keep hatching; only adding new ones is limited.
 - Friends already found stay visible in the friend book.
-- A setting that points at something locked plays the nearest free thing (a locked world plays as "Surprise me", a locked song plays the Animal band); the setting itself is kept so it comes back if they buy again.
+- A setting that points at something locked plays the nearest free thing (a locked world plays as "Surprise me", a locked song plays Egg karaoke); the setting itself is kept so it comes back if they buy again.
 
 Never, in any experiment:
 - A pitch, price or upsell on a kid-facing screen. The child only ever sees a small lock.
@@ -80,7 +80,7 @@ All user-initiated; all open the parental gate first, then the paywall (`Paywall
 
 | Placement | Moment | Interruptive? | Notes |
 |---|---|---|---|
-| `settings` | Grown-up settings, top row "The Whole Nest", plus Restore Purchases | No | The menu is always on the table |
+| `settings` | Grown-up settings, top row "The Whole Nest: For grown-ups" (no offer or price on the row; Restore Purchases is on the paywall, behind the gate) | No | The menu is always on the table |
 | `lockedWorld` | Tapping a locked world in the world picker | No | Lock badge on the card |
 | `lockedSong` | Tapping a locked hatching song | No | 🔒 on the chip |
 | `lockedFriend` | Tapping a locked silhouette in the friend book | No | Small lock badge |
@@ -119,7 +119,7 @@ The full click-by-click list is in `APP_STORE.md`. In short:
 ## Assumptions made without asking
 - The app has not shipped, so there is nobody to grandfather. If a paid or free build ever shipped with all 40 friends, add `AppTransaction` grandfathering before release.
 - Terms of Use link uses Apple's standard EULA until you host your own.
-- The paywall promises "every new pack as it arrives" without naming packs that aren't in the app yet, so App Review doesn't read it as advertising missing content. The App Store description names the packs as "coming".
+- The paywall promises "every new pack as it arrives" without naming packs that aren't in the app yet, so App Review doesn't read it as advertising missing content. The App Store description doesn't name them either.
 - Pack on/off toggles (web `S.packsOff`) are not ported yet; with only Classic on the iPhone there is nothing to toggle.
 - No test target exists and the project is not hand-edited, so the gate checks run as a small `swiftc` program in CI instead of XCTest.
 - iPhone only (`TARGETED_DEVICE_FAMILY = 1`), portrait.

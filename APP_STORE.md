@@ -16,8 +16,8 @@ Facts you'll need:
 | Devices | iPhone only, portrait, iOS 17+ |
 | Category | Kids, Ages 5 and Under |
 
-Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/ProductID.swift`):
-- `LegalLinks.privacyPolicy` = `https://example.com/get-cracking/privacy` → **replace** with your hosted privacy policy.
+Links in the app (`LegalLinks` in `GetCracking/Monetization/ProductID.swift`):
+- `LegalLinks.privacyPolicy` = `https://getcrackingkids.vercel.app/privacy.html`. The page is `privacy.html` on the web app (`main`). **Before submitting:** merge that page, fill in its [brackets] (date, your name, city, contact email), open the address on a phone to check it loads, and change the link here if the web app lives on another domain.
 - `LegalLinks.terms` = Apple's standard EULA → fine as it is; replace only if you host your own terms.
 
 ---
@@ -60,7 +60,7 @@ Don't copy a `.storekit` file from anywhere; let Xcode write it.
    - Localization: Display Name `The Whole Nest`, Description `Every friend, world and song, plus every new pack.`
 4. **Editor → Default Storefront → Australia** (and **Editor → Default Localization → English (Australia)**), so the paywall shows A$5.99.
 5. **Product → Scheme → Edit Scheme…** → **Run** → **Options** → **StoreKit Configuration** → `Products.storekit`. Close.
-6. Run in the simulator. Settings (⚙️) → The Whole Nest → answer the gate → the paywall shows **A$5.99**. Buy it; locks disappear; the friend book banner goes away.
+6. Run in the simulator. Settings → The Whole Nest → answer the gate → the paywall shows **A$5.99**. Buy it; locks disappear; the friend book banner goes away.
 7. To undo a test purchase: **Debug → StoreKit → Manage Transactions…** → select it → **Delete** (or **Refund** to test the downgrade rule).
 
 ## 5. Kids Category and age rating (ASC → App Information)
@@ -83,10 +83,10 @@ Don't copy a `.storekit` file from anywhere; let Xcode write it.
 1. **Get Started** → "Do you or your third-party partners collect data from this app?" → **No, we do not collect data from this app**. Publish. The label reads **Data Not Collected**.
 2. This agrees with `GetCracking/Resources/PrivacyInfo.xcprivacy` (checked on this branch): `NSPrivacyTracking` false, no tracking domains, **no collected data types**, and one required-reason API (UserDefaults, reason `CA92.1`: the app's own settings and friend book). Nothing to change.
 3. Why it's true: no accounts, no network code, no SDKs. Photos are picked with Apple's photo picker (no photo-library permission is asked) and saved as small JPEGs in the app's own folder; they never leave the device except inside the family's own iPhone backup. Purchases go through Apple; the app only reads StoreKit's signed receipts on the device.
-4. **Privacy Policy URL**: the address where you host the policy below. Put the same URL in `LegalLinks.privacyPolicy`.
+4. **Privacy Policy URL**: `https://getcrackingkids.vercel.app/privacy.html`, the same address as `LegalLinks.privacyPolicy`.
 
-## 7. Draft privacy policy and terms (host them yourself)
-Fill in the [brackets]. Host on any page you control (a GitHub Pages site, your own domain, or a page on the web app, e.g. `[https://your-domain]/privacy`).
+## 7. Privacy policy and terms
+The privacy policy is hosted as `privacy.html` on the web app (`main`); the text below is the same draft. Fill in the [brackets] on that page.
 
 ### Privacy Policy (draft)
 > **Get Cracking: Privacy Policy**
@@ -128,11 +128,11 @@ Kids Category wording rules: the words "for kids" and "for children" are fine he
 **Keywords** (100 max, commas, no spaces): `toddler,visual timer,countdown,preschool,routine,transition,tidy up,bedtime,hatch,animal,band,kids` (98)
 
 **Promotional text** (170 max, can change any time without review):
-`New: The Whole Nest. One payment unlocks all 40 friends, 10 worlds and every hatching song, plus every new pack as it arrives. The timer and 12 friends stay free.` (162)
+`New: Egg karaoke. The friend who hatches sings with its own band. The timer and 12 friends are free; The Whole Nest unlocks all 40 friends and 10 worlds.` (152)
 
 **Description:**
 ```
-A wordless timer for little ones. Set the time and watch the egg crack bit by bit as the minutes pass. When time's up, the egg hatches into a chibi animal friend who plays a song with the animal band.
+A wordless timer for little ones. Set the time and watch the egg crack bit by bit as the minutes pass. When time's up, the egg hatches into a chibi animal friend who sings its own song with a little band.
 
 Made for toddlers who can't read a clock yet: "when the egg hatches" is something they can see, hear and wait for. Use it for tidy-up time, teeth, screen time, turn-taking, bath time or bedtime.
 
@@ -140,6 +140,7 @@ FREE, FOREVER
 • The full timer, from 10 seconds to 60 minutes
 • 12 friends to hatch: chick, duckling, bunny, kitten, puppy, piglet, fox, owl, frog, penguin, elephant and dino
 • 3 worlds: Sunny Meadow, Mossy Forest and Lily Pond
+• Egg karaoke: the friend who hatched sings in a band with its own voice
 • Three hatch styles, gentle countdown music, the Animal band and four short hatching jingles
 • One photo friend: a photo of someone they love can hatch from the egg
 • A friend book that fills up as friends hatch
@@ -152,7 +153,7 @@ For families who want more:
 • All 10 worlds, from Snowy Pines to the Coral Reef Tank
 • Every hatching song, with the Jungle jam and Farmyard hoedown bands
 • As many photo friends as you like
-• Every new pack of friends and worlds as it arrives, at no extra cost (an Aussie Bush pack and a Christmas pack are coming)
+• Every new pack of friends and worlds as it arrives, at no extra cost
 One payment, no subscription. Family Sharing is on. Purchases sit behind a parental gate.
 
 PRIVATE BY DESIGN
@@ -167,7 +168,7 @@ Sizes: **6.9"** (1320 × 2868, iPhone 16 Pro Max simulator) is required; **6.5"*
 Take them in the simulator with **File → Save Screen** (⌘S). Suggested set, in order:
 1. The egg mid-crack in the Sunny Meadow with the ring half empty (caption: "A timer they can see")
 2. A friend just hatched with "It's a Fox!" (caption: "Then a friend hatches")
-3. The setup screen with the egg on its perch (caption: "Set it in a second")
+3. The setup screen with the egg-timer dial (caption: "Twist to set the time")
 4. The friend book with some friends found (caption: "Collect every friend")
 5. The world picker showing several worlds (caption: "10 worlds, 40 friends with The Whole Nest")
 
@@ -178,18 +179,18 @@ Paste into **App Review Information → Notes** (app version) and the IAP's **Re
 ```
 Get Cracking is a wordless visual timer for children aged 5 and under (Kids Category). No account or sign-in is needed, and the app makes no network requests of its own.
 
-In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 40 friends, 10 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, the first animal band and jingles, one photo friend) is complete on its own.
+In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 40 friends, 10 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
 
-Parental gate: every purchase surface, Restore Purchases in the paywall, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
+Parental gate: every purchase surface, Restore Purchases, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
 
 To reach the purchase:
 1. On the home screen tap the gear button (Settings).
-2. The top row is "The Whole Nest". Tap it.
+2. The top row is "The Whole Nest: For grown-ups". Tap it.
 3. Answer the parental gate.
 4. The paywall shows the price, Restore Purchases, Terms of Use and Privacy Policy. Tap "Unlock The Whole Nest".
 Other ways in: tap a locked world (World button), a locked hatching song (Music button), a locked friend or the "For grown-ups" banner in the friend book (Friends button), or the locked "+" after adding one photo (Settings → Who hatches?).
 
-After purchase every lock disappears. Restore Purchases is also in Settings → The Whole Nest.
+After purchase every lock disappears. Restore Purchases is on the paywall only (Settings → The Whole Nest → parental gate), so it is never reachable without the gate.
 ```
 
 ## 11. Submit
@@ -208,11 +209,11 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 | 3 | Load failure | Airplane mode, open the paywall | "Couldn't reach the App Store just now" + Try again; nothing unlocks |
 | 4 | Purchase | Online, Unlock The Whole Nest, confirm with the sandbox account | Paywall says thank you; every lock gone; friend-book banner gone; Settings row says "unlocked" |
 | 5 | Shuffle | Run a few short timers | Locked-before friends and worlds now appear |
-| 6 | Restore | Delete the app, reinstall, Settings → Restore Purchases | Unlocks again |
+| 6 | Restore | Delete the app, reinstall, Settings → The Whole Nest → gate → Restore Purchases | Unlocks again |
 | 7 | Offline launch | Owned; airplane mode; force-quit; relaunch | Still unlocked (StoreKit's receipts are on the device) |
 | 8 | Ask to Buy | In Xcode with `Products.storekit`: **Editor → Enable Ask To Buy**, buy | "Waiting for a grown-up to approve"; approve in **Debug → StoreKit → Manage Transactions** → everything unlocks by itself |
-| 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Animal band |
-| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → Restore Purchases | Unlocked without paying |
+| 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Egg karaoke |
+| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → The Whole Nest → gate → Restore Purchases | Unlocked without paying |
 | 11 | Foreground refresh | Refund in Transaction Manager while the app is in the background, then bring it back | Locks return without a relaunch |
 
 Sandbox account: ASC → **Users and Access** → **Sandbox** → **Test Accounts** → **+**, Australian storefront. On the iPhone: **Settings → Developer → Sandbox Apple Account** (or Settings → App Store → Sandbox Account, depending on iOS version).

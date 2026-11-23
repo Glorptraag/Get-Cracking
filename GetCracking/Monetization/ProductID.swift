@@ -14,12 +14,12 @@ enum ProductID {
 }
 
 /// Links shown inside the paywall (behind the parental gate).
-/// REPLACE the placeholders with the pages you host before submitting
-/// (draft texts are in APP_STORE.md). The App Store Connect metadata must
-/// carry the same Privacy Policy URL.
+/// The App Store Connect metadata must carry the same Privacy Policy URL
+/// (see APP_STORE.md).
 enum LegalLinks {
     /// Apple's standard licence agreement. Swap for your own hosted terms if you publish them.
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    /// PLACEHOLDER: replace with your hosted privacy policy.
-    static let privacyPolicy = URL(string: "https://example.com/get-cracking/privacy")!
+    /// privacy.html on the web app (the web repo's main branch). Change it
+    /// here and in App Store Connect if the web app moves to another domain.
+    static let privacyPolicy = URL(string: "https://getcrackingkids.vercel.app/privacy.html")!
 }

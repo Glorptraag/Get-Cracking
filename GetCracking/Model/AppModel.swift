@@ -235,7 +235,7 @@ final class RunController {
         scene.ringLayer.play([KF(opacity: 1), KF(opacity: 0.25)], duration: 0.8, fill: true)
         let friend = pickFriend()
         let s = settings
-        // a song that isn't owned (e.g. after a refund) plays the first animal band
+        // a song that isn't owned (e.g. after a refund) plays Egg karaoke
         let endSound = app?.gate.effectiveEndSound(s.endSound) ?? Packs.defaultEndSound
         // tapping the friend: it says hello in its own voice
         egg.onCheer = {
