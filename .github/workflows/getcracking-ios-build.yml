@@ -25,6 +25,22 @@ jobs:
             GetCracking/Art/Animals.swift GetCracking/Art/Loops.swift GetCracking/Art/Props.swift GetCracking/Art/Scenes.swift \
             GetCracking/Art/Packs/*.swift GetCracking/Monetization/Packs.swift Tests/ArtChecks/*.swift -o artcheck
           ./artcheck art-png
+      - name: Compare with the web drawings (TEMPORARY diagnostic)
+        if: ${{ !cancelled() }}
+        run: |
+          git fetch --depth=1 origin claude/epic-hypatia-3w52rk
+          W=Tests/ArtChecks/WebDiff
+          mkdir -p $W/js/packs webref
+          for f in util animals scenes packs packs/aussie packs/christmas; do git show FETCH_HEAD:js/$f.js > $W/js/$f.js; done
+          CH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+          for f in art-png/friend-*.png art-png/world-*.png; do
+            n=$(basename $f .png); kind=${n%%-*}; id=${n#*-}
+            if [ $kind = friend ]; then size=600,540; else size=600,720; fi
+            "$CH" --headless --disable-gpu --hide-scrollbars --force-device-scale-factor=1 --window-size=$size \
+              --screenshot=webref/$n.png "file://$PWD/$W/ref.html#$kind=$id" >/dev/null 2>&1 || echo "no web render for $n"
+          done
+          python3 -m venv /tmp/v && /tmp/v/bin/pip -q install pillow
+          /tmp/v/bin/python $W/diff.py art-png webref
       - name: Upload the pack contact sheets
         if: always()
         uses: actions/upload-artifact@v4

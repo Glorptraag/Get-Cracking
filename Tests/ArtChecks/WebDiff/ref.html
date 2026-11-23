@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#fff;overflow:hidden}svg{display:block}</style></head><body>
+<script src="js/util.js"></script><script src="js/animals.js"></script><script src="js/scenes.js"></script>
+<script src="js/packs.js"></script><script src="js/packs/aussie.js"></script><script src="js/packs/christmas.js"></script>
+<script>
+// ref.html#friend=galah or #world=outback: the web drawing, static, framed like Tests/ArtChecks
+const [kind, id] = location.hash.slice(1).split('=');
+if (kind === 'friend') {
+  document.body.innerHTML = `<svg width="600" height="540" viewBox="-150 -250 300 270" style="background:#fff">${GC.Animals.render(GC.Animals.byId[id])}</svg>`;
+} else {
+  document.body.innerHTML = '<svg id="s" width="600" height="720" style="background:#fff"></svg>';
+  const s = document.getElementById('s');
+  GC.Scenes.build(s, id, { particles: false });
+  s.setAttribute('width', 600); s.setAttribute('height', 720);
+}
+</script>
+</body></html>
