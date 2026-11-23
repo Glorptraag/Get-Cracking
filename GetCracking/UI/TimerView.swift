@@ -12,6 +12,7 @@ struct TimerView: View {
     @State private var hintBob = false
     @State private var timePulse = false
     @State private var clockDim = false
+    @State private var againWiggle = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -155,7 +156,8 @@ struct TimerView: View {
     }
 
     private func lockButton(_ s: Settings) -> some View {
-        HStack(spacing: 12) {
+        // the tip sits above the lock, so it never hides behind the − / + / pause buttons
+        ZStack(alignment: .bottomLeading) {
             ZStack {
                 Circle().fill(Theme.cream.opacity(0.78))
                 Circle().strokeBorder(Theme.out, lineWidth: 4)
@@ -179,9 +181,10 @@ struct TimerView: View {
                 .font(Theme.hand(18))
                 .foregroundStyle(Theme.cream)
                 .padding(.horizontal, 12).padding(.vertical, 4)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.out.opacity(0.82)))
+                .background(RoundedRectangle(cornerRadius: 12).fill(Theme.out.opacity(0.88)))
+                .fixedSize()
                 .opacity(run.showLockTip ? 1 : 0)
-                .offset(x: run.showLockTip ? 0 : -8)
+                .offset(y: run.showLockTip ? -74 : -66)
                 .animation(.easeOut(duration: 0.25), value: run.showLockTip)
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
@@ -237,7 +240,11 @@ struct TimerView: View {
                 Capsule().strokeBorder(Theme.out, lineWidth: 4)
             }
         )
-        .holdable(s.holdSeconds, progress: $againProgress) { model.stopToSetup() }
+        // a quick tap wiggles, so it's clear the button needs holding
+        .phaseAnimator([0.0, -3, 3, -2, 0], trigger: againWiggle) { v, deg in
+            v.rotationEffect(.degrees(deg))
+        } animation: { _ in .easeInOut(duration: 0.08) }
+        .holdable(s.holdSeconds, progress: $againProgress, onTap: { againWiggle += 1 }) { model.stopToSetup() }
         .accessibilityLabel("Hold for a new egg")
         .accessibilityAddTraits(.isButton)
     }
@@ -290,11 +297,10 @@ struct TimerView: View {
         .toy(Theme.paper, radius: 26, border: 5, depth: 7)
         .overlay(alignment: .topTrailing) {
             Button { run.closeTray() } label: {
-                IconView(name: "close", size: 22)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(Theme.cream))
-                    .overlay(Circle().strokeBorder(Theme.out, lineWidth: 3))
+                IconView(name: "close", size: 26)
+                    .frame(width: 46, height: 46)
             }
+            .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 23, border: 4, depth: 3))
             .padding(8)
             .accessibilityLabel("Close")
         }

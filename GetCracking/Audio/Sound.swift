@@ -224,6 +224,8 @@ final class Sound {
         }
     }
     func boop() { with { $0.boop() } }
+    /// one click of the setup dial
+    func tick() { with { $0.tick() } }
     func knock() { with { $0.knock() } }
     func ready() { with { $0.ready() } }
     func pop() {
@@ -880,6 +882,7 @@ final class Synth {
         tone(220, at, 0.08, gain: 0.1, slide: 0.6, bus: .sfx)
     }
     func boop() { tone(GC.rand(520, 640), t, 0.18, gain: 0.08, slide: 1.5, bus: .sfx) }
+    func tick() { tone(1500, t, 0.035, gain: 0.06, slide: 0.7, bus: .sfx) }
     func knock() {
         let at = t + 0.01
         for dt in [0.0, 0.2] {

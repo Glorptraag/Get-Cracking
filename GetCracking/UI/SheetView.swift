@@ -302,12 +302,15 @@ struct HatchSection: View {
                         .overlay(Circle().strokeBorder(Theme.out, lineWidth: 4))
                         .overlay(alignment: .topTrailing) {
                             Button { model.removePhoto(p) } label: {
-                                IconView(name: "close", size: 16)
-                                    .frame(width: 28, height: 28)
+                                IconView(name: "close", size: 22)
+                                    .frame(width: 34, height: 34)
                                     .background(Circle().fill(Color.white))
                                     .overlay(Circle().strokeBorder(Theme.out, lineWidth: 3))
+                                    .padding(9)
+                                    .contentShape(Circle())
                             }
-                            .offset(x: 2, y: -2)
+                            .buttonStyle(PressDown())
+                            .offset(x: 19, y: -19)
                             .accessibilityLabel("Remove photo")
                         }
                 }
@@ -521,7 +524,10 @@ struct AboutSection: View {
             }
         }
         .confirmationDialog("Clear the friend book?", isPresented: $confirmBook, titleVisibility: .visible) {
-            Button("Clear friend book", role: .destructive) { model.resetBook() }
+            Button("Clear friend book", role: .destructive) {
+                model.resetBook()
+                model.sheet = nil
+            }
         }
         .confirmationDialog("Reset all settings?", isPresented: $confirmSettings, titleVisibility: .visible) {
             Button("Reset settings", role: .destructive) { model.resetSettings() }

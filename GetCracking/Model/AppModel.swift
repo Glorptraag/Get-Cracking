@@ -60,8 +60,8 @@ final class Ring {
         layer.add(peb)
 
         let h = nGroup([
-            nCircle(0, 0, 13, St.o(5).filled("#fdf3e4")),
-            nPath("M0,-4 C-2,-16 -14,-18 -16,-12 C-12,-6 -4,-4 0,-4 Z M0,-4 C2,-16 14,-18 16,-12 C12,-6 4,-4 0,-4 Z", St.o(3).filled("#a9d36b")),
+            nCircle(0, 0, 14, St.o(5).filled("#fdf3e4")),
+            nCircle(0, 0, 5, .f(color)),
         ])
         hand = h
         layer.add(h)
@@ -386,8 +386,8 @@ final class AppModel {
     /// StoreKit: what this family owns
     let store = EntitlementStore()
     private(set) var setupScene: BuiltScene
-    private(set) var perchRoot: VNode
-    private(set) var perchEgg: Egg
+    /// the egg in the middle of the setup dial
+    private(set) var dialEgg: Egg
 
     @ObservationIgnored let bag: ShuffleBag
     @ObservationIgnored let sceneBag: ShuffleBag
@@ -405,9 +405,7 @@ final class AppModel {
         let pending = gate.effectiveScene(s.scene) == "random" ? sb.next() : s.scene
         pendingScene = pending
         setupScene = Scenes.build(pending)
-        let (root, egg) = AppModel.buildPerch()
-        perchRoot = root
-        perchEgg = egg
+        dialEgg = AppModel.buildDialEgg()
         Sound.shared.setVolume(s.volume)
         #if DEBUG
         assert(Set(Packs.allFriends) == Set(Animals.list.map(\.id)), "Packs.swift and Animals.list disagree")
@@ -440,18 +438,11 @@ final class AppModel {
         paywall = placement
     }
 
-    static func buildPerch() -> (VNode, Egg) {
-        let root = VNode()
-        root.add(nGroup([
-            nEllipse(0, -2, 86, 20, St.o(6).filled("#b98652")),
-            nPath("M-74,-6 Q-30,8 10,-4 T76,-6 M-60,6 Q-10,-8 40,6 T80,0", St.line("#8a5a3b", 4)),
-        ]))
-        let egg = Egg(x: 0, y: 4, scale: 0.92)
+    /// the egg that sits in the middle of the egg-timer dial (dial units, centre 0,0)
+    static func buildDialEgg() -> Egg {
+        let egg = Egg(x: 0, y: -4, scale: 0.6)
         egg.onBoop = { Sound.shared.boop() }
-        root.add(egg.root)
-        root.add(nPath("M-84,-2 Q-40,22 0,18 Q40,22 84,-2 Q60,20 0,22 Q-60,20 -84,-2 Z", St.o(5).filled("#b98652")))
-        root.add(nPath("M-70,6 L-50,0 M-30,12 L-8,6 M20,12 L44,6 M56,6 L74,0", St.line("#8a5a3b", 4)))
-        return (root, egg)
+        return egg
     }
 
     var sceneBackground: Color { Color(hex: (run?.scene.scene ?? setupScene.scene).bg) }
@@ -463,10 +454,8 @@ final class AppModel {
         setupScene = Scenes.build(pendingScene)
     }
 
-    func newPerch() {
-        let (root, egg) = AppModel.buildPerch()
-        perchRoot = root
-        perchEgg = egg
+    func newDialEgg() {
+        dialEgg = AppModel.buildDialEgg()
     }
 
     func startRun() {
@@ -481,7 +470,7 @@ final class AppModel {
         run?.end()
         run = nil
         chooseScene()
-        newPerch()
+        newDialEgg()
     }
 
     func restartSame() {
@@ -492,26 +481,37 @@ final class AppModel {
         startRun()
     }
 
-    // MARK: setup controls
+    // MARK: setup controls (the egg-timer dial)
 
-    func bumpMinutes() {
-        settings.minutes = (settings.minutes + 1) % 61
-        if settings.minutes == 0 && settings.seconds == 0 { settings.seconds = 30 }
+    /// the dial runs from 15 seconds to an hour
+    static let minSecs = 15
+    static let maxSecs = 3600
+
+    var totalSecs: Int { settings.minutes * 60 + settings.seconds }
+
+    /// Set the timer length (clamped). Ticks and taps unless quiet; false if nothing changed.
+    @discardableResult
+    func setTotal(_ secs: Int, quiet: Bool = false) -> Bool {
+        let t = min(max(secs, AppModel.minSecs), AppModel.maxSecs)
+        if t == totalSecs { return false }
+        settings.minutes = t / 60
+        settings.seconds = t % 60
+        if !quiet {
+            Sound.shared.tick()
+            UISelectionFeedbackGenerator().selectionChanged()
+        }
+        return true
     }
 
-    func bumpSeconds() {
-        settings.seconds = (settings.seconds + 15) % 60
-        if settings.minutes == 0 && settings.seconds == 0 { settings.seconds = 15 }
-    }
-
-    func setMinutes(_ m: Int) {
-        settings.minutes = m
-        if m == 0 && settings.seconds == 0 { settings.seconds = 30 }
-    }
-
-    func preset(_ m: Int) {
-        settings.minutes = m
-        settings.seconds = 0
+    /// − / +: 15 s steps under 3 minutes, 1 minute above. Snaps to the step
+    /// grid first, so 0:10 + goes to 0:15 and 4:30 − goes to 4:00.
+    @discardableResult
+    func stepTime(_ dir: Int) -> Bool {
+        let t = totalSecs
+        let fine = dir > 0 ? t < 180 : t <= 180
+        let unit = fine ? 15 : 60
+        let next = dir > 0 ? (t / unit) * unit + unit : ((t + unit - 1) / unit) * unit - unit
+        return setTotal(next)
     }
 
     // MARK: photos
@@ -541,7 +541,7 @@ final class AppModel {
     }
 
     func resetSettings() {
-        settings = Settings()
+        settings = Settings()   // the hold time too
         Sound.shared.setVolume(settings.volume)
         chooseScene()
     }
