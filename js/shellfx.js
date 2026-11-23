@@ -28,8 +28,9 @@
  * After release the friend jumps from the egg's centre up to y ≈ -190 and
  * lands at (0, ctx.ground) in ~1.1 s. Keep the friend visible:
  *   - anything in ctx.front draws OVER the friend: by ~400 ms after
- *     release, front pieces must be clear of the box x ∈ [-75, 75],
- *     y ∈ [-200, 60]; move lingering pieces to ctx.back or off to the sides.
+ *     release, front pieces must be clear of ctx.clear (at least x ∈ [-75, 75],
+ *     y ∈ [-200, 60]; wider for a wide friend); move lingering pieces to
+ *     ctx.back or off to the sides.
  *   - anything in ctx.back draws behind the friend (rubble, shadows).
  *
  * Coordinates are egg-local: the egg's base is (0,0), the egg spans
@@ -43,6 +44,7 @@
  * Never use raw setTimeout / el.animate in an effect.
  *
  *   ctx.front / ctx.back      SVG <g> layers (egg-local coords)
+ *   ctx.clear                 { l, r, t, b } the friend's keep-clear box (egg-local)
  *   ctx.pal                   { shell, spot } colours of this egg
  *   ctx.EGG_PATH, ctx.ZIG     the egg outline path, the zig-zag crack points
  *   ctx.piece(points, opts?)  → { el, wrap, cx, cy }. el's origin is the

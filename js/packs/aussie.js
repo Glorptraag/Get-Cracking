@@ -84,6 +84,16 @@
     },
 
     back: {
+      /** platypus: a broad, flat, furry paddle tail sticking out behind, low down */
+      paddleTail(d, k) {
+        const { w, h, f, S, O, id } = k, c = d.tailColor || d.body;
+        const p = `M${f(w * 0.55)},${f(-h * 0.14)} C${w + 6},${f(-h * 0.2)} ${w + 22},${f(-h * 0.3)} ${w + 30},${f(-h * 0.22)} ` +
+          `C${w + 38},${f(-h * 0.14)} ${w + 36},${f(-h * 0.02)} ${w + 26},1 C${w + 16},4 ${w + 4},0 ${f(w * 0.6)},-2 Z`;
+        return `<g class="c-tail"><clipPath id="${id}pt"><path d="${p}"/></clipPath><path d="${p}" fill="${c}"/>` +
+          `<g clip-path="url(#${id}pt)">` +
+          [0, 1].map((i) => `<path d="M${w + 10 + i * 10},${f(-h * 0.22 + 4)} l4,${f(h * 0.17)}" stroke="${O}" stroke-opacity=".18" stroke-width="3" stroke-linecap="round"/>`).join('') +
+          `</g><path d="${p}" fill="none" ${S}/></g>`;
+      },
       /** galah: a short, rounded pale crest */
       galahCrest(d, k) {
         const { h, S4 } = k, c = d.crestColor;

@@ -808,6 +808,7 @@
 
   function secAbout() {
     return sec('About', 'Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.',
+      h('p', { class: 'hint' }, h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy policy')),
       h('div', { class: 'opts' },
         h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); closeSheet(); } } }, GC.Icons.el('broom'), 'Reset friend book'),
         h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); document.documentElement.style.setProperty('--hold', `${S.holdSeconds}s`); closeSheet(); chooseScene(); fitSetup(); } } }, GC.Icons.el('reset'), 'Reset settings')));

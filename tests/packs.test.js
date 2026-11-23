@@ -60,12 +60,18 @@ const note = (m) => { warn++; console.log('  !', m); };
         id, name: a.name, err, bad: /undefined|NaN/.test(markup), w: bb.width, h: bb.height, x: bb.x, y: bb.y,
         call: GC.Band.FRIEND_CALL[id], hasCall: !!GC.Band.CALLS[GC.Band.FRIEND_CALL[id]],
         world: (GC.Karaoke.FRIENDS[id] || [])[0], hasWorld: !!GC.Karaoke.WORLDS[(GC.Karaoke.FRIENDS[id] || [])[0]],
-        hasSay: !!(GC.Karaoke.FRIENDS[id] && GC.Sound.kit && true),
+        // a part that draws nothing is a typo or a missing part (render without it: same markup = it drew nothing)
+        deadParts: ['back', 'marks', 'front', 'over'].flatMap((layer) => (a[layer] || []).filter((name) => {
+          const strip = (m) => m.replace(/id="[^"]*"|url\(#[^)]*\)/g, '');
+          const without = Object.assign({}, a, { [layer]: a[layer].filter((x) => x !== name) });
+          return strip(GC.Animals.render(without)) === strip(markup);
+        }).map((name) => `${layer}:${name}`)),
       };
     }), pk.friends);
     for (const r of report) {
       ok(!r.err && !r.bad, `${r.name}: renders cleanly${r.err ? ' — ' + r.err : r.bad ? ' — markup has undefined/NaN' : ''}`);
       ok(r.w > 80 && r.w < 300 && r.h > 90 && r.h < 300 && r.y > -260, `${r.name}: sensible size (${Math.round(r.w)}×${Math.round(r.h)}, top ${Math.round(r.y)})`);
+      ok(!r.deadParts.length, `${r.name}: every part it names draws something${r.deadParts.length ? ' — missing: ' + r.deadParts.join(', ') : ''}`);
       ok(r.hasCall && r.hasWorld, `${r.name}: call "${r.call}" and karaoke world "${r.world}" exist`);
       const file = (k) => fs.existsSync(path.join(ROOT, 'sounds', k + '.mp3'));
       if (!(idx.voice[r.id] && file('voice/' + r.id))) note(`${r.name}: no recorded "It's a …!" line (sounds/voice/${r.id}.mp3); the device voice will say it`);

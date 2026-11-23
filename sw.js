@@ -1,7 +1,7 @@
 /* Get Cracking — offline cache. Bump VERSION when the file list changes. */
 const VERSION = 'gc-v11';
 const FILES = [
-  './', 'index.html', 'manifest.webmanifest', 'css/app.css',
+  './', 'index.html', 'privacy.html', 'manifest.webmanifest', 'css/app.css',
   'js/util.js', 'js/icons.js', 'js/animals.js', 'js/egg.js', 'js/shellfx.js',
   'js/hatch/roll.js', 'js/hatch/boom.js', 'js/hatch/crumble.js', 'js/scenes.js', 'js/samples.js', 'js/audio.js', 'js/band.js', 'js/karaoke.js',
   'js/packs.js', 'js/packs/aussie.js', 'js/packs/christmas.js', 'js/store.js', 'js/app.js',
