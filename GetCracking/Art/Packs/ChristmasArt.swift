@@ -474,7 +474,12 @@ enum ChristmasArt {
     /// Snowman: a smile of little coals
     private static func mouthCoal(_ d: AnimalDef, _ k: PartKit) -> [VNode] {
         let my = faceY(d, k.h) + 19
-        return [-12.0, -6, 0, 6, 12].map { x in nCircle(x, my + 5 * (1 - (x / 12) * (x / 12)), 2.8, .f(O)) }
+        let xs: [Double] = [-12, -6, 0, 6, 12]
+        return xs.map { x in
+            let u: Double = x / 12
+            let y: Double = my + 5 * (1 - u * u)
+            return nCircle(x, y, 2.8, .f(O))
+        }
     }
 
     // nose
