@@ -14,10 +14,10 @@ jobs:
           XC=$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)
           sudo xcode-select -s "$XC"
           xcodebuild -version
-      - name: Gate checks (The Whole Nest decisions, no StoreKit)
+      - name: Gate checks (The Whole Nest decisions and the setup dial's rules, no StoreKit)
         run: |
           swiftc GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
-            Tests/GateChecks/main.swift -o gatecheck
+            GetCracking/Model/TimeDial.swift Tests/GateChecks/main.swift -o gatecheck
           ./gatecheck
       - name: Egg karaoke checks (keys, bends and every friend's sounds against the web, no audio)
         if: ${{ !cancelled() }}
@@ -25,14 +25,15 @@ jobs:
           swiftc GetCracking/Audio/KaraokeData.swift GetCracking/Audio/KaraokeIndex.swift \
             GetCracking/Monetization/Packs.swift Tests/KaraokeChecks/main.swift -o karaokecheck
           ./karaokecheck
-      - name: Art checks (pack friends and worlds drawn with CoreGraphics on macOS)
+      - name: Art checks (pack friends and worlds, the egg's crack steps and the icons, drawn with CoreGraphics on macOS)
         if: ${{ !cancelled() }}
         run: |
           swiftc GetCracking/Core/VNode.swift GetCracking/Core/SVGPath.swift GetCracking/Core/Motion.swift GetCracking/Core/Util.swift \
             GetCracking/Art/Animals.swift GetCracking/Art/Loops.swift GetCracking/Art/Props.swift GetCracking/Art/Scenes.swift \
+            GetCracking/Art/EggArt.swift GetCracking/Art/Icons.swift \
             GetCracking/Art/Packs/*.swift GetCracking/Monetization/Packs.swift Tests/ArtChecks/*.swift -o artcheck
           ./artcheck art-png
-      - name: Upload the pack contact sheets
+      - name: Upload the contact sheets (packs, egg steps, icons)
         if: always()
         uses: actions/upload-artifact@v4
         with:

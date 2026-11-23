@@ -258,6 +258,8 @@ final class Sound {
     func cheer() { with { $0.cheer() } }
     func clink(_ p: Double = 0.5) { with { $0.clink(p) } }
     func thud(_ p: Double = 0.5) { with { $0.thud(p) } }
+    /// one click of the setup dial (web Sound.tick)
+    func tick() { with { s in s.tone(1500, s.t, 0.035, gain: 0.06, slide: 0.7, bus: .sfx) } }
     func whoosh() { with { $0.whoosh() } }
 
     /// the celebration tune; returns its length in seconds.

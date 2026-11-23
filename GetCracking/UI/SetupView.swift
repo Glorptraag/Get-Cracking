@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// "Who's in the egg?" — set the time and press Start.
+/// "Who's in the egg?" — set the time on the egg-timer dial and press Start
+/// (web 2f810aa: the dial, − / + in its corners, quick times, a plain Start).
 struct SetupView: View {
     @Environment(AppModel.self) private var model
     @State private var contentHeight: CGFloat = 800
-    @State private var minBump = false
-    @State private var secBump = false
+    @State private var timeBump = false
+
+    private static let quickTimes = [1, 2, 5, 10, 15, 30]
 
     var body: some View {
         GeometryReader { geo in
@@ -39,222 +41,314 @@ struct SetupView: View {
     }
 
     private var content: some View {
-        return VStack(spacing: 14) {
+        VStack(spacing: 14) {
             Text("Who's in the egg?")
-                .font(Theme.hand(30))
+                .font(Theme.hand(28))
                 .foregroundStyle(Theme.out)
-                .padding(.horizontal, 26).padding(.vertical, 6)
+                .padding(.horizontal, 31).padding(.top, 7).padding(.bottom, 8)
                 .toy(Theme.pill, radius: 40, border: 5, depth: 5)
-                .padding(.bottom, 120)
                 .accessibilityAddTraits(.isHeader)
 
             timerBox
-                .padding(.bottom, 16)
+
+            startButton
+                .padding(.top, 4)
 
             HStack(spacing: 12) {
                 ToySwitch(isOn: Binding(get: { model.settings.hatchMode == "tap" },
                                         set: { model.settings.hatchMode = $0 ? "tap" : "auto" }))
-                OutlinedText(text: "Hatch waits for a tap")
+                OutlinedText(text: model.settings.hatchMode == "tap" ? "Hatch waits for a tap" : "Hatches by itself")
             }
-            .padding(.top, 8)
+            .frame(minHeight: 44)
             .accessibilityElement(children: .combine)
 
-            startButton
-                .padding(.top, 34)
-
-            HStack(spacing: 12) {
-                iconButton("🌳", "World", .world)
-                iconButton("🎶", "Music", .sound)
-                iconButton("📖", "Friends", .book)
-                iconButton("⚙️", "Settings", .settings)
+            HStack(spacing: 10) {
+                iconButton("tree", "World", a11y: "Choose world", .world)
+                iconButton("notes", "Music", a11y: "Choose music", .sound)
+                iconButton("book", "Friends", a11y: "Friend book", .book)
+                iconButton("gear", "Settings", a11y: "Grown-up settings", .settings)
             }
-            .padding(.top, 10)
         }
-        .padding(.top, 70)
-        .padding(.bottom, 40)
+        .padding(.top, 64)
+        .padding(.bottom, 44)
     }
 
-    // MARK: the timer box with the egg perched on top
+    // MARK: the timer box: the dial with − / + in its corners, and quick times
 
     private var timerBox: some View {
-        let s = model.settings
-        return VStack(spacing: 14) {
-            HStack(spacing: 14) {
-                dial(String(format: "%02d", s.minutes), bump: minBump, label: "Minutes") {
-                    model.bumpMinutes()
-                    pulse($minBump)
+        let t = model.totalSecs
+        return VStack(spacing: 12) {
+            TimerDial(timeBump: timeBump)
+                .overlay(alignment: .bottomLeading) {
+                    RepeatButton(icon: "minus", label: "Less time", enabled: t > TimeDial.minSecs) { model.stepTime(-1) }
                 }
-                VStack(spacing: 18) {
-                    colonDot
-                    colonDot
+                .overlay(alignment: .bottomTrailing) {
+                    RepeatButton(icon: "plus", label: "More time", enabled: t < TimeDial.maxSecs) { model.stepTime(1) }
                 }
-                dial(String(format: "%02d", s.seconds), bump: secBump, label: "Seconds") {
-                    model.bumpSeconds()
-                    pulse($secBump)
-                }
-            }
-            Text(s.minutes == 1 ? "minute" : "minutes")
-                .font(Theme.hand(22))
-                .foregroundStyle(Theme.out)
-                .padding(.horizontal, 16).padding(.bottom, 2)
-                .toy(Theme.cream, radius: 12, border: 4, depth: 4)
-                .padding(.top, 6)
-            MinuteSlider(value: Binding(get: { s.minutes }, set: { model.setMinutes($0) }))
-                .frame(height: 46)
-                .padding(.horizontal, 10)
-            FlowLayout(spacing: 5) {
-                ForEach([1, 2, 5, 10, 15, 20, 30], id: \.self) { m in
-                    Button("\(m)") { model.preset(m) }
-                        .font(Theme.round(16, .semibold))
-                        .frame(minWidth: 38, minHeight: 38)
-                        .buttonStyle(ToyButtonStyle(fill: s.minutes == m && s.seconds == 0 ? Theme.gold : Theme.cream, radius: 12))
-                        .accessibilityLabel("\(m) minutes")
+            HStack(spacing: 6) {
+                ForEach(Self.quickTimes, id: \.self) { m in
+                    let on = t == m * 60
+                    Button {
+                        if model.setTotal(m * 60) { pulse() }
+                    } label: {
+                        Text("\(m)")
+                            .font(Theme.round(21, .bold))
+                            .foregroundStyle(Theme.ink)
+                            .frame(maxWidth: .infinity, minHeight: 50)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(ToyButtonStyle(fill: on ? Theme.gold : Theme.cream, radius: 16, border: 4, depth: 5))
+                    .accessibilityLabel("\(m) minute\(m == 1 ? "" : "s")")
+                    .accessibilityAddTraits(on ? .isSelected : [])
                 }
             }
+            .padding(.bottom, 5)
         }
-        .padding(.top, 26).padding(.horizontal, 20).padding(.bottom, 30)
+        .padding(.top, 14).padding(.horizontal, 14).padding(.bottom, 26)
         .frame(maxWidth: .infinity)
         .background(
             ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Theme.out).offset(y: 8)
-                RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Theme.tealDark)
-                RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Theme.teal).padding(.bottom, 12)
-                RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.out, lineWidth: 6)
+                RoundedRectangle(cornerRadius: 32, style: .continuous).fill(Theme.out).offset(y: 8)
+                RoundedRectangle(cornerRadius: 32, style: .continuous).fill(Theme.tealDark)
+                RoundedRectangle(cornerRadius: 32, style: .continuous).fill(Theme.teal).padding(.bottom, 12)
+                RoundedRectangle(cornerRadius: 32, style: .continuous).strokeBorder(Theme.out, lineWidth: 6)
             }
         )
-        .background(alignment: .bottom) {
-            HStack {
-                boxFoot
-                Spacer()
-                boxFoot
-            }
-            .padding(.horizontal, 44)
-            .offset(y: 30)
-        }
-        .overlay(alignment: .topLeading) { Sprout().rotationEffect(.degrees(-18)).offset(x: -20, y: -26) }
-        .overlay(alignment: .topTrailing) { Sprout().scaleEffect(x: -1).rotationEffect(.degrees(14)).offset(x: 18, y: -24) }
-        .overlay(alignment: .bottomTrailing) { Sprout().rotationEffect(.degrees(160)).scaleEffect(0.8).offset(x: -18, y: 22) }
-        .overlay(alignment: .top) {
-            StageView(root: model.perchRoot, viewBox: CGRect(x: -110, y: -205, width: 220, height: 225))
-                .frame(width: 150, height: 150)
-                .contentShape(Ellipse().inset(by: 20))
-                .onTapGesture { model.perchEgg.boop() }
-                .offset(y: -128)
-                .accessibilityLabel("The egg")
-                .accessibilityAddTraits(.isButton)
+    }
+
+    private func pulse() {
+        withAnimation(.easeOut(duration: 0.1)) { timeBump = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeIn(duration: 0.1)) { timeBump = false }
         }
     }
 
-    private var colonDot: some View {
-        RoundedRectangle(cornerRadius: 4).fill(Theme.gold)
-            .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Theme.out, lineWidth: 4))
-            .frame(width: 16, height: 16)
-    }
+    // MARK: Start and the option buttons
 
-    private var boxFoot: some View {
-        UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10)
-            .fill(Color(hex: "#9a5a3c"))
-            .overlay(UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10).stroke(Theme.out, lineWidth: 5))
-            .frame(width: 34, height: 26)
-    }
-
-    private func dial(_ text: String, bump: Bool, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(text)
-                .font(Theme.round(58, .bold))
-                .foregroundStyle(Theme.ink)
-                .padding(.top, 4)
-                .frame(width: 112, height: 112)
-                .background(
-                    ZStack {
-                        Circle().fill(Theme.out).padding(-9).offset(y: 9)
-                        Circle().fill(Theme.out).padding(-9)
-                        Circle().fill(Theme.cream)
-                        Circle().strokeBorder(Theme.gold, lineWidth: 7)
-                    }
-                )
-        }
-        .buttonStyle(PressDown())
-        .scaleEffect(bump ? 1.08 : 1)
-        .accessibilityLabel("\(label): \(text). Tap to change")
-    }
-
-    private func pulse(_ flag: Binding<Bool>) {
-        withAnimation(.easeOut(duration: 0.11)) { flag.wrappedValue = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.11) {
-            withAnimation(.easeIn(duration: 0.11)) { flag.wrappedValue = false }
-        }
-    }
+    private static let playNode = nPath("M15 9.5 C15 7.5 17 6.5 18.7 7.5 L39 21.5 C40.6 22.6 40.6 25.4 39 26.5 L18.7 40.5 C17 41.5 15 40.5 15 38.5 Z",
+                                        St(fill: "#fdf3e4", stroke: GC.outHex, width: 4.5, join: .round))
 
     private var startButton: some View {
         Button {
             model.startRun()
         } label: {
-            ZStack {
-                // planter rim
-                RoundedRectangle(cornerRadius: 10).fill(Theme.clay)
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.out, lineWidth: 6))
-                    .frame(height: 22)
-                    .padding(.horizontal, -12)
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .offset(y: -6)
-                    .zIndex(1)
+            HStack(spacing: 14) {
+                StageView(root: Self.playNode, viewBox: Icons.box, animated: false)
+                    .frame(width: 44, height: 44)
+                    .accessibilityHidden(true)
                 Text("Start")
-                    .font(Theme.hand(40))
-                    .tracking(4)
+                    .font(Theme.hand(46))
+                    .tracking(4.6)
                     .foregroundStyle(Theme.out)
-                    .padding(.horizontal, 26).padding(.bottom, 2)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.cream))
-                    .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.out, lineWidth: 4))
-                    .offset(y: 8)
-                    .zIndex(2)
             }
-            .frame(width: 280, height: 96)
-            .background(
-                ZStack(alignment: .bottom) {
-                    UnevenRoundedRectangle(topLeadingRadius: 12, bottomLeadingRadius: 18, bottomTrailingRadius: 18, topTrailingRadius: 12)
-                        .fill(Theme.out).offset(y: 7)
-                    UnevenRoundedRectangle(topLeadingRadius: 12, bottomLeadingRadius: 18, bottomTrailingRadius: 18, topTrailingRadius: 12)
-                        .fill(Theme.clayDark)
-                    UnevenRoundedRectangle(topLeadingRadius: 12, bottomLeadingRadius: 18, bottomTrailingRadius: 18, topTrailingRadius: 12)
-                        .fill(Theme.clay).padding(.bottom, 10)
-                    UnevenRoundedRectangle(topLeadingRadius: 12, bottomLeadingRadius: 18, bottomTrailingRadius: 18, topTrailingRadius: 12)
-                        .stroke(Theme.out, lineWidth: 6)
-                }
-            )
-            .overlay(alignment: .top) {
-                HStack {
-                    SproutPair()
-                    Spacer()
-                    SproutPair(delay: 1.5)
-                }
-                .padding(.horizontal, 44)
-                .offset(y: -40)
-                .allowsHitTesting(false)
-            }
+            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity)
+            .frame(height: 88)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(PressDown())
+        .buttonStyle(StartButtonStyle())
         .accessibilityLabel("Start the timer")
     }
 
-    private func iconButton(_ icon: String, _ label: String, _ kind: SheetKind) -> some View {
+    private func iconButton(_ icon: String, _ label: String, a11y: String, _ kind: SheetKind) -> some View {
         Button {
             model.sheet = kind
         } label: {
-            VStack(spacing: 0) {
-                Text(icon).font(.system(size: 28))
-                Text(label).font(Theme.hand(15))
+            VStack(spacing: 1) {
+                IconView(name: icon, size: 38)
+                Text(label).font(Theme.hand(16))
             }
-            .frame(width: 76, height: 72)
+            .frame(maxWidth: .infinity)
+            .frame(height: 76)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 18, border: 4, depth: 5))
-        .accessibilityLabel(label)
+        .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 20, border: 4, depth: 5))
+        .accessibilityLabel(a11y)
     }
 }
 
 private struct HeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+/// The egg-timer dial: twist or tap the ring to set whole minutes (one full
+/// turn is 60), with the egg in the middle. The egg stays tappable.
+struct TimerDial: View {
+    @Environment(AppModel.self) private var model
+    var timeBump = false
+    @State private var touching = false
+    @State private var dragging = false
+
+    private static let box = CGRect(x: -170, y: -170, width: 340, height: 340)
+
+    var body: some View {
+        GeometryReader { geo in
+            let d = min(geo.size.width, geo.size.height)
+            let u = d / 340
+            let t = model.totalSecs
+            let f = TimeDial.fraction(t)
+            let k = TimeDial.knob(t)
+            let ring = CGFloat(TimeDial.radius * 2) * u
+            let ease: Animation? = dragging || GC.reduceMotion ? nil : .easeOut(duration: 0.12)
+            ZStack {
+                Circle().stroke(Theme.out, lineWidth: 42 * u).frame(width: ring, height: ring)
+                Circle().stroke(Theme.cream, lineWidth: 30 * u).frame(width: ring, height: ring)
+                Circle().trim(from: 0, to: f)
+                    .stroke(Theme.gold, style: StrokeStyle(lineWidth: 30 * u, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: ring, height: ring)
+                    .animation(ease, value: f)
+                Canvas { ctx, size in
+                    // a dot for every minute, a bigger one every five
+                    for i in 0..<60 {
+                        let a = Double(i) / 60 * 2 * .pi, big = i % 5 == 0
+                        let r = (big ? 3.6 : 1.7) * u
+                        let x = size.width / 2 + CGFloat(sin(a) * TimeDial.radius) * u
+                        let y = size.height / 2 - CGFloat(cos(a) * TimeDial.radius) * u
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r)),
+                                 with: .color(Theme.out.opacity(big ? 0.5 : 0.28)))
+                    }
+                }
+                Circle().fill(Theme.cream).frame(width: CGFloat(TimeDial.radius - 21) * 2 * u, height: CGFloat(TimeDial.radius - 21) * 2 * u)
+                StageView(root: model.perchRoot, viewBox: Self.box)
+                    .allowsHitTesting(false)
+                Text(GC.fmtTime(Double(t)))
+                    .font(Theme.round(60 * u, .bold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                    .scaleEffect(timeBump ? 1.12 : 1)
+                    .position(x: d / 2, y: d / 2 + 58 * u)
+                knob(u)
+                    .offset(x: CGFloat(k.x) * u, y: CGFloat(k.y) * u)
+                    .animation(ease, value: t)
+            }
+            .frame(width: d, height: d)
+            .contentShape(Circle())
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { g in
+                    let first = !touching
+                    let at = first ? g.startLocation : g.location
+                    let x = Double((at.x - d / 2) / u), y = Double((at.y - d / 2) / u)
+                    let p = TimeDial.touch(x, y)
+                    if first {
+                        touching = true
+                        if TimeDial.onRing(p.dist) {
+                            dragging = true
+                            turn(to: p.minutes, first: true)
+                        } else if Self.eggArea.contains(CGPoint(x: x, y: y)) {
+                            model.perchEgg.boop()
+                        }
+                    } else if dragging {
+                        turn(to: p.minutes, first: false)
+                    }
+                }
+                .onEnded { _ in
+                    touching = false
+                    dragging = false
+                })
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Timer length")
+        .accessibilityValue(TimeDial.spoken(model.totalSecs))
+        .accessibilityHint("Swipe up or down to change it")
+        .accessibilityAdjustableAction { dir in
+            switch dir {
+            case .increment: model.stepTime(1)
+            case .decrement: model.stepTime(-1)
+            @unknown default: break
+            }
+        }
+    }
+
+    /// the egg in the middle (0.6 scale at 0, -4), in the dial's box
+    private static let eggArea = CGRect(x: -42, y: -110, width: 84, height: 112)
+
+    private func turn(to minutes: Int, first: Bool) {
+        let m = TimeDial.ringMinutes(minutes, currentSecs: model.totalSecs, first: first)
+        model.setTotal(m * 60)
+    }
+
+    private func knob(_ u: CGFloat) -> some View {
+        ZStack {
+            Circle().fill(Theme.out).frame(width: 48 * u, height: 48 * u)
+            Circle().fill(Theme.cream).frame(width: 36 * u, height: 36 * u)
+            Circle().fill(Theme.gold).frame(width: 16 * u, height: 16 * u)
+            Circle().strokeBorder(Theme.out, lineWidth: 3.5 * u).frame(width: 19.5 * u, height: 19.5 * u)
+        }
+        .shadow(color: Theme.out.opacity(0.35), radius: 0, x: 0, y: 4 * u)
+        .allowsHitTesting(false)
+    }
+}
+
+/// − / + in the dial's corners: one step per tap, repeating while held
+/// (slow at first, then faster), like the web's `repeatable()`.
+struct RepeatButton: View {
+    let icon: String
+    let label: String
+    let enabled: Bool
+    let action: () -> Bool
+
+    @GestureState private var pressed = false
+    @State private var task: Task<Void, Never>?
+
+    var body: some View {
+        IconView(name: icon, size: 34)
+            .frame(width: 56, height: 56)
+            .background(ToyBackground(fill: Theme.cream, radius: 28, border: 4, depth: pressed && enabled ? 1 : 5))
+            .offset(y: pressed && enabled ? 4 : 0)
+            .opacity(enabled ? 1 : 0.45)
+            .contentShape(Circle())
+            .gesture(DragGesture(minimumDistance: 0).updating($pressed) { _, state, _ in state = true })
+            .onChange(of: pressed) { _, on in
+                if on { start() } else { stop() }
+            }
+            .onDisappear { stop() }
+            .animation(.easeOut(duration: 0.08), value: pressed)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { if enabled { _ = action() } }
+    }
+
+    private func start() {
+        stop()
+        guard enabled else { return }
+        _ = action()
+        task = Task { @MainActor in
+            var delay = 0.42
+            while true {
+                await GC.sleep(delay)
+                if Task.isCancelled || !action() { return }
+                delay = max(0.07, delay * 0.8)
+            }
+        }
+    }
+
+    private func stop() {
+        task?.cancel()
+        task = nil
+    }
+}
+
+/// The plain, full-width Start button: leaf green, sinks onto its shadow.
+struct StartButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        let shape = RoundedRectangle(cornerRadius: 30, style: .continuous)
+        configuration.label
+            .background(
+                ZStack(alignment: .bottom) {
+                    shape.fill(Theme.out).offset(y: pressed ? 3 : 8)
+                    shape.fill(Theme.leafDark)
+                    shape.fill(Theme.leaf).padding(.bottom, 10)
+                    shape.strokeBorder(Theme.out, lineWidth: 6)
+                }
+            )
+            .offset(y: pressed ? 5 : 0)
+            .animation(.easeOut(duration: 0.08), value: pressed)
+    }
 }
 
 /// Buttons that just nudge down when pressed (their art draws its own shadow).
@@ -264,90 +358,5 @@ struct PressDown: ButtonStyle {
             .offset(y: configuration.isPressed ? 3 : 0)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
-/// The berry-and-bark minutes slider (0–60).
-struct MinuteSlider: View {
-    @Binding var value: Int
-
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let p = CGFloat(value) / 60
-            let thumbW: CGFloat = 30
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color(hex: "#5a2a2c")).frame(height: 22)
-                Capsule().fill(Theme.berry).frame(width: max(22, w * p), height: 22)
-                Capsule().strokeBorder(Theme.out, lineWidth: 5).frame(height: 22)
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(hex: "#8a5a3b"))
-                    .overlay(alignment: .bottom) {
-                        RoundedRectangle(cornerRadius: 6).fill(Color(hex: "#6b4430")).frame(height: 8).padding(5)
-                    }
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.out, lineWidth: 5))
-                    .frame(width: thumbW, height: 46)
-                    .offset(x: (w - thumbW) * p)
-            }
-            .frame(height: geo.size.height)
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                let v = Int(((g.location.x - thumbW / 2) / max(1, w - thumbW) * 60).rounded())
-                let nv = min(60, max(0, v))
-                if nv != value { value = nv }
-            })
-        }
-        .accessibilityElement()
-        .accessibilityLabel("Minutes")
-        .accessibilityValue("\(value)")
-        .accessibilityAdjustableAction { dir in
-            switch dir {
-            case .increment: value = min(60, value + 1)
-            case .decrement: value = max(0, value - 1)
-            @unknown default: break
-            }
-        }
-    }
-}
-
-/// A pair of little leaves.
-struct Sprout: View {
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            Leaf().rotationEffect(.degrees(-20), anchor: .bottom).offset(x: 2)
-            Leaf().scaleEffect(x: -1).rotationEffect(.degrees(40), anchor: .bottom).offset(x: 20, y: -4)
-        }
-        .frame(width: 44, height: 30, alignment: .bottomLeading)
-        .allowsHitTesting(false)
-    }
-}
-
-/// Two sprouts that sway on the Start planter.
-struct SproutPair: View {
-    var delay: Double = 0
-    @State private var sway = false
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            Leaf(w: 22, h: 30).rotationEffect(.degrees(-28 + (sway ? 6 : 0)), anchor: .bottom).offset(x: 4)
-            Leaf(w: 22, h: 30).scaleEffect(x: -1).rotationEffect(.degrees(28 + (sway ? 6 : 0)), anchor: .bottom).offset(x: 24)
-        }
-        .frame(width: 54, height: 40, alignment: .bottomLeading)
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { sway = true }
-            }
-        }
-    }
-}
-
-struct Leaf: View {
-    var w: CGFloat = 20
-    var h: CGFloat = 26
-    var body: some View {
-        let shape = UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: w, bottomTrailingRadius: 0, topTrailingRadius: w)
-        shape.fill(Theme.leaf)
-            .overlay(shape.stroke(Theme.out, lineWidth: 4))
-            .frame(width: w, height: h)
     }
 }

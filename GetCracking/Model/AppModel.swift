@@ -464,17 +464,14 @@ final class AppModel {
         paywall = placement
     }
 
+    /// The egg in the middle of the setup dial (web buildDial: a soft shadow
+    /// and the egg at 0.6 scale, in the dial's 340×340 box centred on 0,0).
     static func buildPerch() -> (VNode, Egg) {
         let root = VNode()
-        root.add(nGroup([
-            nEllipse(0, -2, 86, 20, St.o(6).filled("#b98652")),
-            nPath("M-74,-6 Q-30,8 10,-4 T76,-6 M-60,6 Q-10,-8 40,6 T80,0", St.line("#8a5a3b", 4)),
-        ]))
-        let egg = Egg(x: 0, y: 4, scale: 0.92)
+        root.add(nEllipse(0, -4, 46, 9, St.f(GC.outHex).op(0.13)))
+        let egg = Egg(x: 0, y: -4, scale: 0.6)
         egg.onBoop = { Sound.shared.boop() }
         root.add(egg.root)
-        root.add(nPath("M-84,-2 Q-40,22 0,18 Q40,22 84,-2 Q60,20 0,22 Q-60,20 -84,-2 Z", St.o(5).filled("#b98652")))
-        root.add(nPath("M-70,6 L-50,0 M-30,12 L-8,6 M20,12 L44,6 M56,6 L74,0", St.line("#8a5a3b", 4)))
         return (root, egg)
     }
 
@@ -518,25 +515,29 @@ final class AppModel {
 
     // MARK: setup controls
 
-    func bumpMinutes() {
-        settings.minutes = (settings.minutes + 1) % 61
-        if settings.minutes == 0 && settings.seconds == 0 { settings.seconds = 30 }
+    /// the timer length the setup dial shows, in whole seconds
+    var totalSecs: Int { settings.minutes * 60 + settings.seconds }
+
+    @ObservationIgnored private let dialHaptic = UIImpactFeedbackGenerator(style: .light)
+
+    /// Set the timer length (clamped to 15 s … 60 min). Each change clicks and
+    /// gives a light haptic tick; false if nothing changed (a held − / + stops).
+    @discardableResult
+    func setTotal(_ secs: Int, quiet: Bool = false) -> Bool {
+        let t = TimeDial.clamp(secs)
+        if t == totalSecs { return false }
+        settings.minutes = t / 60
+        settings.seconds = t % 60
+        if !quiet {
+            Sound.shared.tick()
+            dialHaptic.impactOccurred()
+        }
+        return true
     }
 
-    func bumpSeconds() {
-        settings.seconds = (settings.seconds + 15) % 60
-        if settings.minutes == 0 && settings.seconds == 0 { settings.seconds = 15 }
-    }
-
-    func setMinutes(_ m: Int) {
-        settings.minutes = m
-        if m == 0 && settings.seconds == 0 { settings.seconds = 30 }
-    }
-
-    func preset(_ m: Int) {
-        settings.minutes = m
-        settings.seconds = 0
-    }
+    /// − / + on the dial: 15 s steps below 3 minutes, 1 minute above.
+    @discardableResult
+    func stepTime(_ dir: Int) -> Bool { setTotal(TimeDial.step(totalSecs, dir)) }
 
     // MARK: photos
 
