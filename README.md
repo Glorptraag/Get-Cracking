@@ -2,8 +2,8 @@
 
 A visual timer for little ones that doesn't use words. The countdown runs around an egg that cracks as time passes. When time is up, the egg hatches into an animated friend who joins a little band for a song instead of an alarm.
 
-- **40 hatchable friends**, all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
-- **10 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
+- **65 hatchable friends** in three packs (Classic, Aussie Bush, Christmas), all drawn in SVG from one parametric chibi renderer. A shuffle bag makes sure every friend appears once before any repeats.
+- **13 illustrated worlds**: isometric cut-away dioramas with burrows, sleepy critters and looping ambient animation (fireflies, snow, leaves, bubbles).
 - **Custom photos** can hatch from the egg instead of an animal, or mixed in with them.
 - **Egg karaoke** (the default hatching song): a little band plays an original ~19-second tune, and the friend who just hatched is one of the players. The tune passes between instruments; the friend adds off-beat stabs and its second sound (a purr, a snort, a splash…) in the verse, joins the hook with the lead instrument in the chorus, and takes a short solo break. A friend whose call holds a note (a meow, a moo, a hoot) sings in tune, and the song moves to that friend's key so its voice still sounds like itself. A friend whose sound is not a note (a quack, an oink, a sniff, a turtle's shell knock) plays it as it is, in time, like a percussion instrument. Each world (meadow, woodland, jungle, water or magic) has its own band of recorded instruments.
 - **Animal bands** for the hatch: three ~15-second celebration songs, each a full band plus a chorus of animal voices (moo, quack, baa, woof, meow, oink, ribbit, hoot, elephant trumpet, roar, neigh, rooster and more). The friend who just hatched always gets the solo, and tapping it afterwards makes it call again.
@@ -46,7 +46,7 @@ On a phone or tablet, use **Add to Home Screen**. The service worker caches ever
   - *Animal band*: a proper marching band. It opens with the drum major's whistle and a snare roll, then plays a dotted march tune on trumpets (with a harmony line) over tuba oom-pah, trombones, French horns, marching bass drum, flammed snare, hand cymbals, glockenspiel and a piccolo. A kazoo joins the animal choir, the finale steps up a key, and it ends "ta-daaa… bum-BUM!"
   - *Jungle jam*: steel drum, marimba, ukulele, bongos, shaker, claves, bass, pan flute; monkeys, elephants, parrots, frogs, lions
   - *Farmyard hoedown*: fiddle, banjo, harmonica, jug, washboard, cowbell, hand claps, slide whistle; cows, sheep, pigs, ducks, dogs, horses, goats and a rooster to start
-  - Each of the 40 friends has a call (`FRIEND_CALL`). The voices are one small synth (`_voice`: oscillators → vowel formant filters → tremolo/vibrato), so the same moo can be a cow or a calf, and the animals can sing pitched notes.
+  - Every friend has a call (`FRIEND_CALL`; pack friends name theirs). The voices are one small synth (`_voice`: oscillators → vowel formant filters → tremolo/vibrato), so the same moo can be a cow or a calf, and the animals can sing pitched notes.
   - Songs are scheduled a little ahead at a time, like the countdown music, so the hatch animation stays smooth and the song stops at once on New egg / Stop. The band ducks while the device voice says the friend's name.
 - **Countdown music:** gains an extra twinkle in the last 10% of the timer (`Sound.setTension`).
 - **Grown-up controls:** Pause, ±1 min, Hatch now, New egg and Stop sit behind the lock button. It needs a press-and-hold (1–3 s); a quick tap only shows a reminder (`holdable()`). Escape opens it on a keyboard. On-screen pause and ±1 buttons are optional.
@@ -59,7 +59,7 @@ index.html            setup screen + timer screen + sheets
 css/app.css           visual language and every animation loop
 js/util.js            helpers, seeded RNG, shuffle bag
 js/icons.js           every UI icon, drawn in SVG (no emoji)
-js/animals.js         the 40 friends + photo "friend"
+js/animals.js         the 40 Classic friends + photo "friend"
 js/egg.js             egg, crack stages, hatch choreography
 js/shellfx.js         hatch-style registry + the contract every style follows
 js/hatch/*.js         one file per hatch style (roll, boom, crumble)
@@ -121,6 +121,12 @@ The 40 friends and 10 worlds are the **Classic** pack. Other packs live in `js/p
 - **friends** use the same parts as the Classic 40, plus their own: `GC.Animals.parts.<layer>[name] = (d, k) => markup` (layers: ears, back, marks, front, over, eyes, muzzle, nose, mouth, arms, feet). Each friend names its `call` (animal bands) and its `karaoke` world and stand-in voice.
 - **worlds** have the same shape as `js/scenes.js`, using the props and helpers in `GC.Scenes.kit`; new particle kinds go in `GC.Scenes.PARTICLES`.
 - **sounds**: new calls with a synth stand-in, Egg karaoke worlds, chirps and instruments. Each pack's ElevenLabs prompts live in `tools/packs/<id>.sounds.json` and `tools/packs/<id>.karaoke.json`. The pick tools only add to `sounds/index.json` when given a pack manifest, so packs never undo each other.
+
+**Aussie Bush** (`js/packs/aussie.js`): 12 Australian friends. They are the Galah, Cockatoo, Kookaburra, Emu Chick, a Joey peeking from mum's pouch, Wombat, Platypus, Echidna, Sugar Glider, Frill-neck Lizard, Bilby and a friendly Mole Cricket with big soft digging hands. There are two worlds: a red-dirt outback with termite mounds, spinifex and the mole cricket's tunnel, and a gum-tree billabong with the platypus's bank burrow, drifting red dust and falling gum leaves. In Egg karaoke they play in a bush band (banjo lead, spoons on the backbeat, flute, ukulele and walking bass), and the band answers with a kookaburra laugh made of the song's own chord notes. It has no Aboriginal sacred or cultural material (no Uluru, didgeridoo or dot painting).
+
+**Christmas** (`js/packs/christmas.js`): 13 festive friends borrowed from Advent Eggs. The Christmas baking (Gingerbread Pal, Christmas Tree Cookie, Shortbread Star, Christmas Pudding) and the Nutcracker cast (Nutcracker, Sugar Plum Fairy, Mouse King, Snowflake Fairy) join an Angel, Reindeer, Robin, Snowman and an Aussie Christmas Beetle. Each makes the sound it really would: a gingerbread giggle, a nutcracker's wooden clack, a fairy's celesta run, the snowman's soft "hoo". The Christmas Village world has snowy roofs, warm windows, fairy lights, the church under the star, gifts, and a mouse hole with a tiny stocking. Its Egg karaoke band is a celesta lead with recorded sleigh bells on every off-beat. Nine of its "It's …!" lines are the Advent Eggs recordings.
+
+Every friend in both packs has a recorded call, an "It's a …!" line, and its own karaoke voice and ad-lib, made with ElevenLabs from `tools/packs/<id>.sounds.json` and `tools/packs/<id>.karaoke.json` (792 credits for each pack). `tools/gen-voice.js` finds a pack friend from its one-line `{ id, name, … body }` definition. Put a custom line (`say: 'It\'s a baby kangaroo, a joey!'`) on that same line, and pass `--only <ids>` so it records just the new friends.
 
 In settings ("Who hatches?") a grown-up can switch any pack off, and then its friends and worlds leave the shuffle (Christmas only in December, say). The friend book is grouped by pack. On the web every pack is free. The App Store app (branch `ios-swiftui`) is a free download with a one-time unlock, The Whole Nest, which opens every pack now and in future; the friends and worlds marked `starter` in `js/animals.js` and `js/scenes.js` are its free set.
 
