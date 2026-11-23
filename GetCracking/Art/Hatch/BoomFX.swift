@@ -299,7 +299,7 @@ private func driftPuff(_ ctx: ShellCtx, _ x: Double, _ y: Double, _ r: Double, _
 // MARK: the effect
 
 struct BoomFX: ShellEffect {
-    let id = "boom", name = "Kaboom", icon = "💥"
+    let id = "boom", name = "Kaboom", icon = "boom"
 
     func run(_ ctx: ShellCtx) async {
         let (P, polys) = buildPolys()

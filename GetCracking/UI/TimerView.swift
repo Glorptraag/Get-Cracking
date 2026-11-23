@@ -11,6 +11,8 @@ struct TimerView: View {
     @State private var againProgress = 0.0
     @State private var hintBob = false
     @State private var timePulse = false
+    @State private var clockDim = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let s = model.settings
@@ -37,12 +39,11 @@ struct TimerView: View {
                 // the pointing finger, at the egg's lower right
                 if run.showTapHint {
                     let p = CGPoint(x: Scenes.egg.x + 15, y: Scenes.egg.y - 48).applying(m)
-                    Text("👆")
-                        .font(.system(size: 54))
+                    IconView(name: "tap", size: 64)
                         .shadow(color: Theme.out, radius: 0, x: 0, y: 3)
                         .rotationEffect(.degrees(hintBob ? -8 : 0))
                         .offset(y: hintBob ? -14 : 0)
-                        .position(x: p.x + 27, y: p.y + 27)
+                        .position(x: p.x + 32, y: p.y + 32)
                         .allowsHitTesting(false)
                         .onAppear {
                             withAnimation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true)) { hintBob = true }
@@ -52,9 +53,17 @@ struct TimerView: View {
             }
         }
         .ignoresSafeArea()
-        .overlay(alignment: .top) { topPills(s) }
+        .overlay(alignment: .top) { GeometryReader { g in topPills(s, width: g.size.width) } }
         .overlay(alignment: .bottom) { bottomBar(s) }
         .persistentSystemOverlays(.hidden)
+        .onChange(of: run.phase == .paused, initial: true) { _, paused in
+            // the clock pulses gently while paused
+            if paused && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { clockDim = true }
+            } else {
+                withAnimation(.easeOut(duration: 0.2)) { clockDim = false }
+            }
+        }
         .onChange(of: run.timeBump) { _, _ in
             withAnimation(.easeOut(duration: 0.15)) { timePulse = true }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { withAnimation(.easeIn(duration: 0.15)) { timePulse = false } }
@@ -73,7 +82,7 @@ struct TimerView: View {
 
     // MARK: top
 
-    private func topPills(_ s: Settings) -> some View {
+    private func topPills(_ s: Settings, width: CGFloat) -> some View {
         ZStack(alignment: .top) {
             Text(run.hatchText)
                 .font(Theme.hand(40))
@@ -90,22 +99,27 @@ struct TimerView: View {
                 .padding(.horizontal, 70)
                 .allowsHitTesting(false)
 
+            // the big clock: minutes and seconds, centred at the top
             if s.showNumbers && (run.phase == .running || run.phase == .paused) {
+                let size = min(100, max(56, width * 0.17))
                 Text(run.timeText)
-                    .font(Theme.round(18, .semibold))
+                    .font(Theme.round(size, .bold))
                     .monospacedDigit()
-                    .foregroundStyle(Theme.out)
-                    .padding(.horizontal, 12).padding(.vertical, 2)
-                    .toy(Theme.pill, radius: 20, border: 3, depth: 3)
-                    .opacity(0.7)
-                    .scaleEffect(timePulse ? 1.25 : 1)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 14)
-                    .padding(.top, 6)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, size * 0.45)
+                    .padding(.top, size * 0.1).padding(.bottom, size * 0.12)
+                    .toy(Theme.cream, radius: size, border: 6, depth: 7)
+                    .opacity(run.phase == .paused ? (reduceMotion ? 0.6 : (clockDim ? 0.5 : 1)) : 1)
+                    .scaleEffect(timePulse ? 1.08 : 1)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 14)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: bottom
@@ -145,7 +159,7 @@ struct TimerView: View {
             ZStack {
                 Circle().fill(Theme.cream.opacity(0.78))
                 Circle().strokeBorder(Theme.out, lineWidth: 4)
-                Text("🔒").font(.system(size: 24))
+                IconView(name: "lock", size: 30)
                 Circle()
                     .trim(from: 0, to: lockProgress)
                     .stroke(Theme.gold, style: StrokeStyle(lineWidth: 5, lineCap: .round))
@@ -185,7 +199,11 @@ struct TimerView: View {
                     roundButton("+1", "One minute more") { run.adjust(60) }
                 }
                 if s.showPause {
-                    roundButton(run.phase == .paused ? "▶" : "❚❚", run.phase == .paused ? "Resume" : "Pause") { run.togglePause() }
+                    Button { run.togglePause() } label: {
+                        IconView(name: run.phase == .paused ? "play" : "pause", size: 32).frame(width: 60, height: 60)
+                    }
+                    .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 30))
+                    .accessibilityLabel(run.phase == .paused ? "Resume" : "Pause")
                 }
             }
         }
@@ -201,8 +219,9 @@ struct TimerView: View {
 
     private func againButton(_ s: Settings) -> some View {
         HStack(spacing: 10) {
-            Text("🥚").font(.system(size: 26))
+            IconView(name: "egg", size: 30)
             Text("Hold for a new egg").font(Theme.hand(20)).foregroundStyle(Theme.out)
+                .lineLimit(1).fixedSize()
         }
         .padding(.leading, 16).padding(.trailing, 22)
         .frame(height: 60)
@@ -230,7 +249,7 @@ struct TimerView: View {
                 if let img = PhotoStore.image(s.nextUp.photo) {
                     Image(uiImage: img).resizable().scaledToFill()
                 } else {
-                    Text(s.nextUp.icon.isEmpty ? "⭐" : s.nextUp.icon).font(.system(size: 36))
+                    IconView(name: s.nextUp.icon, size: 46)
                 }
             }
             .frame(width: 64, height: 64)
@@ -238,7 +257,7 @@ struct TimerView: View {
             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Theme.out, lineWidth: 4))
             VStack(alignment: .leading, spacing: 0) {
                 Text("Next up").font(Theme.hand(16)).opacity(0.7)
-                Text(s.nextUp.text).font(Theme.hand(28)).lineLimit(2)
+                Text(s.nextUp.text).font(Theme.hand(28)).lineLimit(1).minimumScaleFactor(0.6)
             }
             .foregroundStyle(Theme.out)
         }
@@ -257,13 +276,13 @@ struct TimerView: View {
             Text("Grown-up controls").font(Theme.hand(22)).foregroundStyle(Theme.out)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                 if live {
-                    trayButton(run.phase == .paused ? "▶" : "❚❚", run.phase == .paused ? "Resume" : "Pause") { run.togglePause() }
-                    trayButton("−1", "Minute") { run.adjust(-60) }
-                    trayButton("+1", "Minute") { run.adjust(60) }
+                    trayButton(run.phase == .paused ? "Resume" : "Pause", icon: run.phase == .paused ? "play" : "pause") { run.togglePause() }
+                    trayButton("Minute", text: "−1") { run.adjust(-60) }
+                    trayButton("Minute", text: "+1") { run.adjust(60) }
                 }
-                if canHatch { trayButton("🐣", "Hatch now") { run.hatchNow() } }
-                trayButton("🔁", "New egg") { model.restartSame() }
-                trayButton("■", "Stop", danger: true) { model.stopToSetup() }
+                if canHatch { trayButton("Hatch now", icon: "hatch") { run.hatchNow() } }
+                trayButton("New egg", icon: "again") { model.restartSame() }
+                trayButton("Stop", icon: "stop", danger: true) { model.stopToSetup() }
             }
         }
         .padding(.top, 14).padding(.horizontal, 16).padding(.bottom, 18)
@@ -271,7 +290,7 @@ struct TimerView: View {
         .toy(Theme.paper, radius: 26, border: 5, depth: 7)
         .overlay(alignment: .topTrailing) {
             Button { run.closeTray() } label: {
-                Text("✕").font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.out)
+                IconView(name: "close", size: 22)
                     .frame(width: 40, height: 40)
                     .background(Circle().fill(Theme.cream))
                     .overlay(Circle().strokeBorder(Theme.out, lineWidth: 3))
@@ -284,13 +303,17 @@ struct TimerView: View {
         .allowsHitTesting(run.trayOpen)
     }
 
-    private func trayButton(_ icon: String, _ label: String, danger: Bool = false, _ action: @escaping () -> Void) -> some View {
+    private func trayButton(_ label: String, icon: String? = nil, text: String? = nil, danger: Bool = false, _ action: @escaping () -> Void) -> some View {
         Button {
             run.armTray()
             action()
         } label: {
             VStack(spacing: 4) {
-                Text(icon).font(Theme.round(24, .bold))
+                if let icon {
+                    IconView(name: icon, size: 30)
+                } else {
+                    Text(text ?? "").font(Theme.round(24, .bold))
+                }
                 Text(label).font(Theme.hand(17))
             }
             .frame(maxWidth: .infinity)

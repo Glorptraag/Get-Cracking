@@ -22,21 +22,21 @@ final class Sound {
     struct Choice: Identifiable { let id: String; let name: String; let icon: String }
 
     static let music: [Choice] = [
-        Choice(id: "musicbox", name: "Music box", icon: "🎶"),
-        Choice(id: "marimba", name: "Marimba walk", icon: "🎵"),
-        Choice(id: "forest", name: "Forest birds", icon: "🐦"),
-        Choice(id: "rain", name: "Soft rain", icon: "🌧️"),
-        Choice(id: "ticktock", name: "Gentle tick-tock", icon: "🕰️"),
-        Choice(id: "off", name: "Quiet", icon: "🔇"),
+        Choice(id: "musicbox", name: "Music box", icon: "notes"),
+        Choice(id: "marimba", name: "Marimba walk", icon: "note"),
+        Choice(id: "forest", name: "Forest birds", icon: "bird"),
+        Choice(id: "rain", name: "Soft rain", icon: "rain"),
+        Choice(id: "ticktock", name: "Gentle tick-tock", icon: "clock"),
+        Choice(id: "off", name: "Quiet", icon: "quiet"),
     ]
     static let endSounds: [Choice] = [
-        Choice(id: "band", name: "Animal band", icon: "🥁"),
-        Choice(id: "jungle", name: "Jungle jam", icon: "🪇"),
-        Choice(id: "farm", name: "Farmyard hoedown", icon: "🐮"),
-        Choice(id: "tada", name: "Ta-da parade", icon: "🎉"),
-        Choice(id: "chimes", name: "Happy chimes", icon: "🔔"),
-        Choice(id: "birds", name: "Birdsong hello", icon: "🐤"),
-        Choice(id: "bubbles", name: "Bubble pops", icon: "🫧"),
+        Choice(id: "band", name: "Animal band", icon: "drum"),
+        Choice(id: "jungle", name: "Jungle jam", icon: "maracas"),
+        Choice(id: "farm", name: "Farmyard hoedown", icon: "barn"),
+        Choice(id: "tada", name: "Ta-da parade", icon: "tada"),
+        Choice(id: "chimes", name: "Happy chimes", icon: "bell"),
+        Choice(id: "birds", name: "Birdsong hello", icon: "chick"),
+        Choice(id: "bubbles", name: "Bubble pops", icon: "bubbles"),
     ]
 
     private let engine = AVAudioEngine()

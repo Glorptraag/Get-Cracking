@@ -122,7 +122,7 @@ struct LockBadge: View {
     var size: CGFloat = 26
 
     var body: some View {
-        Text("🔒").font(.system(size: size * 0.55))
+        IconView(name: "lock", size: size * 0.72)
             .frame(width: size, height: size)
             .background(Circle().fill(Theme.cream))
             .overlay(Circle().strokeBorder(Theme.out, lineWidth: 2.5))

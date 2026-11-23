@@ -63,10 +63,10 @@ struct SetupView: View {
                 .padding(.top, 34)
 
             HStack(spacing: 12) {
-                iconButton("🌳", "World", .world)
-                iconButton("🎶", "Music", .sound)
-                iconButton("📖", "Friends", .book)
-                iconButton("⚙️", "Settings", .settings)
+                iconButton("tree", "World", .world)
+                iconButton("notes", "Music", .sound)
+                iconButton("book", "Friends", .book)
+                iconButton("gear", "Settings", .settings)
             }
             .padding(.top, 10)
         }
@@ -242,8 +242,8 @@ struct SetupView: View {
             model.sheet = kind
         } label: {
             VStack(spacing: 0) {
-                Text(icon).font(.system(size: 28))
-                Text(label).font(Theme.hand(15))
+                IconView(name: icon, size: 38)
+                Text(label).font(Theme.hand(16))
             }
             .frame(width: 76, height: 72)
         }

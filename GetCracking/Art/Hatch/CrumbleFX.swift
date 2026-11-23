@@ -178,7 +178,7 @@ private final class Tile {
 }
 
 struct CrumbleFX: ShellEffect {
-    let id = "crumble", name = "Crumble", icon = "🧱"
+    let id = "crumble", name = "Crumble", icon = "bricks"
 
     func run(_ ctx: ShellCtx) async {
         let R = ctx.rand
