@@ -8,7 +8,8 @@ import UIKit
 struct NextUp: Codable, Equatable {
     var on = false
     var text = "Tidy-up time"
-    var icon = "🧸"
+    /// a drawn icon's name (Art/Icons.swift); older builds saved an emoji
+    var icon = "teddy"
     /// file name of a photo in the photo folder, if one was picked
     var photo: String? = nil
 }
@@ -30,7 +31,7 @@ struct Settings: Codable, Equatable {
     var showAdjust = false      // −/+ time buttons visible on the timer screen
     var longPressStop = true    // grown-up controls need a long press
     var holdSeconds = 1.5
-    var showNumbers = true      // small m:ss for grown-ups
+    var showNumbers = true      // the big mm:ss clock at the top of the timer screen
     var nextUp = NextUp()
     var seenHint = false
 
@@ -56,6 +57,8 @@ struct Settings: Codable, Equatable {
         holdSeconds = (try? c.decodeIfPresent(Double.self, forKey: .holdSeconds)) ?? d.holdSeconds
         showNumbers = (try? c.decodeIfPresent(Bool.self, forKey: .showNumbers)) ?? d.showNumbers
         nextUp = (try? c.decodeIfPresent(NextUp.self, forKey: .nextUp)) ?? d.nextUp
+        // older builds saved an emoji here; it is now the name of a drawn icon
+        nextUp.icon = Icons.normalized(nextUp.icon)
         seenHint = (try? c.decodeIfPresent(Bool.self, forKey: .seenHint)) ?? d.seenHint
         // builds before the animal bands: anyone still on the old default jingle gets the band
         tunesV = (try? c.decodeIfPresent(Int.self, forKey: .tunesV)) ?? 1

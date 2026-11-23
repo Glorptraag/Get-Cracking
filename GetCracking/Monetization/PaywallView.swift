@@ -44,11 +44,11 @@ struct PaywallView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 10) {
-                    bullet("🐣", "All \(allFriends) friends to hatch and collect in the friend book")
-                    bullet("🌳", "All \(allWorlds) worlds, from the Snowy Pines to the Coral Reef Tank")
-                    bullet("🥁", "Every hatching song, with the Jungle jam and Farmyard hoedown bands")
-                    bullet("📷", "As many photo friends as you like: grandparents, pets, the whole family")
-                    bullet("🎁", "Every new pack of friends and worlds as it arrives, at no extra cost")
+                    bullet("hatch", "All \(allFriends) friends to hatch and collect in the friend book")
+                    bullet("tree", "All \(allWorlds) worlds, from the Snowy Pines to the Coral Reef Tank")
+                    bullet("drum", "Every hatching song, with the Jungle jam and Farmyard hoedown bands")
+                    bullet("camera", "As many photo friends as you like: grandparents, pets, the whole family")
+                    bullet("gift", "Every new pack of friends and worlds as it arrives, at no extra cost")
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -92,8 +92,8 @@ struct PaywallView: View {
     }
 
     private func bullet(_ icon: String, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(icon).font(.system(size: 20)).accessibilityHidden(true)
+        HStack(alignment: .top, spacing: 10) {
+            IconView(name: icon, size: 26)
             Text(text).font(Theme.round(16)).fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -111,7 +111,7 @@ struct PaywallView: View {
             }
         } else if store.purchasePending {
             VStack(spacing: 6) {
-                Text("⏳").font(.system(size: 34)).accessibilityHidden(true)
+                IconView(name: "clock", size: 40)
                 Text("Waiting for a grown-up to approve").font(Theme.hand(26)).multilineTextAlignment(.center)
                 Text("Once it's approved, everything unlocks here by itself.")
                     .font(Theme.round(14)).opacity(0.75).multilineTextAlignment(.center)

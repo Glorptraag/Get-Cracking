@@ -103,5 +103,41 @@ check(Set(freeTier.friendPool(packsOff: ["classic"])) == Packs.classic.starterFr
 check(Set(freeTier.scenePool(packsOff: ["classic", "aussie", "christmas"])) == Packs.classic.starterScenes, "free, everything off: the starter worlds")
 check(freeTier.friendPool(packsOff: ["aussie", "christmas"]).allSatisfy(freeTier.friend), "free: nothing locked in a pack-filtered shuffle")
 
+// The setup dial (Model/TimeDial.swift), against the web's stepTime / wireDial (js/app.js, 2f810aa)
+print("\nThe egg-timer dial")
+check(TimeDial.minSecs == 15 && TimeDial.maxSecs == 3600, "dial: 15 s … 60 min")
+check(TimeDial.step(165, 1) == 180 && TimeDial.step(165, -1) == 150, "dial: at 2:45, + → 3:00 and − → 2:30 (15 s steps)")
+check(TimeDial.step(180, 1) == 240 && TimeDial.step(180, -1) == 165, "dial: at 3:00, + → 4:00 (1 min) and − → 2:45 (15 s)")
+check(TimeDial.step(3540, 1) == 3600 && TimeDial.step(3540, -1) == 3480, "dial: at 59:00, + → 60:00 and − → 58:00")
+check(TimeDial.step(3600, 1) == 3600, "dial: + at 60:00 stays at the max")
+check(TimeDial.step(15, -1) == 15 && TimeDial.step(30, -1) == 15, "dial: − never goes under 15 s")
+check(TimeDial.step(10, 1) == 15 && TimeDial.step(270, -1) == 240 && TimeDial.step(200, 1) == 240 && TimeDial.step(200, -1) == 180,
+      "dial: steps snap to their grid first (0:10 + → 0:15, 4:30 − → 4:00, 3:20 → 4:00 / 3:00)")
+check(TimeDial.clamp(0) == 15 && TimeDial.clamp(-60) == 15 && TimeDial.clamp(4000) == 3600 && TimeDial.clamp(300) == 300, "dial: clamp to 15 s … 60 min")
+func near(_ a: Double, _ b: Double) -> Bool { abs(a - b) < 1e-6 }
+check(near(TimeDial.fraction(900), 0.25) && near(TimeDial.angle(900), .pi / 2) && near(TimeDial.angle(3600), 2 * .pi), "dial: one full turn is 60 minutes")
+let k15 = TimeDial.knob(900), k30 = TimeDial.knob(1800), k0 = TimeDial.knob(0)
+check(near(k15.x, 136) && near(k15.y, 0) && near(k30.x, 0) && near(k30.y, 136) && near(k0.x, 0) && near(k0.y, -136),
+      "dial: the knob sits at 3 o'clock for 15 min, 6 for 30, 12 for 0")
+check(TimeDial.touch(136, 0).minutes == 15 && TimeDial.touch(0, 136).minutes == 30 && TimeDial.touch(-136, 0).minutes == 45,
+      "dial: a touch at 3, 6 and 9 o'clock reads 15, 30 and 45 minutes")
+check(TimeDial.touch(0, -136).minutes == 0 && TimeDial.touch(-1, -136).minutes == 60 && TimeDial.touch(1, -136).minutes == 0,
+      "dial: just left of the top reads 60, the top itself 0")
+for m in [1, 7, 23, 44, 59] {
+    let a = Double(m) / 60 * 2 * .pi
+    check(TimeDial.touch(sin(a) * 120, -cos(a) * 120).minutes == m, "dial: angle ↔ minutes round trip at \(m) min")
+}
+check(near(TimeDial.touch(3, 4).dist, 5), "dial: touch distance")
+check(TimeDial.onRing(136) && TimeDial.onRing(110) && TimeDial.onRing(176) && !TimeDial.onRing(109) && !TimeDial.onRing(177),
+      "dial: only the ring (110 … 176 from the centre) turns it; the egg stays tappable")
+check(TimeDial.ringMinutes(0, currentSecs: 50 * 60, first: true) == 60 && TimeDial.ringMinutes(0, currentSecs: 10 * 60, first: true) == 1,
+      "dial: the top of the ring is 60 coming from above 30 min, 1 coming from below")
+check(TimeDial.ringMinutes(10, currentSecs: 50 * 60, first: false) == 60 && TimeDial.ringMinutes(50, currentSecs: 10 * 60, first: false) == 1,
+      "dial: a drag never wraps past the top")
+check(TimeDial.ringMinutes(50, currentSecs: 10 * 60, first: true) == 50 && TimeDial.ringMinutes(20, currentSecs: 50 * 60, first: false) == 20,
+      "dial: a first tap jumps anywhere; a drag elsewhere just follows")
+check(TimeDial.spoken(300) == "5 minutes" && TimeDial.spoken(60) == "1 minute" && TimeDial.spoken(165) == "2 minutes 45 seconds"
+      && TimeDial.spoken(15) == "15 seconds", "dial: VoiceOver reads the time as the web's aria-valuetext")
+
 print(failures == 0 ? "All gate checks passed" : "\(failures) gate check(s) FAILED")
 exit(failures == 0 ? 0 : 1)

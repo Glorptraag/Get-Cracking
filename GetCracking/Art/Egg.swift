@@ -1,22 +1,7 @@
 import SwiftUI
 
-/// The egg is the progress bar. It cracks in 8 stepped "landmarks" so a
-/// child who can't read numbers can still see time passing:
-///
-///   step 1   hairline crack near the top
-///   step 2-5 the main zig-zag crack runs across the shell
-///   step 6   a little hole opens — someone is peeking out!
-///   step 7   warm light leaks through the cracks
-///   step 8   extra cracks, the egg starts hopping
-///
-/// Coordinates: base of the egg at (0,0), the egg grows up to y = -170.
-
-enum EggPattern: String, CaseIterable { case spots, band, stripes }
-
-struct EggPalette {
-    let shell: String
-    let spot: String
-}
+/// The live egg on the timer screen: it cracks step by step (the drawing and
+/// the crack landmarks are in EggArt.swift), wobbles, and hatches a friend.
 
 extension GC {
     static func sleep(_ seconds: Double) async {
@@ -54,71 +39,6 @@ final class Gate {
     }
 }
 
-enum EggArt {
-    static let pathD = "M0,-170 C40,-170 64,-96 64,-58 C64,-20 36,0 0,0 C-36,0 -64,-20 -64,-58 C-64,-96 -40,-170 0,-170 Z"
-    static var path: Path { SVGPath.parse(pathD) }
-    static let zig: [Pt] = [(-68, -74), (-50, -88), (-36, -72), (-20, -92), (-4, -74), (12, -94), (28, -74), (44, -90), (68, -76)]
-    static let branches: [(step: Int, pts: [Pt])] = [
-        (1, [(-30, -140), (-22, -128), (-27, -117), (-17, -108)]),
-        (3, [(14, -150), (20, -138), (12, -128), (18, -118)]),
-        (5, [(34, -62), (40, -50), (31, -40)]),
-        (8, [(-44, -66), (-50, -52), (-42, -42), (-47, -30)]),
-        (8, [(-6, -152), (-12, -160)]),
-    ]
-    /// fraction of the timer at which each crack step happens
-    static let stepAt: [Double] = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.8, 0.9]
-    static let mainLenByStep: [Double] = [0, 0, 0.22, 0.46, 0.72, 1, 1, 1, 1]
-    static let holeD = "M14,-128 L22,-138 L34,-134 L40,-122 L34,-110 L22,-108 L14,-116 Z"
-
-    static let palettes: [EggPalette] = [
-        EggPalette(shell: "#fbf1dc", spot: "#a9cf8b"),
-        EggPalette(shell: "#dff1e4", spot: "#7cbf9e"),
-        EggPalette(shell: "#dcecf6", spot: "#86b6dc"),
-        EggPalette(shell: "#fde3d3", spot: "#f19c82"),
-        EggPalette(shell: "#ece2f6", spot: "#b49ad9"),
-        EggPalette(shell: "#fff1c2", spot: "#f3b54a"),
-    ]
-
-    static func stepFor(_ fraction: Double) -> Int {
-        var n = 0
-        for (i, at) in stepAt.enumerated() where fraction >= at { n = i + 1 }
-        return n
-    }
-
-    static func patternNodes(_ kind: EggPattern, _ spot: String) -> [VNode] {
-        switch kind {
-        case .band:
-            return [
-                nPath("M-70,-112 L-52,-124 L-36,-110 L-20,-124 L-4,-110 L12,-124 L28,-110 L44,-124 L60,-110 L72,-118 L72,-100 L-70,-96 Z", .f(spot)),
-                nCircle(-30, -40, 7, .f(spot)), nCircle(20, -30, 9, .f(spot)), nCircle(-6, -150, 6, .f(spot)),
-            ]
-        case .stripes:
-            var out: [VNode] = []
-            for (i, y) in [-140.0, -104, -46].enumerated() {
-                out.append(nPath("M-70,\(y) Q0,\(y + 14) 70,\(y)", St(stroke: spot, width: i == 1 ? 12 : 9)))
-            }
-            out.append(nCircle(-24, -122, 5, .f(spot)))
-            out.append(nCircle(26, -70, 6, .f(spot)))
-            return out
-        case .spots:
-            let pts: [(Double, Double, Double)] = [(-30, -132, 10), (24, -146, 7), (32, -108, 12), (-40, -86, 8), (-8, -104, 6), (10, -60, 11), (-30, -36, 9), (40, -40, 7), (-48, -58, 5)]
-            return pts.map { nCircle($0.0, $0.1, $0.2, .f(spot)) }
-        }
-    }
-
-    /// The painted shell (fill, pattern, highlight, inner shade, outline).
-    static func body(_ pal: EggPalette, _ pattern: EggPattern) -> VNode {
-        nGroup([
-            nPath(pathD, .f(pal.shell)),
-            nGroup(patternNodes(pattern, pal.spot) + [
-                nPath("M-40,-60 C-44,-110 -26,-150 -6,-160", St.line("#ffffff", 9).so(0.7)),
-                nPath(pathD, St(stroke: GC.outHex, width: 16, strokeOpacity: 0.12)).moved(tr(7, 4)),
-            ], clip: path),
-            nPath(pathD, St.o(6)),
-        ])
-    }
-}
-
 @MainActor
 final class Egg {
     let root: VNode
@@ -138,8 +58,10 @@ final class Egg {
 
     let shellBack = VNode(), friendHolder = VNode(), shellFront = VNode(), fx = VNode()
     private let rays: VNode, shadow: VNode, halo: VNode, wobble: VNode, squash: VNode
-    private let hole: VNode, cracks: VNode, glow: VNode, mainLine: VNode, mainGlow: VNode
-    private var branchLines: [(step: Int, line: VNode, glow: VNode)] = []
+    private let cracks: VNode, mainLine: VNode
+    private var branchLines: [(step: Int, line: VNode)] = []
+    /// eases the crack widths to the new step's (the web's 0.5 s stroke-width transition)
+    private var widthTask: Task<Void, Never>?
     private var cheering = false
 
     init(x: Double = 0, y: Double = 0, scale: Double = 1, palette: EggPalette? = nil, pattern: EggPattern? = nil, style: String? = nil) {
@@ -166,37 +88,17 @@ final class Egg {
         halo0.opacity = 0
         halo = halo0
 
-        let hole0 = nGroup([
-            nPath(EggArt.holeD, St.o(6).filled("#2a1a1c")),
-            nGroup([nEllipse(22, -122, 2.6, 3.4, .f("#ffffff")), nEllipse(32, -122, 2.6, 3.4, .f("#ffffff"))]).looping(Loops.blink(3.6)),
-        ])
-        hole0.hidden = true
-        hole = hole0
-
-        let mainGlow0 = nPolyline(EggArt.zig, St.line("#ffe680", 16))
-        mainGlow0.softGlow = true
-        mainGlow = mainGlow0
-        let mainLine0 = nPolyline(EggArt.zig, St.line(GC.outHex, 4.5))
+        let mainLine0 = nPolyline(EggArt.zig, St.line(GC.outHex, EggArt.crackW(0)))
         mainLine = mainLine0
-        var glowKids: [VNode] = [mainGlow0]
-        var lineKids: [VNode] = []
-        var lines: [(step: Int, line: VNode, glow: VNode)] = []
+        var lines: [(step: Int, line: VNode)] = []
         for b in EggArt.branches {
-            let g = nPolyline(b.pts, St.line("#ffe680", 16))
-            g.softGlow = true
-            let l = nPolyline(b.pts, St.line(GC.outHex, 3.5))
-            lines.append((b.step, l, g))
-            glowKids.append(g)
-            lineKids.append(l)
+            lines.append((b.step, nPolyline(b.pts, St.line(GC.outHex, EggArt.branchW(0)))))
         }
         branchLines = lines
-        let glow0 = nGroup(glowKids)
-        glow0.opacity = 0
-        glow = glow0
-        let cracks0 = nGroup([glow0, mainLine0] + lineKids, clip: EggArt.path)
+        let cracks0 = nGroup([mainLine0] + lines.map(\.line), clip: EggArt.path)
         cracks = cracks0
 
-        let squash0 = nGroup([EggArt.body(pal0, pat0), hole0, cracks0])
+        let squash0 = nGroup([EggArt.body(pal0, pat0), cracks0])
         squash = squash0
         let wobble0 = nGroup([squash0])
         wobble = wobble0
@@ -210,47 +112,46 @@ final class Egg {
     // MARK: cracking
 
     /// Advance to a crack step. Cracks never heal, even if time is added.
+    /// Each step runs the cracks further, branches new ones, and draws them
+    /// all wider and deeper (`EggArt.crackWByStep`).
     @discardableResult
     func setStep(_ n: Int, silent: Bool = false) -> Bool {
         if n < step && !silent { return false }
         let changed = n != step
         step = n
-        let len = EggArt.mainLenByStep[n]
-        for l in [mainLine, mainGlow] { trim(l, to: len, duration: 0.35, ease: Ease(0.2, 1.4, 0.5, 1), silent) }
+        trim(mainLine, to: EggArt.mainLenByStep[n], duration: 0.35, ease: Ease(0.2, 1.4, 0.5, 1), silent)
         for b in branchLines {
-            let v: Double = n >= b.step ? 1 : 0
-            trim(b.line, to: v, duration: 0.3, ease: .easeOut, silent)
-            trim(b.glow, to: v, duration: 0.3, ease: .easeOut, silent)
+            trim(b.line, to: n >= b.step ? 1 : 0, duration: 0.3, ease: .easeOut, silent)
         }
-        if n >= 6 {
-            if hole.hidden {
-                hole.hidden = false
-                if !silent {
-                    let c = hole.bounds
-                    let cx = Double(c.midX), cy = Double(c.midY)
-                    hole.play([KF([.translate(cx, cy), .s(0.01), .translate(-cx, -cy)]),
-                               KF([.translate(cx, cy), .s(1), .translate(-cx, -cy)])],
-                              duration: 0.4, easing: Ease(0.3, 1.8, 0.5, 1), fill: true)
-                }
-            }
-        } else {
-            hole.hidden = true
-        }
-        if n >= 7 {
-            if glow.loop == nil {
-                glow.loop = Loops.glowThrob
-                if silent { glow.opacity = 1 } else { glow.play([KF(opacity: 0), KF(opacity: 1)], duration: 1, fill: true) }
-            }
-        } else {
-            glow.loop = nil
-            glow.opacity = 0
-        }
+        setCrackWidth(n, animated: !silent)
         updateWobble()
         if changed && !silent {
             shake()
             chips(4)
         }
         return changed
+    }
+
+    private func setCrackWidth(_ n: Int, animated: Bool) {
+        widthTask?.cancel()
+        widthTask = nil
+        let main = (from: Double(mainLine.strokeWidth), to: EggArt.crackW(n))
+        let branch = (from: Double(branchLines.first?.line.strokeWidth ?? 0), to: EggArt.branchW(n))
+        func apply(_ u: Double) {
+            mainLine.strokeWidth = CGFloat(main.from + (main.to - main.from) * u)
+            let bw = CGFloat(branch.from + (branch.to - branch.from) * u)
+            for b in branchLines { b.line.strokeWidth = bw }
+        }
+        if !animated || abs(main.to - main.from) < 0.001 { apply(1); return }
+        let start = GC.now, ease = Ease.easeOut
+        widthTask = Task { @MainActor in
+            while !Task.isCancelled {
+                let u = min(1, (GC.now - start) / 0.5)
+                apply(ease(u))
+                if u >= 1 { return }
+                await GC.sleep(1.0 / 60)
+            }
+        }
     }
 
     private func trim(_ node: VNode, to v: Double, duration: Double, ease: Ease, _ silent: Bool) {
@@ -344,20 +245,9 @@ final class Egg {
         }
     }
 
-    /// The cracks (and peek hole) exactly as they look right now, as static
-    /// nodes for the shell pieces.
-    func crackNodes() -> VNode {
-        let len = EggArt.mainLenByStep[step]
-        var kids: [VNode] = []
-        if len > 0 {
-            let m = nPolyline(EggArt.zig, St.line(GC.outHex, 4.5))
-            m.trimTo = CGFloat(len)
-            kids.append(m)
-        }
-        for b in EggArt.branches where step >= b.step { kids.append(nPolyline(b.pts, St.line(GC.outHex, 3.5))) }
-        if step >= 6 { kids.append(nPath(EggArt.holeD, St.o(6).filled("#2a1a1c"))) }
-        return nGroup(kids, clip: EggArt.path)
-    }
+    /// The cracks exactly as they look right now, as static nodes for the
+    /// shell pieces.
+    func crackNodes() -> VNode { EggArt.cracks(step: step) }
 
     // MARK: hatching
 
@@ -390,7 +280,6 @@ final class Egg {
         // 2. hand over to the shell effect
         let effect = ShellFX.pick(requested ?? style)
         cracks.hidden = true
-        hole.hidden = true
         halo.hidden = true
         shadow.hidden = true
         wobble.hidden = true

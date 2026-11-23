@@ -43,8 +43,7 @@ struct ParentalGate: View {
                 Spacer()
                 CloseButton { dismiss() }
             }
-            Text("🔒").font(.system(size: 44))
-                .accessibilityHidden(true)
+            IconView(name: "lock", size: 56)
             Text("Ask a grown-up").font(Theme.hand(34))
                 .accessibilityAddTraits(.isHeader)
             Text("For grown-ups: type the answer in numbers.")
@@ -103,13 +102,13 @@ struct ParentalGate: View {
     }
 }
 
-/// The round ✕ used on the sheets.
+/// The round close button used on the sheets.
 struct CloseButton: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text("✕").font(.system(size: 20, weight: .bold)).foregroundStyle(Theme.out)
+            IconView(name: "close", size: 28)
                 .frame(width: 46, height: 46)
         }
         .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 23, border: 4, depth: 3))
@@ -122,7 +121,7 @@ struct LockBadge: View {
     var size: CGFloat = 26
 
     var body: some View {
-        Text("🔒").font(.system(size: size * 0.55))
+        IconView(name: "lock", size: size * 0.66)
             .frame(width: size, height: size)
             .background(Circle().fill(Theme.cream))
             .overlay(Circle().strokeBorder(Theme.out, lineWidth: 2.5))
