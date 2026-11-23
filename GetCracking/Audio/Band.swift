@@ -21,9 +21,9 @@ import Foundation
 /// is due (inside the render callback), so the song stops at once.
 
 private func midi(_ n: Double) -> Double { 440 * pow(2, (n - 69) / 12) }
-private func P(_ v: Double) -> Path { [(0, v)] }
+private func P(_ v: Double) -> PitchPath { [(0, v)] }
 /// a path written as fractions of a length d (time) and a pitch f
-private func rel(_ p: Path, _ f: Double, _ d: Double) -> Path { p.map { ($0.0 * d, $0.1 * f) } }
+private func rel(_ p: PitchPath, _ f: Double, _ d: Double) -> PitchPath { p.map { ($0.0 * d, $0.1 * f) } }
 
 /// mixer channels inside a song (web: one gain + pan node each; here a level)
 enum Ch { case drums, bass, comp, lead, sparkle, aL, aR, solo }

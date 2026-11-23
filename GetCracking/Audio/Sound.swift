@@ -386,14 +386,14 @@ enum OscType { case saw, square, sine, triangle }
 
 /// A pitch or filter sweep: (seconds from the note's start, value),
 /// exponential between points, like Web Audio's exponentialRampToValueAtTime.
-typealias Path = [(Double, Double)]
+typealias PitchPath = [(Double, Double)]
 
 /// One synthesised voice: oscillators → (filter) → (vowel formants) →
 /// (tremolo) → envelope. Brass, horns, fiddle, kazoo and every animal are one
 /// of these. Keep arguments in this order when calling the memberwise init.
 struct VSpec {
     var type: OscType = .saw
-    var f: Path
+    var f: PitchPath
     var partials: [(Double, Double)] = [(1, 1)]
     /// extra copies, detuned in cents, for a section sound
     var detune: [Double] = [0]
@@ -406,14 +406,14 @@ struct VSpec {
     var pluck = false
     var vib: (rate: Double, cents: Double, delay: Double)? = nil
     var trem: (rate: Double, depth: Double)? = nil
-    var filter: (type: FilterType, f: Path, q: Double)? = nil
-    var formants: [(f: Path, q: Double, amp: Double)] = []
+    var filter: (type: FilterType, f: PitchPath, q: Double)? = nil
+    var formants: [(f: PitchPath, q: Double, amp: Double)] = []
     /// breath or growl mixed in before the filters
     var noise: Double = 0
     var noiseF: Double = 1500
 }
 
-/// Steps through a Path one sample at a time.
+/// Steps through a PitchPath one sample at a time.
 private struct Glide {
     private let pts: [(Int, Double)]
     private var seg = 0
@@ -421,7 +421,7 @@ private struct Glide {
     private var left = 0
     private(set) var value: Double
 
-    init(_ path: Path, sr: Double) {
+    init(_ path: PitchPath, sr: Double) {
         let p = path.isEmpty ? [(0.0, 440.0)] : path
         pts = p.map { (Int(($0.0 * sr).rounded()), max($0.1, 0.0001)) }
         value = pts[0].1
