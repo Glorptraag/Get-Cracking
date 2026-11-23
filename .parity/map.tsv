@@ -29,3 +29,6 @@ js/packs/aussie.js	GetCracking/Art/Packs/AussieArt.swift	Aussie Bush pack
 js/packs/aussie.js	GetCracking/Art/Packs/AussieWorlds.swift	Aussie Bush pack
 js/packs/christmas.js	GetCracking/Art/Packs/ChristmasArt.swift	Christmas pack
 js/packs/christmas.js	GetCracking/Art/Packs/ChristmasWorld.swift	Christmas pack
+js/icons.js	GetCracking/Art/Icons.swift	Drawn icons
+js/egg.js	GetCracking/Art/EggArt.swift	Egg and cracking
+js/app.js	GetCracking/Model/TimeDial.swift	Setup screen

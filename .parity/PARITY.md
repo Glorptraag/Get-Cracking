@@ -23,10 +23,10 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Feature | web | mac | notes |
 |---|---|---|---|
 | Timer | done | done | state machine, pause, ±1 min with a 5 s floor, tap-to-hatch wait, keep screen awake |
-| Setup screen | done | partial | web has the egg-timer dial (twist ring, −/+ hold-repeat, arrow keys) from 2f810aa; iPhone still has digit dials, a minute slider and presets |
-| Timer screen | done | partial | web has the big centred mm:ss clock from 982859f; iPhone has the older time pill |
-| Drawn icons | done | missing | web replaced emoji with drawn icons (js/icons.js, 982859f); the iPhone app was ported before that |
-| Egg and cracking | done | partial | web has plain deepening cracks (CRACK_W_BY_STEP, 982859f); iPhone has the earlier crack style |
+| Setup screen | done | done | egg-timer dial from 2f810aa: `UI/SetupView.swift`, rules in `Model/TimeDial.swift` (parity/to-mac-20261123-ui). Keyboard keys → VoiceOver adjust; no landscape layout (portrait-only app) |
+| Timer screen | done | done | big centred mm:ss clock from 982859f, frozen time on pause (c4600dd) |
+| Drawn icons | done | done | js/icons.js → `Art/Icons.swift` (54 icons as path data) + `UI/IconView.swift`; iPhone-only extra: a nest icon for The Whole Nest |
+| Egg and cracking | done | done | plain deepening cracks (STEP_AT, MAIN_LEN_BY_STEP, CRACK_W_BY_STEP) in `Art/EggArt.swift`. Hatch styles get `ctx.clear`, the friend's own keep-clear box (web fix in claude/epic-hypatia-3w52rk) |
 | Hatch styles | done | done | Roll away, Kaboom, Crumble |
 | 40 friends | done | done | the Classic pack |
 | 10 worlds | done | done | |

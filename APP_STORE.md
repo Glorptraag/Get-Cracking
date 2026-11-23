@@ -228,10 +228,10 @@ What the web app (`main`) has that the iPhone app doesn't yet, from `.parity/PAR
 | Web feature | Web commit(s) | iPhone today | Suggestion |
 |---|---|---|---|
 | **Egg karaoke**: the hatched friend sings its own song, in its own key, with a full band (now the web's default hatching song) | 464ee4e, c16c242, d0bb03b, 6364d23, 0fbc670 | **Ported** (parity/to-mac-20261123-karaoke, merged here) | Free, and the default hatching song. Checked against the web in CI (Tests/KaraokeChecks); listen to it on a device before release. |
-| **Egg-timer dial** setup screen (twist ring, −/+ hold-repeat) and plain Start button | 2f810aa | Digit dials, minute slider, presets | Nice to have; the current screen works. |
-| **Big centred clock** on the timer screen | 982859f | Older time pill | Small port; good for screenshots. |
-| **Drawn icons** instead of emoji | 982859f | Emoji | Nice to have; emoji render fine on iPhone. |
-| **Plain deepening cracks** (CRACK_W_BY_STEP) | 982859f | Earlier crack style | Small port. |
+| **Egg-timer dial** setup screen (twist ring, −/+ hold-repeat) and plain Start button | 2f810aa | **Ported** (parity/to-mac-20261123-ui, merged here) | Done. |
+| **Big centred clock** on the timer screen | 982859f | **Ported** | Done. |
+| **Drawn icons** instead of emoji | 982859f | **Ported** | Done. |
+| **Plain deepening cracks** (CRACK_W_BY_STEP) | 982859f | **Ported** | Done. |
 | **Content packs: pack on/off toggles and pack-grouped friend book** | 8e30287 (session branch) | **Ported**: registry, gating, grouped friend book and per-pack toggles | Done. |
 | **Aussie Bush and Christmas packs** | claude/epic-hypatia-3w52rk (Glorptraag/Get-Cracking#9) | **Ported** (parity/to-mac-20261123-packart and -karaoke, merged here): 25 friends, 3 worlds, every call, voice line and karaoke sound | Done. Both are part of The Whole Nest. |
 
