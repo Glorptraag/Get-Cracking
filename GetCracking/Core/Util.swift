@@ -78,13 +78,26 @@ struct Seeded {
 /// Shuffle-bag: every item comes up once before any repeats. Persisted.
 final class ShuffleBag {
     private let key: String
-    private let items: [String]
+    private(set) var items: [String]
     private var bag: [String]
 
     init(key: String, items: [String]) {
         self.key = key
         self.items = items
         bag = (UserDefaults.standard.stringArray(forKey: key) ?? []).filter { items.contains($0) }
+    }
+
+    /// Change what can come up (e.g. The Whole Nest unlocked): items no longer
+    /// allowed leave the bag; new ones join it at random places.
+    func setItems(_ new: [String]) {
+        guard new != items else { return }
+        let added = new.filter { !items.contains($0) }
+        items = new
+        bag = bag.filter { new.contains($0) }
+        if !bag.isEmpty {
+            for id in added { bag.insert(id, at: Int.random(in: 0...bag.count)) }
+        }
+        UserDefaults.standard.set(bag, forKey: key)
     }
 
     func next() -> String {

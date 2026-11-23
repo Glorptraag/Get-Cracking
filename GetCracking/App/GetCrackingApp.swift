@@ -8,6 +8,7 @@ struct GetCrackingApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(model.store)
         }
     }
 }
@@ -37,13 +38,22 @@ struct RootView: View {
         }) { kind in
             SheetView(kind: kind)
                 .environment(model)
+                .environment(model.store)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(30)
         }
         .onChange(of: model.settings) { _, new in Store.save(new) }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.run?.tick() }
+            guard phase == .active else { return }
+            model.run?.tick()
+            // a refund or family-sharing change while away sends no update of its own
+            Task { await model.store.refreshEntitlements() }
+        }
+        .onChange(of: model.store.hasWholeNest) { _, _ in model.applyOwnership() }
+        .task {
+            await model.store.start()
+            model.applyOwnership()
         }
     }
 }

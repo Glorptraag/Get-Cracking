@@ -8,6 +8,7 @@ struct SheetView: View {
     let kind: SheetKind
 
     var body: some View {
+        @Bindable var model = model
         VStack(spacing: 0) {
             HStack {
                 Text(kind.title).font(Theme.hand(32)).foregroundStyle(Theme.out)
@@ -32,6 +33,7 @@ struct SheetView: View {
                     case .book:
                         BookSection()
                     case .settings:
+                        NestSection()
                         WorldSection()
                         SoundSection()
                         StyleSection()
@@ -49,6 +51,14 @@ struct SheetView: View {
         .background(Theme.paper.ignoresSafeArea())
         .foregroundStyle(Theme.out)
         .tint(Theme.gold)
+        // The Whole Nest: parental gate first, then the paywall
+        .sheet(item: $model.paywall) { placement in
+            GatedPaywall(placement: placement)
+                .environment(model.store)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(30)
+        }
     }
 }
 
@@ -81,18 +91,23 @@ struct Option: Identifiable {
 struct OptionChips: View {
     let options: [Option]
     let selected: String
+    /// ids shown with a small lock (tapping one still calls onPick)
+    var locked: Set<String> = []
     let onPick: (String) -> Void
 
     var body: some View {
         FlowLayout(spacing: 8) {
             ForEach(options) { o in
+                let isLocked = locked.contains(o.id)
                 Button { onPick(o.id) } label: {
-                    Text(o.label).font(Theme.round(15, .semibold))
+                    Text(isLocked ? "\(o.label) 🔒" : o.label).font(Theme.round(15, .semibold))
                         .padding(.horizontal, 14).padding(.vertical, 6)
                         .frame(minHeight: 44)
+                        .opacity(isLocked ? 0.7 : 1)
                 }
                 .buttonStyle(ToyButtonStyle(fill: o.id == selected ? Theme.gold : Theme.cream, radius: 14))
                 .accessibilityAddTraits(o.id == selected ? .isSelected : [])
+                .accessibilityHint(isLocked ? "Locked. Part of The Whole Nest, for grown-ups." : "")
             }
         }
     }
@@ -132,7 +147,7 @@ struct WorldSection: View {
                         .background(Theme.pill)
                 }
                 ForEach(Scenes.list) { sc in
-                    card(id: sc.id, name: sc.name) {
+                    card(id: sc.id, name: sc.name, locked: !model.gate.scene(sc.id)) {
                         StageView(root: model.thumbnail(sc.id), viewBox: CGRect(x: 40, y: 90, width: 520, height: 540), animated: false)
                             .background(Color(hex: sc.bg))
                     }
@@ -141,9 +156,10 @@ struct WorldSection: View {
         }
     }
 
-    private func card<V: View>(id: String, name: String, @ViewBuilder art: () -> V) -> some View {
-        let on = model.settings.scene == id
+    private func card<V: View>(id: String, name: String, locked: Bool = false, @ViewBuilder art: () -> V) -> some View {
+        let on = model.gate.effectiveScene(model.settings.scene) == id
         return Button {
+            if locked { model.askForNest(.lockedWorld); return }
             model.settings.scene = id
             if model.run == nil { model.chooseScene() }
         } label: {
@@ -157,7 +173,8 @@ struct WorldSection: View {
         }
         .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 16))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Theme.gold, lineWidth: on ? 5 : 0).padding(-4))
-        .accessibilityLabel(name)
+        .overlay(alignment: .topTrailing) { if locked { LockBadge().padding(6) } }
+        .accessibilityLabel(locked ? "\(name), locked" : name)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
@@ -179,7 +196,9 @@ struct SoundSection: View {
             Text("Hatching tune").font(Theme.hand(24)).padding(.top, 18)
             Text("Plays when the egg hatches. In the three animal bands the friend who hatched gets a solo. Tap one to hear it.").font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
             OptionChips(options: Sound.endSounds.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
-                        selected: model.settings.endSound) { id in
+                        selected: model.gate.effectiveEndSound(model.settings.endSound),
+                        locked: Set(Sound.endSounds.map(\.id).filter { !model.gate.endSound($0) })) { id in
+                if !model.gate.endSound(id) { model.askForNest(.lockedSong); return }
                 model.settings.endSound = id
                 Sound.shared.setVolume(model.settings.volume)
                 Sound.shared.preview(end: id)
@@ -208,7 +227,7 @@ struct StyleSection: View {
             OptionChips(options: [Option(id: "random", label: "🎲 Surprise me")] + ShellFX.list.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
                         selected: model.settings.hatchStyle) { id in
                 model.settings.hatchStyle = id
-                preview.play(id, volume: model.settings.volume)
+                preview.play(id, volume: model.settings.volume, pool: model.gate.friendPool)
             }
             StageView(root: preview.root, viewBox: CGRect(x: -200, y: -260, width: 400, height: 330))
                 .aspectRatio(400.0 / 330.0, contentMode: .fit)
@@ -218,7 +237,7 @@ struct StyleSection: View {
                 .frame(maxWidth: 360)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)
-                .onTapGesture { preview.play(model.settings.hatchStyle, volume: model.settings.volume) }
+                .onTapGesture { preview.play(model.settings.hatchStyle, volume: model.settings.volume, pool: model.gate.friendPool) }
                 .accessibilityLabel("Hatch style preview. Tap to replay.")
                 .accessibilityAddTraits(.isButton)
         }
@@ -243,13 +262,13 @@ final class StylePreview {
         return egg
     }
 
-    func play(_ style: String, volume: Double) {
+    func play(_ style: String, volume: Double, pool: [String]) {
         guard !busy else { return }
         busy = true
         Sound.shared.ensure()
         Sound.shared.setVolume(volume)
         let egg = reset()
-        let friend = Animals.render(GC.pick(Animals.list))
+        let friend = Animals.render(Animals.byId[GC.pick(pool)] ?? Animals.list[0])
         Task { @MainActor in
             await egg.hatch(friend: friend, style: style == "random" ? nil : style) { Sound.shared.pop() }
             busy = false
@@ -264,7 +283,9 @@ struct HatchSection: View {
     @State private var picks: [PhotosPickerItem] = []
 
     var body: some View {
-        SheetSection(title: "Who hatches?", hint: "Animals come in a shuffled order: no repeats until all 40 have hatched. Photos you add can hatch too and never leave this device.") {
+        let gate = model.gate
+        let photosLeft = gate.photosLeft(liveCount: model.photos.count)
+        SheetSection(title: "Who hatches?", hint: "Friends come in a shuffled order: no repeats until every friend has hatched. Photos you add can hatch too and never leave this device." + (photosLeft == nil ? "" : " One photo friend is free; The Whole Nest adds as many as you like.")) {
             OptionChips(options: [Option(id: "animals", label: "🐾 Animals"), Option(id: "photos", label: "📷 My photos"), Option(id: "both", label: "🎁 Both")],
                         selected: model.settings.hatchWho) { model.settings.hatchWho = $0 }
             FlowLayout(spacing: 10) {
@@ -284,12 +305,23 @@ struct HatchSection: View {
                             .accessibilityLabel("Remove photo")
                         }
                 }
-                PhotosPicker(selection: $picks, maxSelectionCount: 12, matching: .images) {
-                    Text("＋").font(.system(size: 30)).foregroundStyle(Theme.out)
-                        .frame(width: 78, height: 78)
-                        .overlay(Circle().strokeBorder(Theme.out, style: StrokeStyle(lineWidth: 4, dash: [8, 6])))
+                if gate.canAddPhoto(liveCount: model.photos.count) {
+                    PhotosPicker(selection: $picks, maxSelectionCount: min(12, photosLeft ?? 12), matching: .images) {
+                        Text("＋").font(.system(size: 30)).foregroundStyle(Theme.out)
+                            .frame(width: 78, height: 78)
+                            .overlay(Circle().strokeBorder(Theme.out, style: StrokeStyle(lineWidth: 4, dash: [8, 6])))
+                    }
+                    .accessibilityLabel("Add photos")
+                } else {
+                    Button { model.askForNest(.photoLimit) } label: {
+                        Text("＋").font(.system(size: 30)).foregroundStyle(Theme.out).opacity(0.5)
+                            .frame(width: 78, height: 78)
+                            .overlay(Circle().strokeBorder(Theme.out, style: StrokeStyle(lineWidth: 4, dash: [8, 6])))
+                            .overlay(alignment: .bottomTrailing) { LockBadge() }
+                    }
+                    .buttonStyle(PressDown())
+                    .accessibilityLabel("Add more photos, locked. Part of The Whole Nest, for grown-ups.")
                 }
-                .accessibilityLabel("Add photos")
             }
             .padding(.top, 12)
             .onChange(of: picks) { _, items in
@@ -394,6 +426,64 @@ struct NextUpSection: View {
     }
 }
 
+// MARK: - The Whole Nest
+
+/// The grown-up settings row: the one always-available way to the unlock,
+/// plus Restore Purchases.
+struct NestSection: View {
+    @Environment(AppModel.self) private var model
+    @Environment(EntitlementStore.self) private var store
+    @State private var restoring = false
+
+    var body: some View {
+        SheetSection(title: "The Whole Nest") {
+            if store.hasWholeNest {
+                HStack(spacing: 12) {
+                    Text("🪺").font(.system(size: 30)).accessibilityHidden(true)
+                    Text("Every friend, world and song is unlocked, and every new pack will be too. Thank you!")
+                        .font(Theme.round(15)).fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .toy(Theme.cream, radius: 16)
+            } else {
+                Button { model.askForNest(.settings) } label: {
+                    HStack(spacing: 12) {
+                        Text("🪺").font(.system(size: 30)).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("All \(Packs.allFriends.count) friends, \(Packs.allScenes.count) worlds and every song").font(Theme.round(16, .semibold))
+                            Text("Plus every new pack. One payment, Family Sharing on.").font(Theme.round(13)).opacity(0.75)
+                        }
+                        .multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                        Text("›").font(Theme.round(26, .bold))
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                }
+                .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 16))
+                .accessibilityLabel("The Whole Nest: every friend, world and song. For grown-ups.")
+
+                Button {
+                    Task {
+                        restoring = true
+                        await store.restore()
+                        restoring = false
+                    }
+                } label: {
+                    Text(restoring ? "Restoring…" : "Restore Purchases").font(Theme.round(15, .semibold))
+                        .padding(.horizontal, 14).frame(minHeight: 44)
+                }
+                .buttonStyle(ToyButtonStyle())
+                .disabled(restoring)
+                .padding(.top, 10)
+                if let err = store.lastError, !restoring {
+                    Text(err).font(Theme.round(13)).foregroundStyle(Theme.berry)
+                }
+            }
+        }
+    }
+}
+
 // MARK: - about
 
 struct AboutSection: View {
@@ -430,20 +520,65 @@ struct BookSection: View {
 
     var body: some View {
         let book = model.book
+        let gate = model.gate
         let found = Animals.list.filter { (book[$0.id] ?? 0) > 0 }.count
+        let lockedCount = Animals.list.filter { !gate.friend($0.id) }.count
         SheetSection(title: "\(found) of \(Animals.list.count) friends found", hint: "Every hatch adds a friend to the book.") {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
-                ForEach(Animals.list) { a in
-                    BookCard(animal: a, count: book[a.id] ?? 0)
+            ForEach(Packs.list) { pack in
+                // pack headings once there is more than one pack
+                if Packs.list.count > 1 {
+                    Text(pack.name).font(Theme.hand(22)).padding(.top, 10)
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
+                    ForEach(pack.friends.compactMap { Animals.byId[$0] }) { a in
+                        let count = book[a.id] ?? 0
+                        if gate.bookShowsLock(friend: a.id, timesFound: count) {
+                            Button { model.askForNest(.lockedFriend) } label: {
+                                BookCard(animal: a, count: count, locked: true)
+                            }
+                            .buttonStyle(PressDown())
+                        } else {
+                            BookCard(animal: a, count: count)
+                        }
+                    }
                 }
             }
+            if lockedCount > 0 {
+                NestBanner(lockedCount: lockedCount)
+                    .padding(.top, 18)
+            }
         }
+    }
+}
+
+/// The one quiet line for grown-ups at the foot of the friend book.
+struct NestBanner: View {
+    @Environment(AppModel.self) private var model
+    let lockedCount: Int
+
+    var body: some View {
+        Button { model.askForNest(.friendBook) } label: {
+            HStack(spacing: 12) {
+                Text("🪺").font(.system(size: 30)).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("For grown-ups").font(Theme.hand(18))
+                    Text("\(lockedCount) more friends live in The Whole Nest.")
+                        .font(Theme.round(14)).multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                LockBadge()
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+        }
+        .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 16))
+        .accessibilityLabel("For grown-ups: \(lockedCount) more friends live in The Whole Nest")
     }
 }
 
 struct BookCard: View {
     let animal: AnimalDef
     let count: Int
+    var locked = false
     @State private var node: VNode?
 
     var body: some View {
@@ -465,7 +600,9 @@ struct BookCard: View {
         .padding(.top, 4).padding(.bottom, 6).padding(.horizontal, 2)
         .toy(Theme.cream, radius: 16)
         .overlay(alignment: .topTrailing) {
-            if count > 1 {
+            if locked {
+                LockBadge(size: 24).padding(4)
+            } else if count > 1 {
                 Text("×\(count)").font(.system(size: 12, weight: .bold))
                     .padding(.horizontal, 6)
                     .background(Capsule().fill(Theme.gold))
@@ -475,6 +612,6 @@ struct BookCard: View {
         }
         .onAppear { if node == nil { node = Animals.render(animal) } }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(seen ? (count > 1 ? "\(animal.name), hatched \(count) times" : animal.name) : "Not found yet")
+        .accessibilityLabel(seen ? (count > 1 ? "\(animal.name), hatched \(count) times" : animal.name) : (locked ? "Locked friend, part of The Whole Nest" : "Not found yet"))
     }
 }

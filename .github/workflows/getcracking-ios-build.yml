@@ -1,0 +1,31 @@
+name: Get Cracking iOS build
+on:
+  push:
+    paths: ["GetCracking/**", "GetCracking.xcodeproj/**", "Config/**", "Tests/**", ".github/workflows/getcracking-ios-build.yml"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pick Xcode 16
+        run: |
+          XC=$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - name: Gate checks (The Whole Nest decisions, no StoreKit)
+        run: |
+          swiftc GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
+            Tests/GateChecks/main.swift -o gatecheck
+          ./gatecheck
+      - name: Build for the iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project GetCracking.xcodeproj -target GetCracking \
+            -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build 2>&1 \
+            | tee build.log | grep -E "error:|warning:|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Errors
+        if: failure()
+        run: grep -E "error:" build.log | sort -u | head -60 || true

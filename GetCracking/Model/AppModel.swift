@@ -218,7 +218,7 @@ final class RunController {
             let p = GC.pick(photos)
             return (Animals.renderPhoto(p.image), "Peekaboo!", nil)
         }
-        let id = app?.bag.next() ?? GC.pick(Animals.list).id
+        let id = app?.bag.next() ?? GC.pick(Packs.classic.starterFriends.sorted())
         let a = Animals.byId[id] ?? Animals.list[0]
         return (Animals.render(a), a.name, a.id)
     }
@@ -235,6 +235,8 @@ final class RunController {
         scene.ringLayer.play([KF(opacity: 1), KF(opacity: 0.25)], duration: 0.8, fill: true)
         let friend = pickFriend()
         let s = settings
+        // a song that isn't owned (e.g. after a refund) plays the first animal band
+        let endSound = app?.gate.effectiveEndSound(s.endSound) ?? Packs.defaultEndSound
         // tapping the friend: it says hello in its own voice
         egg.onCheer = {
             if let id = friend.animalId, Sound.shared.friendCall(id) > 0 { return }
@@ -243,7 +245,7 @@ final class RunController {
         Task { @MainActor in
             await egg.hatch(friend: friend.node, style: s.hatchStyle) {
                 Sound.shared.pop()
-                GC.after(0.12) { Sound.shared.endTune(s.endSound, friend: friend.animalId) }
+                GC.after(0.12) { Sound.shared.endTune(endSound, friend: friend.animalId) }
             }
             guard !ended else { return }
             phase = .hatched
@@ -379,6 +381,10 @@ final class AppModel {
     var photos: [PhotoItem] = PhotoStore.list()
     var run: RunController?
     var sheet: SheetKind?
+    /// The Whole Nest paywall (behind the parental gate), shown over a sheet
+    var paywall: PaywallPlacement?
+    /// StoreKit: what this family owns
+    let store = EntitlementStore()
     private(set) var setupScene: BuiltScene
     private(set) var perchRoot: VNode
     private(set) var perchEgg: Egg
@@ -391,16 +397,47 @@ final class AppModel {
     init() {
         let s = Store.loadSettings()
         settings = s
-        bag = ShuffleBag(key: "gc.bag.v1", items: Animals.list.map(\.id))
-        let sb = ShuffleBag(key: "gc.scenebag.v1", items: Scenes.list.map(\.id))
+        // until StoreKit answers (a moment after launch), go by what it said last time
+        let gate = FeatureGate(ownsWholeNest: EntitlementStore.lastKnownHasNest)
+        bag = ShuffleBag(key: "gc.bag.v1", items: gate.friendPool)
+        let sb = ShuffleBag(key: "gc.scenebag.v1", items: gate.scenePool)
         sceneBag = sb
-        let pending = s.scene == "random" ? sb.next() : s.scene
+        let pending = gate.effectiveScene(s.scene) == "random" ? sb.next() : s.scene
         pendingScene = pending
         setupScene = Scenes.build(pending)
         let (root, egg) = AppModel.buildPerch()
         perchRoot = root
         perchEgg = egg
         Sound.shared.setVolume(s.volume)
+        #if DEBUG
+        assert(Set(Packs.allFriends) == Set(Animals.list.map(\.id)), "Packs.swift and Animals.list disagree")
+        assert(Set(Packs.allScenes) == Set(Scenes.list.map(\.id)), "Packs.swift and Scenes.list disagree")
+        #endif
+    }
+
+    // MARK: The Whole Nest
+
+    var gate: FeatureGate { store.gate }
+
+    /// After a purchase, restore, refund or family-sharing change: the
+    /// shuffles only ever hold what this family owns.
+    func applyOwnership() {
+        let g = gate
+        bag.setItems(g.friendPool)
+        sceneBag.setItems(g.scenePool)
+        if run == nil {
+            // the next world must be one this family owns (and the one they picked, if they own it)
+            let sc = g.effectiveScene(settings.scene)
+            let stale = sc == "random" ? !g.scene(pendingScene) : pendingScene != sc
+            if stale { chooseScene() }
+        }
+    }
+
+    /// Open the paywall (the parental gate comes first).
+    func askForNest(_ placement: PaywallPlacement) {
+        guard !store.hasWholeNest else { return }
+        MonetizationLog.event("locked_tap", ["placement": placement.rawValue])
+        paywall = placement
     }
 
     static func buildPerch() -> (VNode, Egg) {
@@ -421,7 +458,8 @@ final class AppModel {
 
     /// Pick the next world (shuffled when set to "Surprise me").
     func chooseScene() {
-        pendingScene = settings.scene == "random" ? sceneBag.next() : settings.scene
+        let sc = gate.effectiveScene(settings.scene)
+        pendingScene = sc == "random" ? sceneBag.next() : sc
         setupScene = Scenes.build(pendingScene)
     }
 
@@ -449,7 +487,8 @@ final class AppModel {
     func restartSame() {
         run?.end()
         run = nil
-        pendingScene = settings.scene == "random" ? sceneBag.next() : settings.scene
+        let sc = gate.effectiveScene(settings.scene)
+        pendingScene = sc == "random" ? sceneBag.next() : sc
         startRun()
     }
 
@@ -478,6 +517,9 @@ final class AppModel {
     // MARK: photos
 
     func addPhotos(_ images: [UIImage]) {
+        // free tier: one photo friend; photos already here always stay
+        let room = gate.photosLeft(liveCount: photos.count) ?? images.count
+        let images = Array(images.prefix(room))
         for img in images { PhotoStore.add(img) }
         photos = PhotoStore.list()
         if !images.isEmpty && settings.hatchWho == "animals" { settings.hatchWho = "both" }
