@@ -148,6 +148,7 @@ final class Egg {
     private let cracks: VNode, mainLine: VNode
     private var branchLines: [(step: Int, line: VNode)] = []
     private var cheering = false
+    private var sung = 0
 
     init(x: Double = 0, y: Double = 0, scale: Double = 1, palette: EggPalette? = nil, pattern: EggPattern? = nil, style: String? = nil) {
         let pal0 = palette ?? GC.pick(EggArt.palettes)
@@ -396,6 +397,37 @@ final class Egg {
         friendNode.transform = tr(0, 48)
         critter.enableIdle()
         friend = friendNode
+    }
+
+    /// Egg karaoke: a little bop on each note the friend sings, and now and
+    /// then a note floats up.
+    func sing(_ dur: Double = 0.3) {
+        if GC.reduceMotion || cheering || disposed { return }
+        guard let f = friend, let inner = f.first(tag: "critter") else { return }
+        let secs: Double = max(0.16, min(0.42, dur))
+        inner.play([
+            KF([.scale(1, 1)]),
+            KF([.scale(1.07, 0.93)], offset: 0.3),
+            KF([.scale(0.97, 1.05)], offset: 0.65),
+            KF([.scale(1, 1)]),
+        ], duration: secs, easing: .easeOut)
+        sung += 1
+        if sung % 2 != 0 { return }
+        let side: Double = sung % 4 != 0 ? 1 : -1
+        let g = nGroup([], tr(side * GC.rand(40, 70), -150))
+        let c = GC.pick(["#f7a8c8", "#ffd86b", "#9fd8e8", "#a9d36b", "#c5a8f0"])
+        let note = nGroup([
+            nPath("M6,-22 V2 M6,-22 L16,-17", St.o(3.5)),
+            nEllipse(0, 3, 7.5, 6, St.o(3).filled(c)),
+        ])
+        g.add(note)
+        fx.add(g)
+        note.play([
+            KF([.translate(0, 0), .s(0.3), .rotate(0)], opacity: 0),
+            KF([.translate(side * 8, -30), .s(1), .rotate(side * 8)], offset: 0.25, opacity: 1),
+            KF([.translate(side * 22, -110), .s(0.9), .rotate(side * -10)], opacity: 0),
+        ], duration: 1.5, easing: .easeOut, fill: true)
+        GC.after(1.55) { g.removeFromParent() }
     }
 
     /// Tap the hatched friend: a happy jump, repeatable.

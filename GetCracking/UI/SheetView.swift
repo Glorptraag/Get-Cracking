@@ -203,7 +203,7 @@ struct SoundSection: View {
                 Sound.shared.preview(music: id)
             }
             Text("Hatching tune").font(Theme.hand(24)).padding(.top, 18)
-            Text("Plays when the egg hatches. In the three animal bands the friend who hatched gets a solo. Tap one to hear it.").font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
+            Text("Plays when the egg hatches. In Egg karaoke the friend who hatched plays in the band with its own voice; in the animal bands it gets a solo. Tap one to hear it.").font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
             OptionChips(options: Sound.endSounds.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
                         selected: model.gate.effectiveEndSound(model.settings.endSound),
                         locked: Set(Sound.endSounds.map(\.id).filter { !model.gate.endSound($0) })) { id in

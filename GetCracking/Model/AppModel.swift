@@ -242,6 +242,14 @@ final class RunController {
             if let id = friend.animalId, Sound.shared.friendCall(id) > 0 { return }
             Sound.shared.cheer()
         }
+        // Egg karaoke: the friend bops on every note it sings
+        Sound.shared.onSing = { [weak self] delay, dur in
+            Task { @MainActor in
+                await GC.sleep(max(0, delay))
+                guard let self, !self.ended else { return }
+                self.egg.sing(dur)
+            }
+        }
         Task { @MainActor in
             await egg.hatch(friend: friend.node, style: s.hatchStyle) {
                 Sound.shared.pop()
