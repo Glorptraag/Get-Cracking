@@ -69,11 +69,12 @@ enum Packs {
 
     // MARK: songs and photos
 
-    /// Hatching songs that stay free: the first animal band and the short jingles.
+    /// Hatching songs that stay free: Egg karaoke (the default song, as on the
+    /// web), the first animal band and the short jingles.
     /// Jungle jam, Farmyard hoedown and any later band need The Whole Nest.
-    static let freeEndSounds: Set<String> = ["band", "tada", "chimes", "birds", "bubbles"]
-    /// the band a locked song falls back to
-    static let defaultEndSound = "band"
+    static let freeEndSounds: Set<String> = ["karaoke", "band", "tada", "chimes", "birds", "bubbles"]
+    /// the song a locked song falls back to: the default song (must be free)
+    static let defaultEndSound = "karaoke"
 
     /// photo friends a family can add without The Whole Nest
     static let freePhotoLimit = 1
