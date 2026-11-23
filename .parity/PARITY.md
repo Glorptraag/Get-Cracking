@@ -28,7 +28,7 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Drawn icons | done | missing | web replaced emoji with drawn icons (js/icons.js, 982859f); the iPhone app was ported before that |
 | Egg and cracking | done | partial | web has plain deepening cracks (CRACK_W_BY_STEP, 982859f); iPhone has the earlier crack style |
 | Hatch styles | done | done | Roll away, Kaboom, Crumble |
-| 40 friends | done | done | |
+| 40 friends | done | done | the Classic pack |
 | 10 worlds | done | done | |
 | Photo friends | done | done | IndexedDB on web, PhotosPicker on iPhone |
 | Friend book | done | done | |
@@ -41,9 +41,11 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Visual style | done | done | |
 | Shared helpers | done | done | |
 | Offline / install | done | n/a | PWA service worker on web; a native app is offline by nature |
-| Egg karaoke | done | missing | web 464ee4e..0fbc670: the hatched friend sings its own song with a full band (web default hatching song) |
-| Content packs | done | partial | web 8e30287 (js/packs.js). iPhone: `Monetization/Packs.swift` registry (Classic pack with starter flags, friend book grouped by pack) in parity/to-mac-20261123-store; per-pack on/off toggles not yet. Aussie Bush and Christmas packs still to port |
-| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
+| Egg karaoke | done | done | web 464ee4e..0fbc670 plus the pack worlds (bush, jingle). Ported in parity/to-mac-20261123-karaoke (merged into -store): `Audio/Karaoke.swift`, `KaraokeData.swift`, `KaraokeIndex.swift` (generated from sounds/index.json), `UI/SingBop.swift`. Mono (no panning); the app's own compressor and reverb. Free, and the default song. `Tests/KaraokeChecks` compares keys and bends with the web |
+| Content packs | done | done | web 8e30287 (js/packs.js). iPhone: `Monetization/Packs.swift` registry, per-pack toggles (`Settings.packsOff`), friend book grouped by pack |
+| Aussie Bush pack | done | done | web js/packs/aussie.js → `Art/Packs/AussieArt.swift`, `AussieWorlds.swift` (parity/to-mac-20261123-packart); audio in -karaoke. `Tests/ArtChecks` pixel-matched the web renders in CI |
+| Christmas pack | done | done | web js/packs/christmas.js → `Art/Packs/ChristmasArt.swift`, `ChristmasWorld.swift`; audio in -karaoke |
+| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Egg karaoke, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
 
 ## Idioms
 
@@ -51,7 +53,8 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 - Web Audio node graph (oscillators, BiquadFilters, gains) → voices rendered sample by sample in the Synth render callback (`SynthVoice`, `VSpec` in Audio/Sound.swift). The band's lookahead pump → `Celebration` events run inside the render callback, under the same lock.
 - Web stereo panning (StereoPannerNode) → dropped: the iPhone synth renders mono. Channel levels are kept (`Kit.g`).
 - Web ConvolverNode room → a small Schroeder reverb (`Room`).
-- Recordings: `sounds/<id>.mp3` → `Resources/Sounds/call-<id>.mp3`, `sounds/voice/<id>.mp3` → `voice-<id>.mp3` (the synchronised folder flattens into the bundle, so names must not collide). The parity script filters .mp3 as noise: copy new or changed recordings by hand when sounds/ changes.
+- Recordings: `sounds/<id>.mp3` → `Resources/Sounds/call-<id>.mp3`, `sounds/voice/<id>.mp3` → `voice-<id>.mp3` (the synchronised folder flattens into the bundle, so names must not collide). The parity script filters .mp3 as noise: copy new or changed recordings by hand when sounds/ changes. Egg karaoke: `sounds/karaoke/inst|sing|extra/<id>.mp3` → `kinst-<id>.mp3`, `ksing-<id>.mp3`, `kextra-<id>.mp3`; regenerate `Audio/KaraokeIndex.swift` from the `karaoke` section of sounds/index.json.
+- Web pack parts (`GC.Animals.parts.<layer>[name]`) → `AnimalParts` / `PartKit` in Art/Animals.swift, one function per part (big closures time out the Swift compiler); each pack's art lives in `Art/Packs/<Pack>Art.swift` and `<Pack>World(s).swift`, and its `Pack` entry in Monetization/Packs.swift.
 
 - Web SVG drawing → the iPhone app's own vector scene graph (`Core/VNode.swift`, `Core/Renderer.swift`, SwiftUI `Canvas`); port drawings as path data, don't rasterise.
 - Web Audio synth → `AVAudioEngine` synth in `Audio/Sound.swift`; `speechSynthesis` → `AVSpeechSynthesizer`.

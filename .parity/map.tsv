@@ -21,3 +21,11 @@ css/app.css	GetCracking/Art/Loops.swift	Visual style
 js/band.js	GetCracking/Audio/Band.swift	Animal bands
 js/samples.js	GetCracking/Audio/Sound.swift	Recorded sounds
 sounds/index.json	GetCracking/Resources/Sounds/	Recorded sounds
+js/karaoke.js	GetCracking/Audio/Karaoke.swift	Egg karaoke
+js/karaoke.js	GetCracking/Audio/KaraokeData.swift	Egg karaoke
+sounds/index.json	GetCracking/Audio/KaraokeIndex.swift	Egg karaoke
+js/packs.js	GetCracking/Monetization/Packs.swift	Content packs
+js/packs/aussie.js	GetCracking/Art/Packs/AussieArt.swift	Aussie Bush pack
+js/packs/aussie.js	GetCracking/Art/Packs/AussieWorlds.swift	Aussie Bush pack
+js/packs/christmas.js	GetCracking/Art/Packs/ChristmasArt.swift	Christmas pack
+js/packs/christmas.js	GetCracking/Art/Packs/ChristmasWorld.swift	Christmas pack

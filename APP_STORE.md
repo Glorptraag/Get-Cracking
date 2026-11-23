@@ -128,11 +128,11 @@ Kids Category wording rules: the words "for kids" and "for children" are fine he
 **Keywords** (100 max, commas, no spaces): `toddler,visual timer,countdown,preschool,routine,transition,tidy up,bedtime,hatch,animal,band,kids` (98)
 
 **Promotional text** (170 max, can change any time without review):
-`New: The Whole Nest. One payment unlocks all 40 friends, 10 worlds and every hatching song, plus every new pack as it arrives. The timer and 12 friends stay free.` (162)
+`New: Aussie Bush and Christmas packs! The Whole Nest unlocks all 65 friends, 13 worlds and every song, plus every new pack. The timer and 12 friends stay free.` (156)
 
 **Description:**
 ```
-A wordless timer for little ones. Set the time and watch the egg crack bit by bit as the minutes pass. When time's up, the egg hatches into a chibi animal friend who plays a song with the animal band.
+A wordless timer for little ones. Set the time and watch the egg crack bit by bit as the minutes pass. When time's up, the egg hatches into a chibi animal friend who sings along with a little band, in its own voice.
 
 Made for toddlers who can't read a clock yet: "when the egg hatches" is something they can see, hear and wait for. Use it for tidy-up time, teeth, screen time, turn-taking, bath time or bedtime.
 
@@ -140,6 +140,7 @@ FREE, FOREVER
 • The full timer, from 10 seconds to 60 minutes
 • 12 friends to hatch: chick, duckling, bunny, kitten, puppy, piglet, fox, owl, frog, penguin, elephant and dino
 • 3 worlds: Sunny Meadow, Mossy Forest and Lily Pond
+• Egg karaoke: the friend who hatched sings its own song with a little band
 • Three hatch styles, gentle countdown music, the Animal band and four short hatching jingles
 • One photo friend: a photo of someone they love can hatch from the egg
 • A friend book that fills up as friends hatch
@@ -148,11 +149,13 @@ FREE, FOREVER
 
 THE WHOLE NEST (one-time in-app purchase)
 For families who want more:
-• All 40 friends, including the dragon, unicorn, panda and capybara
-• All 10 worlds, from Snowy Pines to the Coral Reef Tank
+• All 65 friends, including the dragon, unicorn, panda and capybara
+• The Aussie Bush pack: a galah, mole cricket, joey, wombat, platypus and more, with an outback and a billabong
+• The Christmas pack: gingerbread, the Nutcracker, a reindeer, a snowman and more, in a snowy Christmas village with sleigh bells
+• All 13 worlds, from Snowy Pines to the Coral Reef Tank
 • Every hatching song, with the Jungle jam and Farmyard hoedown bands
 • As many photo friends as you like
-• Every new pack of friends and worlds as it arrives, at no extra cost (an Aussie Bush pack and a Christmas pack are coming)
+• Every new pack of friends and worlds as it arrives, at no extra cost
 One payment, no subscription. Family Sharing is on. Purchases sit behind a parental gate.
 
 PRIVATE BY DESIGN
@@ -169,7 +172,7 @@ Take them in the simulator with **File → Save Screen** (⌘S). Suggested set, 
 2. A friend just hatched with "It's a Fox!" (caption: "Then a friend hatches")
 3. The setup screen with the egg on its perch (caption: "Set it in a second")
 4. The friend book with some friends found (caption: "Collect every friend")
-5. The world picker showing several worlds (caption: "10 worlds, 40 friends with The Whole Nest")
+5. The world picker showing several worlds (caption: "13 worlds, 65 friends with The Whole Nest")
 
 Keep prices and buy buttons out of the screenshots (Kids Category). Use only free content in shots 1-4 if you'd like the page to match exactly what a new download sees.
 
@@ -178,7 +181,7 @@ Paste into **App Review Information → Notes** (app version) and the IAP's **Re
 ```
 Get Cracking is a wordless visual timer for children aged 5 and under (Kids Category). No account or sign-in is needed, and the app makes no network requests of its own.
 
-In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 40 friends, 10 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, the first animal band and jingles, one photo friend) is complete on its own.
+In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 65 friends (the Classic 40 plus the Aussie Bush and Christmas packs), 13 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
 
 Parental gate: every purchase surface, Restore Purchases in the paywall, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
 
@@ -211,7 +214,7 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 | 6 | Restore | Delete the app, reinstall, Settings → Restore Purchases | Unlocks again |
 | 7 | Offline launch | Owned; airplane mode; force-quit; relaunch | Still unlocked (StoreKit's receipts are on the device) |
 | 8 | Ask to Buy | In Xcode with `Products.storekit`: **Editor → Enable Ask To Buy**, buy | "Waiting for a grown-up to approve"; approve in **Debug → StoreKit → Manage Transactions** → everything unlocks by itself |
-| 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Animal band |
+| 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Egg karaoke |
 | 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → Restore Purchases | Unlocked without paying |
 | 11 | Foreground refresh | Refund in Transaction Manager while the app is in the background, then bring it back | Locks return without a relaunch |
 
@@ -224,12 +227,12 @@ What the web app (`main`) has that the iPhone app doesn't yet, from `.parity/PAR
 
 | Web feature | Web commit(s) | iPhone today | Suggestion |
 |---|---|---|---|
-| **Egg karaoke**: the hatched friend sings its own song, in its own key, with a full band (now the web's default hatching song) | 464ee4e, c16c242, d0bb03b, 6364d23, 0fbc670 | Missing | Strong 1.0 candidate: it is the web's headline feature. Decide whether it's free or part of The Whole Nest (suggest free, as the default song). |
+| **Egg karaoke**: the hatched friend sings its own song, in its own key, with a full band (now the web's default hatching song) | 464ee4e, c16c242, d0bb03b, 6364d23, 0fbc670 | **Ported** (parity/to-mac-20261123-karaoke, merged here) | Free, and the default hatching song. Checked against the web in CI (Tests/KaraokeChecks); listen to it on a device before release. |
 | **Egg-timer dial** setup screen (twist ring, −/+ hold-repeat) and plain Start button | 2f810aa | Digit dials, minute slider, presets | Nice to have; the current screen works. |
 | **Big centred clock** on the timer screen | 982859f | Older time pill | Small port; good for screenshots. |
 | **Drawn icons** instead of emoji | 982859f | Emoji | Nice to have; emoji render fine on iPhone. |
 | **Plain deepening cracks** (CRACK_W_BY_STEP) | 982859f | Earlier crack style | Small port. |
-| **Content packs: pack on/off toggles and pack-grouped friend book** | 8e30287 (session branch) | Registry, gating and grouped friend book ported here; per-pack on/off toggles not yet | Port toggles when the first new pack lands. |
-| **Aussie Bush and Christmas packs** | being built on the web now | Missing | Port after they land on the web; they unlock automatically for Whole Nest owners. The description says they're "coming". |
+| **Content packs: pack on/off toggles and pack-grouped friend book** | 8e30287 (session branch) | **Ported**: registry, gating, grouped friend book and per-pack toggles | Done. |
+| **Aussie Bush and Christmas packs** | claude/epic-hypatia-3w52rk (Glorptraag/Get-Cracking#9) | **Ported** (parity/to-mac-20261123-packart and -karaoke, merged here): 25 friends, 3 worlds, every call, voice line and karaoke sound | Done. Both are part of The Whole Nest. |
 
 Also fixed on this branch: the iPhone app on `ios-swiftui` did not compile (the audio port's module-wide `typealias Path` hid SwiftUI's `Path`). It is renamed `PitchPath`; the CI build on this branch is the first green compile of the app.
