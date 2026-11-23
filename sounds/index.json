@@ -49,7 +49,16 @@
   "icetinkle": 0.993,
   "angelaah": 1.228,
   "reindeer": 0.549,
-  "snowhoo": 0.993
+  "snowhoo": 0.993,
+  "galah": 0.81,
+  "cockatoo": 0.705,
+  "kooka": 1.802,
+  "emu": 0.627,
+  "huff": 0.731,
+  "platypus": 0.705,
+  "glider": 0.313,
+  "frill": 0.679,
+  "churr": 0.914
  },
  "voice": {
   "axolotl": 0.993,
@@ -105,7 +114,19 @@
   "snowman": 0.888,
   "sugarplum": 1.411,
   "treecookie": 1.358,
-  "xmasbeetle": 1.149
+  "xmasbeetle": 1.149,
+  "bilby": 0.784,
+  "cockatoo": 0.967,
+  "echidna": 0.836,
+  "emu": 1.019,
+  "frillneck": 1.254,
+  "galah": 0.731,
+  "joey": 1.75,
+  "kookaburra": 0.94,
+  "molecricket": 1.071,
+  "platypus": 0.993,
+  "sugarglider": 1.097,
+  "wombat": 0.94
  },
  "karaoke": {
   "inst": {
@@ -192,6 +213,14 @@
    "celesta": {
     "d": 1.063,
     "m": 79.03
+   },
+   "banjo": {
+    "d": 1.2,
+    "m": 67.25
+   },
+   "spoons": {
+    "d": 0.48,
+    "m": null
    }
   },
   "sing": {
@@ -406,6 +435,54 @@
    "xmasbeetle": {
     "d": 0.48,
     "m": null
+   },
+   "galah": {
+    "d": 0.68,
+    "m": 97.01
+   },
+   "cockatoo": {
+    "d": 0.498,
+    "m": 82.45
+   },
+   "kookaburra": {
+    "d": 0.6,
+    "m": 71.58
+   },
+   "emu": {
+    "d": 0.394,
+    "m": null
+   },
+   "joey": {
+    "d": 0.48,
+    "m": null
+   },
+   "wombat": {
+    "d": 0.401,
+    "m": null
+   },
+   "platypus": {
+    "d": 0.48,
+    "m": 65.5
+   },
+   "echidna": {
+    "d": 0.48,
+    "m": null
+   },
+   "sugarglider": {
+    "d": 0.48,
+    "m": 87.14
+   },
+   "frillneck": {
+    "d": 0.435,
+    "m": null
+   },
+   "bilby": {
+    "d": 0.225,
+    "m": null
+   },
+   "molecricket": {
+    "d": 0.677,
+    "m": 104.44
    }
   },
   "extra": {
@@ -461,7 +538,19 @@
    "reindeer": 0.8,
    "robin": 0.651,
    "snowman": 0.551,
-   "xmasbeetle": 0.259
+   "xmasbeetle": 0.259,
+   "galah": 0.734,
+   "cockatoo": 0.511,
+   "kookaburra": 0.776,
+   "emu": 0.699,
+   "joey": 0.508,
+   "wombat": 0.66,
+   "platypus": 0.737,
+   "echidna": 0.726,
+   "sugarglider": 0.8,
+   "frillneck": 0.701,
+   "bilby": 0.602,
+   "molecricket": 0.783
   }
  }
 }
