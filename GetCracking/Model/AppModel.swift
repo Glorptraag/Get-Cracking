@@ -237,6 +237,12 @@ final class RunController {
         let s = settings
         // a song that isn't owned (e.g. after a refund) plays the first animal band
         let endSound = app?.gate.effectiveEndSound(s.endSound) ?? Packs.defaultEndSound
+        Sound.shared.preloadFriend(animalId: friend.animalId, sayName: s.sayName)
+        // Egg karaoke: the friend bops on every note it sings
+        Sound.shared.onSing = { [weak self] dur in
+            guard let self, !self.ended else { return }
+            self.egg.sing(dur)
+        }
         // tapping the friend: it says hello in its own voice
         egg.onCheer = {
             if let id = friend.animalId, Sound.shared.friendCall(id) > 0 { return }

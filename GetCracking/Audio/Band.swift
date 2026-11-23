@@ -143,6 +143,9 @@ struct Kit {
         tone(hi ? 410 : 290, t, hi ? 0.13 : 0.18, .drums, gain: gn, partials: [(1, 1), (1.52, 0.25)], slide: 0.9)
         noise(t, 0.018, .drums, freq: hi ? 3200 : 2100, q: 1, gain: gn * 0.35)
     }
+    func woodblock(_ t: Double, _ hi: Bool = true, _ gn: Double = 0.1) {
+        tone(hi ? 1250 : 880, t, 0.07, .drums, gain: gn, partials: [(1, 1), (2.4, 0.3)])
+    }
     func cowbell(_ t: Double, _ gn: Double = 0.07) {
         V(t, VSpec(type: .square, f: P(562), partials: [(1, 1), (1.505, 0.8)], dur: 0.32, gain: gn, pluck: true,
                    filter: (.bandpass, P(820), 2.2)), .drums)
@@ -233,10 +236,14 @@ struct Kit {
     func glock(_ n: Double, _ t: Double, _ d: Double = 1.1, _ gn: Double = 0.045) {
         tone(midi(n), t, d, .sparkle, gain: gn, partials: [(1, 1), (2.76, 0.2), (5.4, 0.06)])
     }
-    func flute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07) {
+    func flute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07, _ c: Ch = .lead) {
         let m = midi(n)
         V(t, VSpec(type: .sine, f: P(m), partials: [(1, 1), (2, 0.14), (3, 0.04)], dur: d, gain: gn, attack: 0.06, sus: 0.9,
-                   vib: (5, 14, 0.15), noise: 0.05, noiseF: m * 2), .lead)
+                   vib: (5, 14, 0.15), noise: 0.05, noiseF: m * 2), c)
+    }
+    /// kalimba / xylophone: a bright struck bar
+    func xylo(_ n: Double, _ t: Double, _ gn: Double = 0.08) {
+        tone(midi(n), t, 0.35, .sparkle, gain: gn, partials: [(1, 1), (3.93, 0.25), (9.4, 0.05)])
     }
     func panflute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07) {
         let m = midi(n)
@@ -845,6 +852,9 @@ enum Band {
         call.play(k, t, c)
         return call.len
     }
+
+    /// the nearest chord tone a bit below a melody note (Egg karaoke's counter-line)
+    static func harmony(_ n: Double, _ chord: [Double]) -> Double { below(n, chord) }
 
     static func lenOf(_ name: String, _ s: Synth) -> Double { s.sampleLength(name) ?? calls[name]?.len ?? 0.8 }
 

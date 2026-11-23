@@ -18,8 +18,8 @@ struct Settings: Codable, Equatable {
     var seconds = 0
     var scene = "random"        // scene id or "random"
     var music = "musicbox"
-    var endSound = "band"       // hatching tune: an animal band (Audio/Band.swift) or a short jingle
-    var tunesV = 2              // settings from before the animal bands get moved onto them once
+    var endSound = "karaoke"    // hatching tune: Egg karaoke (Audio/Karaoke.swift), an animal band (Audio/Band.swift) or a short jingle
+    var tunesV = 3              // settings from before a new default song get moved onto it once
     var volume = 0.7
     var sayName = true
     var hatchWho = "animals"    // "animals" | "photos" | "both"
@@ -62,6 +62,11 @@ struct Settings: Codable, Equatable {
         if tunesV < 2 {
             if endSound == "tada" { endSound = "band" }
             tunesV = 2
+        }
+        // builds before Egg karaoke: anyone still on the old default (the animal band) gets the karaoke
+        if tunesV < 3 {
+            if endSound == "band" { endSound = "karaoke" }
+            tunesV = 3
         }
     }
 

@@ -5,9 +5,11 @@ import UIKit
 ///   1. countdown music — an ambient "something is happening" cue that keeps
 ///      working when the child looks away from the screen
 ///   2. small sound effects — crack, pop, boop, knock
-///   3. the end tune — a cheerful celebration instead of an alarm. The three
-///      animal bands (a full band, animal voices and a solo for the friend who
-///      hatched) live in Band.swift; the short jingles are here.
+///   3. the end tune — a cheerful celebration instead of an alarm. Egg karaoke
+///      (the friend who hatched plays in the band with its own voice,
+///      Karaoke.swift) and the three animal bands (a full band, animal voices
+///      and a solo for that friend, Band.swift) are songs; the short jingles
+///      are here.
 ///   4. recorded sounds — real animal calls, the egg crack and pop, and
 ///      "It's a Fox!" for every friend (Resources/Sounds, generated once with
 ///      ElevenLabs). Every one has a synthesised stand-in.
@@ -30,6 +32,7 @@ final class Sound {
         Choice(id: "off", name: "Quiet", icon: "quiet"),
     ]
     static let endSounds: [Choice] = [
+        Choice(id: "karaoke", name: "Egg karaoke", icon: "mic"),
         Choice(id: "band", name: "Animal band", icon: "drum"),
         Choice(id: "jungle", name: "Jungle jam", icon: "maracas"),
         Choice(id: "farm", name: "Farmyard hoedown", icon: "barn"),
@@ -49,6 +52,9 @@ final class Sound {
     private var pausedMusic: String?
     private var samplesLoading = false
     private(set) var volume: Double = 0.7
+    /// Egg karaoke: called on the main actor as the friend sings each note (with its length)
+    var onSing: (@MainActor (Double) -> Void)?
+    private var singTask: Task<Void, Never>?
 
     private init() {
         let sr = AVAudioSession.sharedInstance().sampleRate
@@ -115,18 +121,19 @@ final class Sound {
     /// "It's a Fox!" sits clearly on top while the band ducks under it
     static let voiceGain = 1.25
 
-    /// Decode the animal calls and effects in the background (the voice lines
-    /// load one at a time, when a friend hatches).
+    /// Decode the animal calls and effects in the background, then Egg karaoke's
+    /// band and every friend's singing voice (the voice lines and each friend's
+    /// extra sound load when a friend hatches).
     private func loadSamples() {
         guard !samplesLoading else { return }
         samplesLoading = true
-        let names = Band.callNames + ["crack", "pop"]
+        let files = (Band.callNames + ["crack", "pop"]).map { ($0, "call-" + $0) } + Karaoke.startupFiles
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            for name in names {
-                guard let url = Bundle.main.url(forResource: "call-" + name, withExtension: "mp3"),
+            for (key, file) in files {
+                guard let url = Bundle.main.url(forResource: file, withExtension: "mp3"),
                       let pcm = Sound.decode(url) else { continue }
                 guard let self else { return }
-                self.lock.lock(); self.synth.samples[name] = pcm; self.lock.unlock()
+                self.lock.lock(); self.synth.samples[key] = pcm; self.lock.unlock()
             }
         }
     }
@@ -141,7 +148,22 @@ final class Sound {
         return (data, file.processingFormat.sampleRate)
     }
 
-    /// load one voice line if it isn't already; true when it can play
+    /// Have the friend's voice line (and its karaoke voice and extra sound)
+    /// ready by the time the shell breaks.
+    func preloadFriend(animalId: String?, sayName: Bool) {
+        var want: [(String, String)] = []
+        let id = animalId ?? "peekaboo"
+        if sayName { want.append(("voice/" + id, "voice-" + id)) }
+        if let a = animalId, Karaoke.friends[a] != nil {
+            want.append((Karaoke.dir + "sing/" + a, "karaoke-sing-" + a))
+            want.append((Karaoke.dir + "extra/" + a, "karaoke-extra-" + a))
+        }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            for (key, file) in want { _ = self?.haveSample(key, file: file) }
+        }
+    }
+
+    /// load one recording if it isn't already; true when it can play
     private func haveSample(_ key: String, file: String) -> Bool {
         lock.lock(); let have = synth.samples[key] != nil; lock.unlock()
         if have { return true }
@@ -243,6 +265,21 @@ final class Sound {
     @discardableResult
     func endTune(_ id: String, friend: String? = nil) -> Double {
         var len = 0.0
+        cancelSinging()
+        if id == "karaoke" {
+            // Egg karaoke: this friend's voice (a random friend for a preview or a photo)
+            let fid = Karaoke.friend(for: friend)
+            _ = haveSample(Karaoke.dir + "sing/" + fid, file: "karaoke-sing-" + fid)
+            _ = haveSample(Karaoke.dir + "extra/" + fid, file: "karaoke-extra-" + fid)
+            var sung: [(delay: Double, len: Double)] = []
+            with { s in
+                let r = Karaoke.perform(friend: fid, on: s)
+                len = r.len
+                sung = r.sung
+            }
+            followSinging(sung)
+            return len
+        }
         with { s in
             if Band.songs[id] != nil {
                 len = Band.perform(id, friend: friend, on: s)
@@ -256,7 +293,27 @@ final class Sound {
 
     /// stop a band that is playing (New egg, Stop, closing a preview)
     func stopCelebration(fade: Double = 0.3) {
+        cancelSinging()
         lock.lock(); synth.stopCelebration(fade: fade); lock.unlock()
+    }
+
+    /// Egg karaoke: tell `onSing` as each sung note starts, so the friend bops along
+    private func followSinging(_ sung: [(delay: Double, len: Double)]) {
+        let notes = sung.sorted { $0.delay < $1.delay }
+        guard !notes.isEmpty else { return }
+        singTask = Task { @MainActor [weak self] in
+            let start = GC.now
+            for n in notes {
+                await GC.sleep(n.delay - (GC.now - start))
+                guard let self, !Task.isCancelled else { return }
+                self.onSing?(n.len)
+            }
+        }
+    }
+
+    private func cancelSinging() {
+        singTask?.cancel()
+        singTask = nil
     }
 
     /// tapping the hatched friend: it says hello in its own voice; 0 if it has none
@@ -635,7 +692,7 @@ final class Synth {
         tones.reserveCapacity(256)
         noises.reserveCapacity(128)
         voices.reserveCapacity(96)
-        plays.reserveCapacity(32)
+        plays.reserveCapacity(128)
     }
 
     var t: Double { Double(now) / sr }
@@ -718,19 +775,24 @@ final class Synth {
     }
 
     /// Play a recording if it has loaded. Returns its length, or 0 so the
-    /// caller can fall back to the synthesised version.
+    /// caller can fall back to the synthesised version. maxDur cuts it off
+    /// with a fade of `fade` seconds (never more than half its length).
     @discardableResult
-    func playSample(_ key: String, at: Double, bus: Bus, gain: Double = 1, rate: Double = 1, maxDur: Double? = nil) -> Double {
-        guard let smp = samples[key], smp.data.count > 1, plays.count < 32 else { return 0 }
+    func playSample(_ key: String, at: Double, bus: Bus, gain: Double = 1, rate: Double = 1, maxDur: Double? = nil,
+                    fade: Double = 0.06) -> Double {
+        // Egg karaoke plays every instrument note from a recording, so allow plenty at once
+        guard let smp = samples[key], smp.data.count > 1, plays.count < 128 else { return 0 }
         var dur = Double(smp.data.count - 1) / smp.sr / rate
         var fadeAt = Int.max
+        var fadeLen = 0.06
         if let m = maxDur, m < dur {
             dur = m
-            fadeAt = max(0, Int((m - 0.06) * sr))
+            fadeLen = min(fade, m / 2)
+            fadeAt = max(0, Int((m - fadeLen) * sr))
         }
         plays.append(SampleVoice(start: sample(at), data: smp.data, step: smp.sr / sr * rate,
                                  gain: gain * Synth.sampleGain, end: Int(dur * sr), fadeAt: fadeAt,
-                                 fadeLen: max(1, Int(0.06 * sr)), bus: bus))
+                                 fadeLen: max(1, Int(fadeLen * sr)), bus: bus))
         return dur
     }
 
