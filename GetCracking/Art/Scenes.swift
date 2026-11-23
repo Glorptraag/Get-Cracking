@@ -370,12 +370,24 @@ enum Scenes {
         reef.front = { [P.coral(500, 404, 0.9, "#f39a6b"), P.shell(100, 398, 0.9), P.seaweed(180, 448, 40), P.seaweed(420, 448, 46, "#8ad08a")] }
         out.append(reef)
 
-        return out
+        // the pack worlds (Art/Packs/*)
+        return out + PackArt.scenes
     }()
 
     static func scene(_ id: String) -> SceneDef { list.first { $0.id == id } ?? list[0] }
 
     // MARK: particles
+
+    /// One particle's drift timing (the web's `--dur`, `--dx`, `animation-delay`).
+    struct ParticleTiming {
+        let dur: Double, delay: Double, dx: Double
+        var fall: Loop { Loops.fall(dur, dx: dx, delay: delay) }
+        var rise: Loop { Loops.rise(dur, dx: dx, delay: delay) }
+        var firefly: Loop { Loops.firefly(dur, dx: dx, delay: delay) }
+    }
+    /// A particle kind a pack adds (the web's `GC.Scenes.PARTICLES[name]`):
+    /// (index, x, y, timing, rng) → one particle.
+    typealias Particle = (Int, Double, Double, ParticleTiming, RNG) -> VNode
 
     static func particles(_ type: String?, _ n: Int) -> VNode? {
         guard let type else { return nil }
@@ -386,6 +398,10 @@ enum Scenes {
             let x = r() * 600, y = r() * 420, dur = 6 + r() * 8
             let delay = -r() * dur
             let dx = ((r() - 0.5) * 80).rounded()
+            if let P = PackArt.particles[type] {
+                out.append(P(i, x, y, ParticleTiming(dur: dur, delay: delay, dx: dx), r))
+                continue
+            }
             switch type {
             case "fireflies":
                 out.append(nGroup([nCircle(0, 0, 4, .f("#fff2a0")).looping(Loops.firefly(dur, dx: dx, delay: delay))], tr(x, 120 + y * 0.8)))

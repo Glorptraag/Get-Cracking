@@ -87,6 +87,7 @@ struct PaywallView: View {
         case .lockedSong: return "Every hatching song."
         case .photoLimit: return "Photo friends for the whole family."
         case .settings: return "Every friend, world and song."
+        case .lockedPack: return "Every friend pack, now and later."
         }
     }
 

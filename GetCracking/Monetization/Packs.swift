@@ -44,11 +44,29 @@ enum Packs {
         starterScenes: ["meadow", "forest", "pond"]
     )
 
-    /// Every pack in the app. Add new packs here as they are ported from the
-    /// web (Aussie Bush and Christmas are next), e.g.
-    ///   Pack(id: "aussie", name: "Aussie Bush", blurb: "Galahs, wombats and a mole cricket",
-    ///        friends: ["galah", …], scenes: ["outback"])
-    static let list: [Pack] = [classic]
+    /// Aussie Bush (web js/packs/aussie.js). Paid: opens with The Whole Nest.
+    static let aussie = Pack(
+        id: "aussie",
+        name: "Aussie Bush",
+        blurb: "Galahs, wombats, a joey and a mole cricket",
+        friends: ["galah", "cockatoo", "kookaburra", "emu", "joey", "wombat",
+                  "platypus", "echidna", "sugarglider", "frillneck", "bilby", "molecricket"],
+        scenes: ["outback", "billabong"]
+    )
+
+    /// Christmas (web js/packs/christmas.js). Paid: opens with The Whole Nest.
+    static let christmas = Pack(
+        id: "christmas",
+        name: "Christmas",
+        blurb: "Gingerbread, the Nutcracker, a reindeer and a snowy village",
+        friends: ["gingerbread", "treecookie", "shortbread", "pudding", "nutcracker", "sugarplum", "mouseking",
+                  "snowfairy", "angel", "reindeer", "robin", "snowman", "xmasbeetle"],
+        scenes: ["xmasvillage"]
+    )
+
+    /// Every pack in the app, in friend-book order. A new pack ported from
+    /// the web goes here (and its art in Art/Packs/PackArt.swift).
+    static let list: [Pack] = [classic, aussie, christmas]
 
     static func byId(_ id: String) -> Pack? { list.first { $0.id == id } }
     static func pack(ofFriend id: String) -> Pack? { list.first { $0.friends.contains(id) } }

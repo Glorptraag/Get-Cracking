@@ -227,7 +227,7 @@ struct StyleSection: View {
             OptionChips(options: [Option(id: "random", label: "🎲 Surprise me")] + ShellFX.list.map { Option(id: $0.id, label: "\($0.icon) \($0.name)") },
                         selected: model.settings.hatchStyle) { id in
                 model.settings.hatchStyle = id
-                preview.play(id, volume: model.settings.volume, pool: model.gate.friendPool)
+                preview.play(id, volume: model.settings.volume, pool: model.gate.friendPool(packsOff: model.settings.packsOff))
             }
             StageView(root: preview.root, viewBox: CGRect(x: -200, y: -260, width: 400, height: 330))
                 .aspectRatio(400.0 / 330.0, contentMode: .fit)
@@ -237,7 +237,7 @@ struct StyleSection: View {
                 .frame(maxWidth: 360)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 12)
-                .onTapGesture { preview.play(model.settings.hatchStyle, volume: model.settings.volume, pool: model.gate.friendPool) }
+                .onTapGesture { preview.play(model.settings.hatchStyle, volume: model.settings.volume, pool: model.gate.friendPool(packsOff: model.settings.packsOff)) }
                 .accessibilityLabel("Hatch style preview. Tap to replay.")
                 .accessibilityAddTraits(.isButton)
         }
@@ -336,12 +336,53 @@ struct HatchSection: View {
                 }
             }
 
+            Text("Friend packs").font(Theme.hand(24)).padding(.top, 18)
+            Text("Switch a pack off to keep its friends and worlds out of the shuffle (Christmas only in December, say).")
+                .font(Theme.round(14)).opacity(0.75).padding(.bottom, 2)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(Packs.list) { PackRow(pack: $0) }
+
             Text("When time is up").font(Theme.hand(24)).padding(.top, 18)
             Text("Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.")
                 .font(Theme.round(14)).opacity(0.75).padding(.bottom, 6)
                 .fixedSize(horizontal: false, vertical: true)
             OptionChips(options: [Option(id: "tap", label: "👆 Wait for a tap"), Option(id: "auto", label: "🐣 Hatch by itself")],
                         selected: model.settings.hatchMode) { model.settings.hatchMode = $0 }
+        }
+    }
+}
+
+/// A pack's on/off switch in "Who hatches?". A locked pack shows its switch
+/// with the small lock; tapping it opens the parental gate and the paywall.
+struct PackRow: View {
+    @Environment(AppModel.self) private var model
+    let pack: Pack
+
+    var body: some View {
+        let worlds = pack.scenes.count
+        let sub = "\(pack.friends.count) friends" + (worlds > 0 ? " · \(worlds) world\(worlds > 1 ? "s" : "")" : "") + " · \(pack.blurb)"
+        if model.gate.pack(pack) {
+            ToggleRow(label: pack.name, sub: sub, isOn: Binding(get: { !model.settings.packsOff.contains(pack.id) },
+                                                              set: { model.setPack(pack.id, on: $0) }))
+        } else {
+            Button { model.askForNest(.lockedPack) } label: {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(pack.name).font(Theme.round(16, .semibold))
+                        Text(sub).font(Theme.round(13)).opacity(0.7)
+                    }
+                    .multilineTextAlignment(.leading)
+                    Spacer()
+                    ToySwitch(isOn: Binding(get: { false }, set: { _ in model.askForNest(.lockedPack) }))
+                        .opacity(0.6)
+                        .overlay(alignment: .topTrailing) { LockBadge(size: 22).offset(x: 6, y: -8) }
+                }
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(PressDown())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(pack.name), locked. Part of The Whole Nest, for grown-ups.")
+            .accessibilityAddTraits(.isButton)
         }
     }
 }
@@ -527,7 +568,9 @@ struct BookSection: View {
             ForEach(Packs.list) { pack in
                 // pack headings once there is more than one pack
                 if Packs.list.count > 1 {
-                    Text(pack.name).font(Theme.hand(22)).padding(.top, 10)
+                    let inBook = pack.friends.filter { (book[$0] ?? 0) > 0 }.count
+                    Text("\(pack.name) · \(inBook) of \(pack.friends.count)").font(Theme.hand(22)).padding(.top, 10)
+                        .accessibilityAddTraits(.isHeader)
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
                     ForEach(pack.friends.compactMap { Animals.byId[$0] }) { a in
