@@ -408,8 +408,8 @@ final class AppModel {
         settings = s
         // until StoreKit answers (a moment after launch), go by what it said last time
         let gate = FeatureGate(ownsWholeNest: EntitlementStore.lastKnownHasNest)
-        bag = ShuffleBag(key: "gc.bag.v1", items: gate.friendPool)
-        let sb = ShuffleBag(key: "gc.scenebag.v1", items: gate.scenePool)
+        bag = ShuffleBag(key: "gc.bag.v1", items: gate.friendPool(packsOff: s.packsOff))
+        let sb = ShuffleBag(key: "gc.scenebag.v1", items: gate.scenePool(packsOff: s.packsOff))
         sceneBag = sb
         let pending = gate.effectiveScene(s.scene) == "random" ? sb.next() : s.scene
         pendingScene = pending
@@ -428,18 +428,31 @@ final class AppModel {
 
     var gate: FeatureGate { store.gate }
 
-    /// After a purchase, restore, refund or family-sharing change: the
-    /// shuffles only ever hold what this family owns.
+    /// After a purchase, restore, refund or family-sharing change, or a pack
+    /// switched on or off: the shuffles only ever hold what this family owns,
+    /// from the packs that are on.
     func applyOwnership() {
         let g = gate
-        bag.setItems(g.friendPool)
-        sceneBag.setItems(g.scenePool)
+        bag.setItems(g.friendPool(packsOff: settings.packsOff))
+        sceneBag.setItems(g.scenePool(packsOff: settings.packsOff))
         if run == nil {
             // the next world must be one this family owns (and the one they picked, if they own it)
             let sc = g.effectiveScene(settings.scene)
-            let stale = sc == "random" ? !g.scene(pendingScene) : pendingScene != sc
+            let stale = sc == "random" ? !sceneBag.items.contains(pendingScene) : pendingScene != sc
             if stale { chooseScene() }
         }
+    }
+
+    /// Switch a friend pack in or out of the shuffles (grown-up settings).
+    func setPack(_ id: String, on: Bool) {
+        settings.packsOff = settings.packsOff.filter { $0 != id } + (on ? [] : [id])
+        applyOwnership()
+    }
+
+    /// a pack's switch in settings, as a bindable value
+    subscript(packOn id: String) -> Bool {
+        get { !settings.packsOff.contains(id) }
+        set { setPack(id, on: newValue) }
     }
 
     /// Open the paywall (the parental gate comes first).

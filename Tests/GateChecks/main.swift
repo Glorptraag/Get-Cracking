@@ -66,5 +66,42 @@ check(!freeTier.bookShowsLock(friend: "chick", timesFound: 0), "free: an unfound
 let gift = Pack(id: "gift", name: "Gift", blurb: "", friends: ["x"], scenes: ["y"], isFree: true)
 check(freeTier.pack(gift), "free: a free pack is allowed")
 
+// the Aussie Bush and Christmas packs (web js/packs/aussie.js, christmas.js), in web order
+let aussieFriends = ["galah", "cockatoo", "kookaburra", "emu", "joey", "wombat",
+                     "platypus", "echidna", "sugarglider", "frillneck", "bilby", "molecricket"]
+let christmasFriends = ["gingerbread", "treecookie", "shortbread", "pudding", "nutcracker", "sugarplum", "mouseking",
+                        "snowfairy", "angel", "reindeer", "robin", "snowman", "xmasbeetle"]
+check(Packs.list.map(\.id) == ["classic", "aussie", "christmas"], "packs: classic, aussie, christmas")
+check(Packs.byId("aussie")?.friends == aussieFriends, "Aussie Bush has its 12 friends in web order")
+check(Packs.byId("aussie")?.scenes == ["outback", "billabong"], "Aussie Bush has outback and billabong")
+check(Packs.byId("christmas")?.friends == christmasFriends, "Christmas has its 13 friends in web order")
+check(Packs.byId("christmas")?.scenes == ["xmasvillage"], "Christmas has the village")
+check(Packs.allFriends.count == 65 && Set(Packs.allFriends).count == 65, "65 friends, no id twice")
+check(Packs.allScenes.count == 13 && Set(Packs.allScenes).count == 13, "13 worlds, no id twice")
+for p in [Packs.aussie, Packs.christmas] {
+    check(!p.isFree && p.starterFriends.isEmpty && p.starterScenes.isEmpty, "\(p.id): paid, no starter items")
+    check(!freeTier.pack(p), "free: \(p.id) pack locked")
+    check(nest.pack(p), "nest: \(p.id) pack open")
+    check(!p.friends.contains(where: freeTier.friend) && !p.scenes.contains(where: freeTier.scene), "free: every \(p.id) friend and world locked")
+    check(p.friends.allSatisfy(nest.friend) && p.scenes.allSatisfy(nest.scene), "nest: every \(p.id) friend and world open")
+    check(freeTier.friendPool.allSatisfy { !p.friends.contains($0) }, "free: no \(p.id) friend in the shuffle")
+    check(Set(p.friends).isSubset(of: Set(nest.friendPool)), "nest: \(p.id) friends in the shuffle")
+}
+check(freeTier.effectiveScene("xmasvillage") == "random", "free: a locked pack world plays as Surprise me")
+check(freeTier.bookShowsLock(friend: "galah", timesFound: 0), "free: an unfound galah shows a lock")
+
+// switching packs off (Settings.packsOff) keeps them out of the shuffles
+check(nest.friendPool(packsOff: []) == nest.friendPool, "nest, all on: friend shuffle = every friend")
+let noXmas = nest.friendPool(packsOff: ["christmas"])
+check(!noXmas.contains(where: christmasFriends.contains) && Set(aussieFriends).isSubset(of: Set(noXmas)), "nest, Christmas off: no Christmas friend in the shuffle")
+check(!nest.scenePool(packsOff: ["christmas"]).contains("xmasvillage"), "nest, Christmas off: no village in the world shuffle")
+check(nest.friendPool(packsOff: ["aussie", "christmas"]) == Packs.classic.friends, "nest, both packs off: Classic friends only")
+check(nest.scenePool(packsOff: ["aussie"]) == Packs.classic.scenes + ["xmasvillage"], "nest, Aussie off: no outback or billabong")
+check(nest.friendPool(packsOff: ["classic"]) == aussieFriends + christmasFriends, "nest, Classic off: pack friends only")
+check(nest.friendPool(packsOff: ["classic", "aussie", "christmas"]) == Packs.classic.friends, "nest, everything off: Classic still plays")
+check(Set(freeTier.friendPool(packsOff: ["classic"])) == Packs.classic.starterFriends, "free, Classic off (packs locked): the starters still play")
+check(Set(freeTier.scenePool(packsOff: ["classic", "aussie", "christmas"])) == Packs.classic.starterScenes, "free, everything off: the starter worlds")
+check(freeTier.friendPool(packsOff: ["aussie", "christmas"]).allSatisfy(freeTier.friend), "free: nothing locked in a pack-filtered shuffle")
+
 print(failures == 0 ? "All gate checks passed" : "\(failures) gate check(s) FAILED")
 exit(failures == 0 ? 0 : 1)

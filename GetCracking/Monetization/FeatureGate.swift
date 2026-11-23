@@ -30,6 +30,20 @@ struct FeatureGate: Equatable {
     var friendPool: [String] { Packs.allFriends.filter(friend) }
     var scenePool: [String] { Packs.allScenes.filter(scene) }
 
+    /// The shuffles with some packs switched off in settings (`Settings.packsOff`):
+    /// owned items of the packs still on. Never empty: if that leaves nothing
+    /// (everything off, or only locked packs on), what is owned in Classic plays.
+    func friendPool(packsOff: [String]) -> [String] {
+        pool(packsOff, \.friends, friend)
+    }
+    func scenePool(packsOff: [String]) -> [String] {
+        pool(packsOff, \.scenes, scene)
+    }
+    private func pool(_ off: [String], _ items: KeyPath<Pack, [String]>, _ owned: (String) -> Bool) -> [String] {
+        let on = Packs.list.filter { !off.contains($0.id) }.flatMap { $0[keyPath: items] }.filter(owned)
+        return on.isEmpty ? Packs.classic[keyPath: items].filter(owned) : on
+    }
+
     // MARK: settings that point at something locked (after a refund or family-sharing change)
 
     /// "random" or an owned world; a locked world plays as "Surprise me".

@@ -20,11 +20,27 @@ jobs:
             Tests/GateChecks/main.swift -o gatecheck
           ./gatecheck
       - name: Egg karaoke checks (keys, bends and every friend's sounds against the web, no audio)
+        if: ${{ !cancelled() }}
         run: |
           swiftc GetCracking/Audio/KaraokeData.swift GetCracking/Audio/KaraokeIndex.swift \
             GetCracking/Monetization/Packs.swift Tests/KaraokeChecks/main.swift -o karaokecheck
           ./karaokecheck
+      - name: Art checks (pack friends and worlds drawn with CoreGraphics on macOS)
+        if: ${{ !cancelled() }}
+        run: |
+          swiftc GetCracking/Core/VNode.swift GetCracking/Core/SVGPath.swift GetCracking/Core/Motion.swift GetCracking/Core/Util.swift \
+            GetCracking/Art/Animals.swift GetCracking/Art/Loops.swift GetCracking/Art/Props.swift GetCracking/Art/Scenes.swift \
+            GetCracking/Art/Packs/*.swift GetCracking/Monetization/Packs.swift Tests/ArtChecks/*.swift -o artcheck
+          ./artcheck art-png
+      - name: Upload the pack contact sheets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pack-art
+          path: art-png
+          if-no-files-found: ignore
       - name: Build for the iOS Simulator
+        if: ${{ !cancelled() }}
         run: |
           set -o pipefail
           xcodebuild -project GetCracking.xcodeproj -target GetCracking \

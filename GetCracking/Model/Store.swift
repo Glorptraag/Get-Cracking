@@ -23,6 +23,7 @@ struct Settings: Codable, Equatable {
     var volume = 0.7
     var sayName = true
     var hatchWho = "animals"    // "animals" | "photos" | "both"
+    var packsOff: [String] = [] // friend packs (Monetization/Packs.swift) kept out of the shuffles
     var hatchStyle = "random"   // shell effect id, or "random"
     var hatchMode = "tap"       // "tap" (hatch waits for you) | "auto"
     var showPause = false       // pause button visible on the timer screen
@@ -46,6 +47,7 @@ struct Settings: Codable, Equatable {
         volume = (try? c.decodeIfPresent(Double.self, forKey: .volume)) ?? d.volume
         sayName = (try? c.decodeIfPresent(Bool.self, forKey: .sayName)) ?? d.sayName
         hatchWho = (try? c.decodeIfPresent(String.self, forKey: .hatchWho)) ?? d.hatchWho
+        packsOff = (try? c.decodeIfPresent([String].self, forKey: .packsOff)) ?? d.packsOff
         hatchStyle = (try? c.decodeIfPresent(String.self, forKey: .hatchStyle)) ?? d.hatchStyle
         hatchMode = (try? c.decodeIfPresent(String.self, forKey: .hatchMode)) ?? d.hatchMode
         showPause = (try? c.decodeIfPresent(Bool.self, forKey: .showPause)) ?? d.showPause

@@ -27,6 +27,14 @@ struct AnimalDef: Identifiable {
     var spotPts: [(Double, Double, Double)]?
     var eyesOnBumps = false, whiskers = false, cheeks = true
     var snoutW: Double?, faceY: Double?, eyeX: Double?
+    /// drawn last, on top of everything (hats, crowns, things held): pack parts only
+    var over: [String] = []
+    // fields the pack parts read (Art/Packs/*)
+    var crestColor: String?, capColor: String?, greyColor: String?, crownColor: String?, stripeColor: String?
+    var spineColor: String?, spineTip: String?, frillColor: String?, frillInner: String?, frillRib: String?
+    var pouchColor: String?, eyeRing: String?, beakTop: String?, beakLow: String?, blueColor: String?
+    var skin: String?, hair: String?, hairTo: Double?, tutu: String?, tutuFlakes = false, breast: String?
+    var capeColor: String?, antlerColor: String?, wandTop: String?, tiara: String?, gem: String?, sparkleColor: String?
 
     init(_ id: String, _ name: String, _ body: String, _ cfg: (inout AnimalDef) -> Void = { _ in }) {
         self.id = id
@@ -36,12 +44,47 @@ struct AnimalDef: Identifiable {
     }
 }
 
+/// What a pack part gets to draw with (the web's `k`): the body size, and
+/// for face and marking parts the face line, eye spread and mark colour.
+struct PartKit {
+    let w: Double, h: Double
+    var fy = 0.0, ex = 0.36, m = ""
+}
+
+/// Parts a content pack adds without touching the Classic drawings (the
+/// web's `GC.Animals.parts.<layer>[name]`). A friend names a pack part like
+/// any built-in one (`ears = "roo"`, `back = ["galahCrest"]`); a pack part
+/// wins over a built-in of the same name. Layers: ears, earsFront (keyed by
+/// `ears`), back, marks, front, over (lists), eyes, muzzle, nose, mouth,
+/// arms, feet. `over` is drawn last, on top of everything.
+struct AnimalParts {
+    typealias Part = (AnimalDef, PartKit) -> [VNode]
+    var ears: [String: Part] = [:], earsFront: [String: Part] = [:]
+    var back: [String: Part] = [:], marks: [String: Part] = [:], front: [String: Part] = [:], over: [String: Part] = [:]
+    var eyes: [String: Part] = [:], muzzle: [String: Part] = [:], nose: [String: Part] = [:], mouth: [String: Part] = [:]
+    var arms: [String: Part] = [:], feet: [String: Part] = [:]
+
+    static func merged(_ list: [AnimalParts]) -> AnimalParts {
+        var out = AnimalParts()
+        func add(_ a: inout [String: Part], _ b: [String: Part]) { a.merge(b) { _, new in new } }
+        for p in list {
+            add(&out.ears, p.ears); add(&out.earsFront, p.earsFront); add(&out.back, p.back); add(&out.marks, p.marks)
+            add(&out.front, p.front); add(&out.over, p.over); add(&out.eyes, p.eyes); add(&out.muzzle, p.muzzle)
+            add(&out.nose, p.nose); add(&out.mouth, p.mouth); add(&out.arms, p.arms); add(&out.feet, p.feet)
+        }
+        return out
+    }
+}
+
 enum Animals {
-    private static let O = GC.outHex
+    static let O = GC.outHex
     /// the standard outline (6) and the finer one (4.5)
-    private static func S(_ fill: String) -> St { St.o(6).filled(fill) }
-    private static func S4(_ fill: String) -> St { St.o(4.5).filled(fill) }
-    private static func sh(_ c: String, _ a: Double) -> String { GC.shade(c, a) }
+    static func S(_ fill: String) -> St { St.o(6).filled(fill) }
+    static func S4(_ fill: String) -> St { St.o(4.5).filled(fill) }
+    static func sh(_ c: String, _ a: Double) -> String { GC.shade(c, a) }
+
+    /// every pack's parts (Art/Packs/*), looked up by layer and name
+    static let parts = AnimalParts.merged(PackArt.parts)
 
     private static let SHAPES: [String: (w: Double, h: Double)] = [
         "round": (64, 128), "tall": (56, 140), "wide": (72, 118), "small": (58, 118),
@@ -57,7 +100,7 @@ enum Animals {
         [nPath(d, St.line(O, width + 9)), nPath(d, St.line(color, width))]
     }
 
-    private static func roundedTri(_ a: Pt, _ b: Pt, _ c: Pt, _ fill: String, _ inner: String? = nil) -> [VNode] {
+    static func roundedTri(_ a: Pt, _ b: Pt, _ c: Pt, _ fill: String, _ inner: String? = nil) -> [VNode] {
         var out = [nPath("M\(a.0),\(a.1) L\(b.0),\(b.1) L\(c.0),\(c.1) Z", S(fill))]
         if let inner {
             let cx = (a.0 + b.0 + c.0) / 3, cy = (a.1 + b.1 + c.1) / 3
@@ -73,6 +116,7 @@ enum Animals {
     // MARK: ears
 
     private static func ears(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
+        if let X = parts.ears[d.ears] { return X(d, PartKit(w: w, h: h)) }
         let c = d.earColor ?? d.body
         let ic = d.earInner ?? sh(c, 0.4)
         switch d.ears {
@@ -108,6 +152,7 @@ enum Animals {
 
     /// floppy ears are drawn in front of the body
     private static func earsFront(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
+        if let X = parts.earsFront[d.ears] { return X(d, PartKit(w: w, h: h)) }
         let c = d.earColor ?? sh(d.body, -0.2)
         if d.ears == "floppy" {
             return both { s in [nEllipse(s * (w - 2), -h * 0.7, 16, 30, S(c)).moved(rotAbout(s * 16, s * (w - 2), -h * 0.7))] }
@@ -120,7 +165,8 @@ enum Animals {
 
     // MARK: behind-the-body extras
 
-    private static func arm(_ s: Double, _ kids: [VNode]) -> VNode {
+    /// an arm group that waves in the idle loop (web: c-arm-l / c-arm-r)
+    static func arm(_ s: Double, _ kids: [VNode]) -> VNode {
         nGroup(kids).looping(s < 0 ? Loops.waveL : Loops.wave, idle: true)
     }
 
@@ -128,6 +174,7 @@ enum Animals {
         var out: [VNode] = []
         let a = d.accent ?? sh(d.body, -0.25)
         for x in d.back {
+            if let X = parts.back[x] { out += X(d, PartKit(w: w, h: h)); continue }
             switch x {
             case "tailFluffy":
                 let p = "M\(w * 0.55),\(-h * 0.22) C\(w + 58),\(-h * 0.16) \(w + 62),\(-h * 0.86) \(w + 26),\(-h * 1.02) " +
@@ -255,6 +302,7 @@ enum Animals {
         let fc = d.faceColor ?? "#fdf3e4"
         let solid = St(fill: m, stroke: m, width: 3, join: .round)
         for x in d.marks {
+            if let X = parts.marks[x] { out += X(d, PartKit(w: w, h: h, fy: fy, ex: ex, m: m)); continue }
             switch x {
             case "stripes":
                 for s in [-1.0, 1] {
@@ -321,6 +369,7 @@ enum Animals {
     // MARK: face
 
     private static func eyes(_ d: AnimalDef, _ w: Double, _ h: Double, _ fy: Double, _ ex: Double) -> [VNode] {
+        if let X = parts.eyes[d.eyes] { return X(d, PartKit(w: w, h: h, fy: fy, ex: ex)) }
         if d.eyes == "none" { return [] }
         let ey = d.eyesOnBumps ? -h * 0.93 : fy
         let exx = d.eyesOnBumps ? 0.46 : ex
@@ -348,6 +397,7 @@ enum Animals {
     }
 
     private static func muzzle(_ d: AnimalDef, _ w: Double, _ h: Double, _ fy: Double) -> [VNode] {
+        if let X = parts.muzzle[d.muzzle] { return X(d, PartKit(w: w, h: h, fy: fy)) }
         let mc = d.muzzleColor ?? sh(d.body, 0.5)
         switch d.muzzle {
         case "snout":
@@ -368,7 +418,8 @@ enum Animals {
         }
     }
 
-    private static func nose(_ d: AnimalDef, _ fy: Double) -> [VNode] {
+    private static func nose(_ d: AnimalDef, _ w: Double, _ h: Double, _ fy: Double) -> [VNode] {
+        if let X = parts.nose[d.nose] { return X(d, PartKit(w: w, h: h, fy: fy)) }
         let nc = d.noseColor ?? O
         let ny = fy + (d.muzzle == "snout" ? 9 : 8)
         switch d.nose {
@@ -381,7 +432,8 @@ enum Animals {
         }
     }
 
-    private static func mouth(_ d: AnimalDef, _ fy: Double) -> [VNode] {
+    private static func mouth(_ d: AnimalDef, _ w: Double, _ h: Double, _ fy: Double) -> [VNode] {
+        if let X = parts.mouth[d.mouth] { return X(d, PartKit(w: w, h: h, fy: fy)) }
         let my = fy + (d.muzzle == "snout" ? 17 : d.nose == "big" ? 25 : d.muzzle == "capy" ? 24 : 16)
         switch d.mouth {
         case "none":
@@ -406,6 +458,7 @@ enum Animals {
     }
 
     private static func arms(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
+        if let X = parts.arms[d.arms] { return X(d, PartKit(w: w, h: h)) }
         let c = d.armColor ?? sh(d.body, -0.06)
         switch d.arms {
         case "none":
@@ -419,7 +472,8 @@ enum Animals {
         }
     }
 
-    private static func feet(_ d: AnimalDef, _ w: Double) -> [VNode] {
+    private static func feet(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
+        if let X = parts.feet[d.feet] { return X(d, PartKit(w: w, h: h)) }
         let c = d.feetColor ?? sh(d.body, -0.12)
         switch d.feet {
         case "none":
@@ -438,6 +492,7 @@ enum Animals {
     private static func front(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
         var out: [VNode] = []
         for x in d.front {
+            if let X = parts.front[x] { out += X(d, PartKit(w: w, h: h)); continue }
             switch x {
             case "tuft":
                 let t = -h * 0.95, c = d.tuftColor ?? sh(d.body, -0.08)
@@ -473,6 +528,11 @@ enum Animals {
         return out
     }
 
+    /// pack extras drawn last, on top of everything (hats, crowns, things held)
+    private static func over(_ d: AnimalDef, _ w: Double, _ h: Double) -> [VNode] {
+        d.over.flatMap { x in parts.over[x].map { $0(d, PartKit(w: w, h: h)) } ?? [] }
+    }
+
     /// Draw one animal. The returned node is tagged "critter".
     static func render(_ d: AnimalDef) -> VNode {
         let dims = SHAPES[d.shape] ?? SHAPES["round"]!
@@ -492,7 +552,7 @@ enum Animals {
         inside += markings(d, w, h, fy, ex)
         inside.append(nPath(bp, St.line("#ffffff", 10).so(0.25)).moved(tr(-6, -6)))
 
-        let face = nGroup(cheeks + muzzle(d, w, h, fy) + whiskers(d, w, fy) + nose(d, fy) + mouth(d, fy) +
+        let face = nGroup(cheeks + muzzle(d, w, h, fy) + whiskers(d, w, fy) + nose(d, w, h, fy) + mouth(d, w, h, fy) +
                           [nGroup(eyes(d, w, h, fy, ex)).looping(Loops.blink(4.2))])
 
         let squash = nGroup(
@@ -502,7 +562,7 @@ enum Animals {
              nGroup(inside, clip: bodyClip),
              nPath(bp, St.o(6)),
              nGroup(earsFront(d, w, h))]
-                + front(d, w, h) + arms(d, w, h) + [face] + feet(d, w)
+                + front(d, w, h) + arms(d, w, h) + [face] + feet(d, w, h) + over(d, w, h)
         ).looping(Loops.critterHop, idle: true)
 
         let shadow = nEllipse(0, 2, w + 6, 10, St.f(O).op(0.18)).looping(Loops.shadowPulse, idle: true)
@@ -529,11 +589,14 @@ enum Animals {
         return nGroup([shadow, squash]).tagged("critter")
     }
 
-    // MARK: the 40 friends
+    // MARK: the 40 friends (the Classic pack)
 
     static let CREAM = "#fdf3e4", WHITE = "#fdfaf3", PINK = "#f6b3bf", BEAK = "#f7a531"
 
-    static let list: [AnimalDef] = [
+    /// every friend: the Classic 40, then each pack's (Art/Packs/*), in friend-book order
+    static let list: [AnimalDef] = classic + PackArt.friends
+
+    static let classic: [AnimalDef] = [
         AnimalDef("chick", "Chick", "#ffd84d") { $0.belly = "#ffe98c"; $0.front = ["tuft"]; $0.arms = "wing"; $0.feet = "bird"; $0.muzzle = "beak"; $0.muzzleColor = BEAK; $0.nose = "none"; $0.mouth = "none"; $0.armColor = "#ffcb2e" },
         AnimalDef("duckling", "Duckling", "#f9e27a") { $0.shape = "wide"; $0.belly = "#fff4c2"; $0.front = ["curl"]; $0.tuftColor = "#f0c94a"; $0.arms = "wing"; $0.feet = "bird"; $0.feetColor = "#f08a3c"; $0.muzzle = "bill"; $0.muzzleColor = "#f08a3c"; $0.nose = "none"; $0.mouth = "none"; $0.armColor = "#f0cf5a"; $0.eyes = "happy"; $0.cheekColor = "#f7a07a" },
         AnimalDef("penguin", "Penguin", "#3d4e6e") { $0.shape = "tall"; $0.belly = WHITE; $0.marks = ["faceMask"]; $0.faceColor = WHITE; $0.arms = "flipper"; $0.feet = "bird"; $0.muzzle = "beak"; $0.muzzleColor = BEAK; $0.nose = "none"; $0.mouth = "none" },

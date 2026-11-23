@@ -3,7 +3,7 @@ import SwiftUI
 /// Where a grown-up asked to see The Whole Nest. Every one is user-initiated:
 /// Get Cracking never pops a paywall on its own.
 enum PaywallPlacement: String, Identifiable {
-    case settings, lockedFriend, lockedWorld, lockedSong, photoLimit, friendBook
+    case settings, lockedFriend, lockedWorld, lockedSong, photoLimit, friendBook, lockedPack
     var id: String { rawValue }
 }
 

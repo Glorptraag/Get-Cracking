@@ -21,8 +21,7 @@ let sounds = "GetCracking/Resources/Sounds/"
 func recording(_ name: String) -> Bool { FileManager.default.fileExists(atPath: sounds + name + ".mp3") }
 
 // The pack friends (the `friends:` ids in the web's js/packs/aussie.js and
-// js/packs/christmas.js). Their art is ported separately into Packs.swift, so
-// they are listed here until then.
+// js/packs/christmas.js), listed here too so a pack missing from Packs.swift fails loudly.
 let aussie = ["galah", "cockatoo", "kookaburra", "emu", "joey", "wombat", "platypus", "echidna", "sugarglider", "frillneck", "bilby", "molecricket"]
 let christmas = ["gingerbread", "treecookie", "shortbread", "pudding", "nutcracker", "sugarplum", "mouseking", "snowfairy", "angel",
                  "reindeer", "robin", "snowman", "xmasbeetle"]
@@ -30,6 +29,7 @@ check(aussie.count + christmas.count == 25, "25 pack friends listed")
 var everyone: [String] = Packs.allFriends
 for id in aussie + christmas where !everyone.contains(id) { everyone.append(id) }
 check(everyone.count == 65, "65 friends: the Classic 40 and the 25 pack friends (\(everyone.count))")
+check(Packs.allFriends.count == 65 && (aussie + christmas).allSatisfy(Packs.allFriends.contains), "Packs.swift lists all 65 friends, pack friends included")
 
 // MARK: key choice and bend limits, against the web
 
