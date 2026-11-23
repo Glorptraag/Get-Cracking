@@ -41,6 +41,9 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Visual style | done | done | |
 | Shared helpers | done | done | |
 | Offline / install | done | n/a | PWA service worker on web; a native app is offline by nature |
+| Egg karaoke | done | missing | web 464ee4e..0fbc670: the hatched friend sings its own song with a full band (web default hatching song) |
+| Content packs | done | partial | web 8e30287 (js/packs.js). iPhone: `Monetization/Packs.swift` registry (Classic pack with starter flags, friend book grouped by pack) in parity/to-mac-20261123-store; per-pack on/off toggles not yet. Aussie Bush and Christmas packs still to port |
+| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
 
 ## Idioms
 
@@ -54,4 +57,6 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 - Web Audio synth → `AVAudioEngine` synth in `Audio/Sound.swift`; `speechSynthesis` → `AVSpeechSynthesizer`.
 - `localStorage` → `Model/Store.swift`; IndexedDB photos → on-device files via `PhotosPicker`.
 - Wake Lock → `UIApplication.shared.isIdleTimerDisabled`.
-- Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac; cloud runs can't compile-check).
+- Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac). Cloud runs compile-check on GitHub's macOS runner: `.github/workflows/getcracking-ios-build.yml` builds every push to a branch that touches the app (from parity/to-mac-20261123-store on), and runs `Tests/GateChecks` (StoreKit-free gate decisions).
+- Never declare a module-wide `typealias` that shadows a SwiftUI or Foundation name: the audio port's `typealias Path` hid SwiftUI's `Path` (now `PitchPath`).
+- Web `starter: true` / `pack` on friends and worlds → `Packs.swift` (`Pack.starterFriends`, `starterScenes`); `GC.Packs.register` → a new `Pack` entry in `Packs.list` plus the art. Store gating (`FeatureGate`) is iPhone-only.
