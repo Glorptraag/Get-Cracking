@@ -223,7 +223,7 @@
     }
 
     /** Build the context object handed to a shell effect (see js/shellfx.js). */
-    _shellCtx(release) {
+    _shellCtx(release, clear) {
       const self = this;
       const ts = () => GC.timeScale || 1;
       const ctx = {
@@ -233,6 +233,7 @@
         pattern: this.pattern,
         EGG_PATH, ZIG,
         ground: 48,
+        clear: clear || { l: -75, r: 75, t: -200, b: 60 },
         bounds: { left: -330, right: 330, top: -480, bottom: 230 },
         reduce: GC.prefersReducedMotion(),
         release,
@@ -320,7 +321,13 @@
       let release;
       const released = new Promise((r) => (release = r));
       let done = false;
-      const ctx = this._shellCtx(() => { if (!done) { done = true; release(); } });
+      // the friend's own keep-clear box: wide friends (an elephant's ears) need more than the default
+      let half = 75;
+      try {
+        const bb = friend.querySelector('.c-squash').getBBox();
+        if (bb.width) half = Math.max(75, Math.ceil(Math.max(-bb.x, bb.x + bb.width)) + 4);
+      } catch (e) { /* no layout (hidden): keep the default */ }
+      const ctx = this._shellCtx(() => { if (!done) { done = true; release(); } }, { l: -half, r: half, t: -200, b: 60 });
       Promise.resolve().then(() => fx.run(ctx)).catch((e) => { console.error('shell fx failed', e); }).then(() => ctx.release());
       await Promise.race([released, new Promise((r) => setTimeout(r, 3500 * ts()))]);
       this.style = fx.id;

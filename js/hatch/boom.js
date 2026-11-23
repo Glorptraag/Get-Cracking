@@ -17,7 +17,6 @@
   const GRAV = 2500;         // px/s²
   const DT = 1 / 60;
   const MAX_T = 2.15;        // s — every shard is done by then
-  const BOX = { l: -75, r: 75, t: -200, b: 60 }; // keep-clear box (front layer)
 
   /* ───────────── geometry ───────────── */
 
@@ -195,8 +194,8 @@
     return { frames, events, resting, out, X, Y, depth };
   }
 
-  /** do any frames after tFrom put the shard inside the keep-clear box? */
-  function crossesBox(frames, r, tFrom) {
+  /** do any frames after tFrom put the shard inside the keep-clear box (ctx.clear)? */
+  function crossesBox(frames, r, tFrom, BOX) {
     for (const f of frames) {
       if (f.t < tFrom) continue;
       if (f.X + r > BOX.l && f.X - r < BOX.r && f.Y + r > BOX.t && f.Y - r < BOX.b) return true;
@@ -311,7 +310,7 @@
         const fromBox = 0.38; // s after release
         let sim = simulate(s, v, Math.max(rand(52, 70), s.y0 + 30), rand);
         s.layer = ctx.front;
-        if (crossesBox(sim.frames, s.r, fromBox) || (sim.resting && Math.abs(sim.X) - s.r < 82)) {
+        if (crossesBox(sim.frames, s.r, fromBox, ctx.clear) || (sim.resting && Math.abs(sim.X) - s.r < ctx.clear.r + 7)) {
           sim = simulate(s, v, Math.max(rand(-15, 36), s.y0 + lowest(s.pts, 0) + 4), rand);
           s.layer = ctx.back;
         }

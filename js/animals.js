@@ -53,8 +53,23 @@
     return out;
   }
 
+  /* ------------------------------------------------------ pack parts
+   * Content packs (js/packs/*.js) add their own parts without touching this
+   * file: GC.Animals.parts.<layer>[name] = (d, k) => markup. A friend then
+   * names that part like any built-in one (ears: 'crest', back: ['wingsGalah']).
+   * k carries the body size and the drawing helpers: see kit() below.
+   * Layers: ears, earsFront (keyed by d.ears), back, marks, front, over (lists),
+   * eyes, muzzle, nose, mouth, arms, feet. 'over' is drawn last, on top of
+   * everything (hats, scarves, things held). */
+  const PARTS = { ears: {}, earsFront: {}, back: {}, marks: {}, front: {}, over: {}, eyes: {}, muzzle: {}, nose: {}, mouth: {}, arms: {}, feet: {} };
+  const kit = (w, h, more) => Object.assign({ w, h, f, S, S4, O, sh, both, tube, roundedTri }, more);
+  /** a pack part for this layer and name, if there is one */
+  const ext = (layer, name) => (name && Object.prototype.hasOwnProperty.call(PARTS[layer], name) ? PARTS[layer][name] : null);
+
   /* ------------------------------------------------------------- ears */
   function ears(d, w, h) {
+    const X = ext('ears', d.ears);
+    if (X) return X(d, kit(w, h));
     const c = d.earColor || d.body;
     const ic = d.earInner || sh(c, 0.4);
     switch (d.ears) {
@@ -94,6 +109,8 @@
 
   // floppy ears are drawn in front of the body
   function earsFront(d, w, h) {
+    const X = ext('earsFront', d.ears);
+    if (X) return X(d, kit(w, h));
     const c = d.earColor || sh(d.body, -0.2);
     if (d.ears === 'floppy') {
       return both((s) => `<ellipse cx="${f(s * (w - 2))}" cy="${f(-h * 0.7)}" rx="16" ry="30" fill="${c}" ${S} transform="rotate(${s * 16} ${f(s * (w - 2))} ${f(-h * 0.7)})"/>`);
@@ -109,6 +126,8 @@
     let out = '';
     const a = d.accent || sh(d.body, -0.25);
     for (const x of d.back || []) {
+      const X = ext('back', x);
+      if (X) { out += X(d, kit(w, h, { id })); continue; }
       switch (x) {
         case 'tailFluffy': {
           const p = `M${f(w * 0.55)},${f(-h * 0.22)} C${w + 58},${f(-h * 0.16)} ${w + 62},${f(-h * 0.86)} ${w + 26},${f(-h * 1.02)} ` +
@@ -238,6 +257,8 @@
     let out = '';
     const m = d.markColor || sh(d.body, -0.3);
     for (const x of d.marks || []) {
+      const X = ext('marks', x);
+      if (X) { out += X(d, kit(w, h, { fy, ex, m })); continue; }
       switch (x) {
         case 'stripes':
           for (const s of [-1, 1]) for (let k = 0; k < 3; k++) {
@@ -311,6 +332,8 @@
 
   /* ---------------------------------------------------------- face */
   function eyes(d, w, h, fy, ex) {
+    const X = ext('eyes', d.eyes);
+    if (X) return X(d, kit(w, h, { fy, ex }));
     if (d.eyes === 'none') return '';
     const ey = d.eyesOnBumps ? -h * 0.93 : fy;
     const exx = d.eyesOnBumps ? 0.46 : ex;
@@ -336,6 +359,8 @@
   }
 
   function muzzle(d, w, h, fy) {
+    const X = ext('muzzle', d.muzzle);
+    if (X) return X(d, kit(w, h, { fy }));
     const mc = d.muzzleColor || sh(d.body, 0.5);
     switch (d.muzzle) {
       case 'snout':
@@ -359,7 +384,9 @@
     }
   }
 
-  function nose(d, fy) {
+  function nose(d, w, h, fy) {
+    const X = ext('nose', d.nose);
+    if (X) return X(d, kit(w, h, { fy }));
     const nc = d.noseColor || O;
     const ny = fy + (d.muzzle === 'snout' ? 9 : 8);
     switch (d.nose) {
@@ -371,7 +398,9 @@
     }
   }
 
-  function mouth(d, fy) {
+  function mouth(d, w, h, fy) {
+    const X = ext('mouth', d.mouth);
+    if (X) return X(d, kit(w, h, { fy }));
     const my = fy + (d.muzzle === 'snout' ? 17 : d.nose === 'big' ? 25 : d.muzzle === 'capy' ? 24 : 16);
     switch (d.mouth) {
       case 'none': return '';
@@ -395,6 +424,8 @@
   }
 
   function arms(d, w, h) {
+    const X = ext('arms', d.arms);
+    if (X) return X(d, kit(w, h));
     const c = d.armColor || sh(d.body, -0.06);
     switch (d.arms) {
       case 'none': return '';
@@ -407,7 +438,9 @@
     }
   }
 
-  function feet(d, w) {
+  function feet(d, w, h) {
+    const X = ext('feet', d.feet);
+    if (X) return X(d, kit(w, h));
     const c = d.feetColor || sh(d.body, -0.12);
     switch (d.feet) {
       case 'none': return '';
@@ -422,6 +455,8 @@
   function front(d, w, h) {
     let out = '';
     for (const x of d.front || []) {
+      const X = ext('front', x);
+      if (X) { out += X(d, kit(w, h)); continue; }
       switch (x) {
         case 'tuft': {
           const t = -h * 0.95, c = d.tuftColor || sh(d.body, -0.08);
@@ -461,6 +496,15 @@
     return out;
   }
 
+  function over(d, w, h) {
+    let out = '';
+    for (const x of d.over || []) {
+      const X = ext('over', x);
+      if (X) out += X(d, kit(w, h));
+    }
+    return out;
+  }
+
   /**
    * Render one animal to SVG markup.
    * @returns {string} a <g class="critter"> ... </g>
@@ -488,13 +532,14 @@
       `<g class="c-earsf">${earsFront(d, w, h)}</g>` +
       `${front(d, w, h)}` +
       `${arms(d, w, h)}` +
-      `<g class="c-face">${cheeks}${muzzle(d, w, h, fy)}${whiskers(d, w, fy)}${nose(d, fy)}${mouth(d, fy)}` +
+      `<g class="c-face">${cheeks}${muzzle(d, w, h, fy)}${whiskers(d, w, fy)}${nose(d, w, h, fy)}${mouth(d, w, h, fy)}` +
       `<g class="c-eyes">${eyes(d, w, h, fy, ex)}</g></g>` +
-      `${feet(d, w)}` +
+      `${feet(d, w, h)}` +
+      `${over(d, w, h)}` +
       `</g></g>`;
   }
 
-  /* ----------------------------------------------------- the 40 friends */
+  /* ------------------------------------- the 40 friends (the Classic pack) */
   const CREAM = '#fdf3e4', WHITE = '#fdfaf3', PINK = '#f6b3bf', BEAK = '#f7a531';
   const LIST = [
     { id: 'chick', name: 'Chick', body: '#ffd84d', belly: '#ffe98c', front: ['tuft'], arms: 'wing', feet: 'bird', muzzle: 'beak', muzzleColor: BEAK, nose: 'none', mouth: 'none', armColor: '#ffcb2e' },
@@ -539,8 +584,11 @@
     { id: 'goat', name: 'Baby Goat', body: '#f3efe8', ears: 'goat', earColor: '#e3d7c7', back: ['horns'], hornColor: '#cdbda4', muzzle: 'snout', muzzleColor: '#f6dcd6', noseColor: '#c98a7a', front: ['leaf'] },
   ];
 
-  // default parts
-  for (const a of LIST) {
+  /** The App Store app's free starter set (12 of the 40). The web app is free
+   * in full and ignores this; it is kept here so the iPhone port matches. */
+  const STARTER = ['chick', 'duckling', 'bunny', 'kitten', 'puppy', 'piglet', 'fox', 'owl', 'frog', 'penguin', 'elephant', 'dino'];
+
+  function withDefaults(a) {
     a.ears = a.ears || 'none';
     a.eyes = a.eyes || 'dot';
     a.mouth = a.mouth || 'w';
@@ -548,11 +596,30 @@
     a.feet = a.feet || 'paw';
     a.nose = a.nose || 'small';
     a.muzzle = a.muzzle || 'none';
+    return a;
   }
+  for (const a of LIST) {
+    withDefaults(a);
+    a.pack = 'classic';
+    if (STARTER.includes(a.id)) a.starter = true;
+  }
+  const byId = Object.fromEntries(LIST.map((a) => [a.id, a]));
 
   GC.Animals = {
     list: LIST,
-    byId: Object.fromEntries(LIST.map((a) => [a.id, a])),
+    byId,
+    STARTER,
+    parts: PARTS,
+    /** add a pack's friends (js/packs.js calls this) */
+    add(defs, packId) {
+      for (const a of defs) {
+        if (byId[a.id]) throw new Error(`friend id "${a.id}" is already taken`);
+        withDefaults(a);
+        a.pack = packId;
+        LIST.push(a);
+        byId[a.id] = a;
+      }
+    },
     render,
     /** Markup for a framed photo "friend" that hatches like an animal. */
     renderPhoto(url) {

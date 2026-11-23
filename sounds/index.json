@@ -38,7 +38,27 @@
   "sloth": 0.94,
   "honk": 0.731,
   "crack": 0.366,
-  "pop": 0.522
+  "pop": 0.522,
+  "gingerhee": 0.784,
+  "bauble": 0.914,
+  "starding": 1.045,
+  "wobble": 0.679,
+  "clack": 0.549,
+  "sugarplum": 1.045,
+  "mouseking": 0.627,
+  "icetinkle": 0.993,
+  "angelaah": 1.228,
+  "reindeer": 0.549,
+  "snowhoo": 0.993,
+  "galah": 0.81,
+  "cockatoo": 0.705,
+  "kooka": 1.802,
+  "emu": 0.627,
+  "huff": 0.731,
+  "platypus": 0.705,
+  "glider": 0.313,
+  "frill": 0.679,
+  "churr": 0.914
  },
  "voice": {
   "axolotl": 0.993,
@@ -81,7 +101,32 @@
   "squirrel": 0.888,
   "tiger": 0.967,
   "turtle": 0.784,
-  "unicorn": 0.993
+  "unicorn": 0.993,
+  "angel": 0.94,
+  "gingerbread": 1.045,
+  "mouseking": 1.045,
+  "nutcracker": 1.097,
+  "pudding": 1.045,
+  "reindeer": 0.862,
+  "robin": 0.784,
+  "shortbread": 1.176,
+  "snowfairy": 1.358,
+  "snowman": 0.888,
+  "sugarplum": 1.411,
+  "treecookie": 1.358,
+  "xmasbeetle": 1.149,
+  "bilby": 0.784,
+  "cockatoo": 0.967,
+  "echidna": 0.836,
+  "emu": 1.019,
+  "frillneck": 1.254,
+  "galah": 0.731,
+  "joey": 1.75,
+  "kookaburra": 0.94,
+  "molecricket": 1.071,
+  "platypus": 0.993,
+  "sugarglider": 1.097,
+  "wombat": 0.94
  },
  "karaoke": {
   "inst": {
@@ -159,6 +204,22 @@
    },
    "sparkle": {
     "d": 0.71,
+    "m": null
+   },
+   "sleighbells": {
+    "d": 0.497,
+    "m": null
+   },
+   "celesta": {
+    "d": 1.063,
+    "m": 79.03
+   },
+   "banjo": {
+    "d": 1.2,
+    "m": 67.25
+   },
+   "spoons": {
+    "d": 0.48,
     "m": null
    }
   },
@@ -322,6 +383,106 @@
    "goat": {
     "d": 0.6,
     "m": 65.36
+   },
+   "gingerbread": {
+    "d": 0.6,
+    "m": null
+   },
+   "treecookie": {
+    "d": 0.598,
+    "m": 112.55
+   },
+   "shortbread": {
+    "d": 0.455,
+    "m": 101.11
+   },
+   "pudding": {
+    "d": 0.48,
+    "m": null
+   },
+   "nutcracker": {
+    "d": 0.212,
+    "m": null
+   },
+   "sugarplum": {
+    "d": 0.611,
+    "m": 94.14
+   },
+   "mouseking": {
+    "d": 0.8,
+    "m": null
+   },
+   "snowfairy": {
+    "d": 0.554,
+    "m": null
+   },
+   "angel": {
+    "d": 0.9,
+    "m": 71.97
+   },
+   "reindeer": {
+    "d": 0.592,
+    "m": null
+   },
+   "robin": {
+    "d": 0.6,
+    "m": 97.88
+   },
+   "snowman": {
+    "d": 0.593,
+    "m": 66.96
+   },
+   "xmasbeetle": {
+    "d": 0.48,
+    "m": null
+   },
+   "galah": {
+    "d": 0.68,
+    "m": 97.01
+   },
+   "cockatoo": {
+    "d": 0.498,
+    "m": 82.45
+   },
+   "kookaburra": {
+    "d": 0.6,
+    "m": 71.58
+   },
+   "emu": {
+    "d": 0.394,
+    "m": null
+   },
+   "joey": {
+    "d": 0.48,
+    "m": null
+   },
+   "wombat": {
+    "d": 0.401,
+    "m": null
+   },
+   "platypus": {
+    "d": 0.48,
+    "m": 65.5
+   },
+   "echidna": {
+    "d": 0.48,
+    "m": null
+   },
+   "sugarglider": {
+    "d": 0.48,
+    "m": 87.14
+   },
+   "frillneck": {
+    "d": 0.435,
+    "m": null
+   },
+   "bilby": {
+    "d": 0.225,
+    "m": null
+   },
+   "molecricket": {
+    "d": 0.677,
+    "m": 104.44
    }
   },
   "extra": {
@@ -364,7 +525,32 @@
    "sloth": 1.096,
    "ladybug": 0.736,
    "snail": 0.592,
-   "goat": 0.425
+   "goat": 0.425,
+   "gingerbread": 0.705,
+   "treecookie": 0.8,
+   "shortbread": 0.432,
+   "pudding": 0.64,
+   "nutcracker": 0.8,
+   "sugarplum": 0.8,
+   "mouseking": 0.8,
+   "snowfairy": 0.578,
+   "angel": 0.745,
+   "reindeer": 0.8,
+   "robin": 0.651,
+   "snowman": 0.551,
+   "xmasbeetle": 0.259,
+   "galah": 0.734,
+   "cockatoo": 0.511,
+   "kookaburra": 0.776,
+   "emu": 0.699,
+   "joey": 0.508,
+   "wombat": 0.66,
+   "platypus": 0.737,
+   "echidna": 0.726,
+   "sugarglider": 0.8,
+   "frillneck": 0.701,
+   "bilby": 0.602,
+   "molecricket": 0.783
   }
  }
 }

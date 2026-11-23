@@ -16,9 +16,15 @@
   const save = () => Store.save(S);
   document.documentElement.style.setProperty('--hold', `${S.holdSeconds}s`);
 
-  const ANIMAL_IDS = GC.Animals.list.map((a) => a.id);
-  const bag = new GC.ShuffleBag('gc.bag.v1', ANIMAL_IDS);
-  const sceneBag = new GC.ShuffleBag('gc.scenebag.v1', GC.Scenes.list.map((s) => s.id));
+  // shuffle bags over the packs that are switched on (js/packs.js); rebuilt when that changes
+  let bag, sceneBag;
+  const packFriends = () => { const on = GC.Packs.enabled(S.packsOff); return GC.Animals.list.filter((a) => on.includes(a.pack)); };
+  function makeBags() {
+    const on = GC.Packs.enabled(S.packsOff);
+    bag = new GC.ShuffleBag('gc.bag.v1', packFriends().map((a) => a.id));
+    sceneBag = new GC.ShuffleBag('gc.scenebag.v1', GC.Scenes.list.filter((sc) => on.includes(sc.pack)).map((sc) => sc.id));
+  }
+  makeBags();
 
   /* ============================================================ setup */
   let pendingScene = null;
@@ -401,6 +407,7 @@
   }
   window.addEventListener('resize', () => { if (run && run.phase === 'ready') placeTapHint(); });
 
+  let forcedFriend = null; // test hook: the next egg hatches this friend
   function pickFriend() {
     const photos = run.photos || [];
     const usePhoto = photos.length && (S.hatchWho === 'photos' || (S.hatchWho === 'both' && Math.random() < 0.4));
@@ -408,7 +415,8 @@
       const p = GC.pick(photos);
       return { kind: 'photo', id: p.id, name: 'Peekaboo!', markup: GC.Animals.renderPhoto(p.url) };
     }
-    const a = GC.Animals.byId[bag.next()];
+    const a = GC.Animals.byId[forcedFriend || bag.next()];
+    forcedFriend = null;
     return { kind: 'animal', id: a.id, name: a.name, markup: GC.Animals.render(a) };
   }
 
@@ -749,8 +757,14 @@
     ], () => S.hatchWho, (v) => (S.hatchWho = v));
     let whoGroup = mkWho();
     refresh();
-    return sec('Who hatches?', 'Animals come in a shuffled order: no repeats until all 40 have hatched. Photos you add can hatch too and never leave this device.',
+    const packRows = GC.Packs.list.map((p) => toggleRow(p.name, `${GC.Packs.friendsIn(p.id).length} friends` + (GC.Packs.scenesIn(p.id).length ? ` · ${GC.Packs.scenesIn(p.id).length} world${GC.Packs.scenesIn(p.id).length > 1 ? 's' : ''}` : '') + (p.blurb ? ` · ${p.blurb}` : ''),
+      () => !(S.packsOff || []).includes(p.id),
+      (v) => { S.packsOff = (S.packsOff || []).filter((x) => x !== p.id).concat(v ? [] : [p.id]); makeBags(); }));
+    return sec('Who hatches?', `Animals come in a shuffled order: no repeats until all ${packFriends().length} have hatched. Photos you add can hatch too and never leave this device.`,
       whoGroup, h('div', { style: 'height:12px' }), photoGrid, file,
+      h('h3', { style: 'margin-top:18px' }, 'Friend packs'),
+      h('p', { class: 'hint' }, 'Switch a pack off to keep its friends and worlds out of the shuffle (Christmas only in December, say).'),
+      ...packRows,
       h('h3', { style: 'margin-top:18px' }, 'When time is up'),
       h('p', { class: 'hint' }, 'Wait for a tap: the egg wiggles and knocks until someone taps it. Hatch by itself: it hatches the moment time runs out.'),
       optGroup([{ v: 'tap', icon: 'tap', label: 'Wait for a tap' }, { v: 'auto', icon: 'hatch', label: 'Hatch by itself' }], () => S.hatchMode, (v) => (S.hatchMode = v)));
@@ -794,6 +808,7 @@
 
   function secAbout() {
     return sec('About', 'Get Cracking works fully offline. No login, no account, no ads — settings, photos and the friend book stay on this device.',
+      h('p', { class: 'hint' }, h('a', { href: 'privacy.html', target: '_blank', rel: 'noopener' }, 'Privacy policy')),
       h('div', { class: 'opts' },
         h('button', { class: 'opt', onclick: () => { if (confirm('Clear the friend book?')) { localStorage.removeItem('gc.book.v1'); closeSheet(); } } }, GC.Icons.el('broom'), 'Reset friend book'),
         h('button', { class: 'opt', onclick: () => { if (confirm('Reset all settings?')) { S = JSON.parse(JSON.stringify(Store.DEFAULTS)); save(); document.documentElement.style.setProperty('--hold', `${S.holdSeconds}s`); closeSheet(); chooseScene(); fitSetup(); } } }, GC.Icons.el('reset'), 'Reset settings')));
@@ -802,14 +817,21 @@
   function secBook() {
     const book = Store.book();
     const found = GC.Animals.list.filter((a) => book[a.id]).length;
-    const grid = h('div', { class: 'book-grid' });
-    for (const a of GC.Animals.list) {
-      const seen = !!book[a.id];
-      const card = h('div', { class: `book-card ${seen ? '' : 'unseen'}` });
-      card.innerHTML = `<svg viewBox="-112 -218 224 232">${GC.Animals.render(a)}</svg><span>${seen ? a.name : '?'}</span>${book[a.id] > 1 ? `<b>×${book[a.id]}</b>` : ''}`;
-      grid.append(card);
+    const parts = [];
+    for (const p of GC.Packs.list) {
+      const friends = GC.Packs.friendsIn(p.id);
+      if (!friends.length) continue;
+      const grid = h('div', { class: 'book-grid' });
+      for (const a of friends) {
+        const seen = !!book[a.id];
+        const card = h('div', { class: `book-card ${seen ? '' : 'unseen'}` });
+        card.innerHTML = `<svg viewBox="-112 -218 224 232">${GC.Animals.render(a)}</svg><span>${seen ? a.name : '?'}</span>${book[a.id] > 1 ? `<b>×${book[a.id]}</b>` : ''}`;
+        grid.append(card);
+      }
+      if (GC.Packs.list.length > 1) parts.push(h('h3', { class: 'book-pack' }, `${p.name} · ${friends.filter((a) => book[a.id]).length} of ${friends.length}`));
+      parts.push(grid);
     }
-    return sec(`${found} of ${GC.Animals.list.length} friends found`, 'Every hatch adds a friend to the book.', grid);
+    return sec(`${found} of ${GC.Animals.list.length} friends found`, 'Every hatch adds a friend to the book.', ...parts);
   }
 
   /* ============================================================ boot */
@@ -827,7 +849,8 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
     // debug/test hook
-    GC.app = { get run() { return run; }, startRun, hatch, setPaused, adjust, stopToSetup, openSheet, closeSheet, settings: () => S };
+    GC.app = { get run() { return run; }, startRun, hatch, setPaused, adjust, stopToSetup, openSheet, closeSheet, settings: () => S,
+      nextFriend: (id) => { forcedFriend = id; }, get bagItems() { return bag.items; } };
   }
   boot();
 })();

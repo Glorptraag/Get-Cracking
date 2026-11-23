@@ -141,6 +141,12 @@
     sparkle: (k, n, t, d, g) => [0, 4, 7, 12, 16].forEach((x, i) => k.glock(n + x, t + i * 0.055, 0.8, 0.03 * g)),
   };
 
+  /** chirp kinds a pack adds for its world: CHIRPS[name] = (p, k, t, chord, hi, out).
+   * Play only chord notes so it stays in key. p.inst adds the song's key itself, so pass it
+   * chord notes (e.g. p.inst('glock', chord[0] + 24, t, 0.6, 0.6, out)); hi already includes
+   * the key and is for k.say.* voices, which don't add it. */
+  const CHIRPS = {};
+
   function makePlayer(s, k, friendId) {
     const idx = (GC.Samples && GC.Samples.index && GC.Samples.index.karaoke) || { inst: {}, sing: {}, extra: {} };
     const has = (key) => !!(GC.Samples && GC.Samples.has(DIR + key));
@@ -200,6 +206,7 @@
       /** tones and chirps that suit the world, always on the chord's notes */
       chirp(t, chord) {
         const hi = chord.map((n) => n + 24 + key), o = k.ch.sparkle;
+        if (CHIRPS[p.world.chirp]) { CHIRPS[p.world.chirp](p, k, t, chord, hi, o); return; }
         switch (p.world.chirp) {
           case 'cheeps':
             k.say.cheep(t, midi(hi[2]), 0.08, o, 0.8); k.say.cheep(t + 0.12, midi(hi[2] + 5), 0.08, o, 0.8);
@@ -368,5 +375,8 @@
     return len;
   };
 
-  GC.Karaoke = { FRIENDS, WORLDS, VERSE, CHORUS, DIR, keyFor, PART_MID };
+  /* A pack can add an instrument too: SYN[id] (the synth stand-in), GAIN[id], and
+   * HOME[id] (the MIDI note it naturally sits around, for pitched ones), plus its
+   * recording in sounds/karaoke/inst/<id>.mp3 listed in sounds/index.json. */
+  GC.Karaoke = { FRIENDS, WORLDS, VERSE, CHORUS, DIR, keyFor, PART_MID, SYN, GAIN, HOME, CHIRPS };
 })();

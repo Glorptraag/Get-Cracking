@@ -1,0 +1,15 @@
+{
+  "_about": "Aussie Bush pack: prompts for its new animal calls (GC.Band.CALLS added in js/packs/aussie.js), generated with tools/gen-sounds.js --manifest tools/packs/aussie.sounds.json and written by tools/pick-sounds.js --manifest (which only adds to sounds/index.json). The joey, echidna and bilby reuse the Classic boing, sniff and squeak. Every call has a synthesised stand-in.",
+  "common": "close-up, isolated, no music, no speech, no background noise",
+  "sounds": [
+    { "id": "galah", "take": 1, "s": 0.8, "prompt": "A galah cockatoo giving two soft friendly chirpy screeches, chet chet, cute, not harsh" },
+    { "id": "cockatoo", "take": 1, "s": 0.7, "prompt": "A sulphur-crested cockatoo giving one short cheeky squawk, playful and not too harsh" },
+    { "id": "kooka", "take": 1, "s": 1.8, "prompt": "A kookaburra laughing, a short cheerful koo-koo-koo-ka-ka-ka laugh" },
+    { "id": "emu", "take": 2, "s": 1.0, "prompt": "An emu making soft deep drumming booms, thrum thrum thrum, gentle" },
+    { "id": "huff", "take": 1, "s": 0.7, "prompt": "A baby wombat making two soft huffy little grunts, hrmph hrmph, cute" },
+    { "id": "platypus", "take": 1, "s": 0.7, "prompt": "A baby platypus making a soft cute grumbly churr, playful, not scary" },
+    { "id": "glider", "take": 2, "s": 0.6, "prompt": "A sugar glider making three tiny high yapping barks, yip yip yip, cute" },
+    { "id": "frill", "take": 1, "s": 0.7, "prompt": "A little lizard opening its frill with a soft papery flutter and a tiny cute hiss" },
+    { "id": "churr", "take": 1, "s": 0.9, "prompt": "A mole cricket singing from its burrow, a soft steady trilling churr" }
+  ]
+}

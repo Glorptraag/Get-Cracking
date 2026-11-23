@@ -1,0 +1,35 @@
+{
+  "_about": "Aussie Bush pack: Egg karaoke recordings, generated with tools/gen-sounds.js --manifest tools/packs/aussie.karaoke.json and chosen, pitched and levelled by tools/pick-karaoke.js --manifest tools/packs/aussie.karaoke.json (which only adds to sounds/index.json). inst = the bush band's two new instruments (banjo lead, spoons backbeat); sing = each friend's sound in the band (a call that holds a steady note sings the tune, anything else plays as it is); extra = its ad-lib in the gaps. Same format and rules as tools/karaoke.json.",
+  "common": "close-up, isolated, no music, no speech, no background noise",
+  "commonInst": "one single isolated note, dry studio recording, no reverb, no other instruments, no melody",
+  "sounds": [
+    { "id": "inst/banjo", "s": 1.2, "inst": true, "pitched": true, "prompt": "A single banjo string plucked, one bright twangy note" },
+    { "id": "inst/spoons", "s": 0.5, "inst": true, "prompt": "A single clack of two spoons played as a folk percussion instrument" },
+
+    { "id": "sing/galah", "s": 0.7, "pitched": true, "prompt": "A galah calling once, one clear chirpy screech on a steady note, cute, not harsh" },
+    { "id": "sing/cockatoo", "s": 0.6, "pitched": true, "prompt": "A cockatoo giving one single short cheeky squawk, not harsh" },
+    { "id": "sing/kookaburra", "s": 0.6, "pitched": true, "prompt": "A kookaburra giving one single short hoo from its laugh, on a steady note" },
+    { "id": "sing/emu", "s": 0.7, "pitched": true, "prompt": "An emu giving one single soft deep drumming boom on a steady note" },
+    { "id": "sing/joey", "s": 0.5, "pitched": true, "prompt": "One single springy cartoon boing of a little kangaroo hop" },
+    { "id": "sing/wombat", "s": 0.5, "pitched": true, "prompt": "A baby wombat giving one single soft short grunt" },
+    { "id": "sing/platypus", "s": 0.5, "pitched": true, "prompt": "A baby platypus giving one single soft short churr" },
+    { "id": "sing/echidna", "s": 0.5, "pitched": true, "prompt": "One single small quick snuffle from an echidna nose" },
+    { "id": "sing/sugarglider", "s": 0.5, "pitched": true, "prompt": "A sugar glider giving one single tiny high yip" },
+    { "id": "sing/frillneck", "s": 0.5, "pitched": true, "prompt": "One single soft papery flutter of a little lizard's frill opening, fwip" },
+    { "id": "sing/bilby", "s": 0.5, "pitched": true, "prompt": "A bilby giving one single tiny high squeak" },
+    { "id": "sing/molecricket", "s": 0.7, "pitched": true, "prompt": "A mole cricket giving one single short trill on a steady note, like a soft whistle" },
+
+    { "id": "extra/galah", "s": 0.8, "prompt": "A galah flapping its wings while swinging upside down, a soft feathery flutter" },
+    { "id": "extra/cockatoo", "s": 0.8, "prompt": "A cockatoo cracking a seed with its beak, one crunchy crack" },
+    { "id": "extra/kookaburra", "s": 0.8, "prompt": "A kookaburra flapping its wings and landing on a branch" },
+    { "id": "extra/emu", "s": 0.8, "prompt": "An emu chick running fast on dry ground, quick pattering footsteps" },
+    { "id": "extra/joey", "s": 0.8, "prompt": "A joey wriggling around inside a soft furry pouch, soft rustling" },
+    { "id": "extra/wombat", "s": 0.8, "prompt": "A wombat munching grass, soft crunchy chewing" },
+    { "id": "extra/platypus", "s": 0.8, "prompt": "A platypus diving into a creek, one small splash" },
+    { "id": "extra/echidna", "s": 0.8, "prompt": "An echidna licking up ants with its long tongue, quick tiny slurps" },
+    { "id": "extra/sugarglider", "s": 0.8, "prompt": "A sugar glider gliding through the air between trees, a soft whoosh" },
+    { "id": "extra/frillneck", "s": 0.8, "prompt": "A little lizard scampering quickly over dry leaves" },
+    { "id": "extra/bilby", "s": 0.8, "prompt": "A bilby hopping on sand, soft little thumps" },
+    { "id": "extra/molecricket", "s": 0.8, "prompt": "A mole cricket burrowing through soft soil, tiny crumbly digging" }
+  ]
+}

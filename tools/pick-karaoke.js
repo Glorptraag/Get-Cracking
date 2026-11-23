@@ -21,11 +21,15 @@
 const fs = require('fs'), path = require('path');
 const { level, analyse, voice, peakDb } = require('./level');
 const dir = process.argv[2];
-if (!dir) { console.error('usage: node tools/pick-karaoke.js <takesDir> [--only id,id]'); process.exit(1); }
+if (!dir) { console.error('usage: node tools/pick-karaoke.js <takesDir> [--only id,id] [--manifest tools/packs/<pack>.karaoke.json]'); process.exit(1); }
 const onlyAt = process.argv.indexOf('--only');
 const only = onlyAt > 0 ? process.argv[onlyAt + 1].split(',') : null; // re-pick just these, keep the rest
 const ROOT = path.join(__dirname, '..');
-const man = JSON.parse(fs.readFileSync(path.join(__dirname, 'karaoke.json'), 'utf8'));
+// a pack's own manifest (tools/packs/<pack>.karaoke.json) adds to the index and never removes the others'
+const manAt = process.argv.indexOf('--manifest');
+const manPath = manAt > 0 ? process.argv[manAt + 1] : path.join(__dirname, 'karaoke.json');
+const man = JSON.parse(fs.readFileSync(manPath, 'utf8'));
+const merge = !!only || manAt > 0;
 const fileId = (id) => id.replace(/\//g, '_');
 const tmp = path.join(dir, 'leveled');
 fs.mkdirSync(tmp, { recursive: true });
@@ -49,8 +53,8 @@ function score(s, a) {
 const idxPath = path.join(ROOT, 'sounds', 'index.json');
 const idx = JSON.parse(fs.readFileSync(idxPath, 'utf8'));
 const reportPath = path.join(dir, 'karaoke-report.json');
-const index = only && idx.karaoke ? idx.karaoke : { inst: {}, sing: {}, extra: {} };
-const report = only && fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf8')) : {};
+const index = merge && idx.karaoke ? idx.karaoke : { inst: {}, sing: {}, extra: {} };
+const report = merge && fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf8')) : {};
 const missing = [];
 for (const s of man.sounds) {
   if (only && !only.includes(s.id)) continue;
