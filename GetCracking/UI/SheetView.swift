@@ -428,12 +428,13 @@ struct NextUpSection: View {
 
 // MARK: - The Whole Nest
 
-/// The grown-up settings row: the one always-available way to the unlock,
-/// plus Restore Purchases.
+/// The grown-up settings row: the one always-available way to the unlock.
+/// It only names who it is for. The offer, the price and Restore Purchases
+/// are all on the paywall, behind the parental gate (Kids Category rule:
+/// Restore can raise an Apple Account sign-in, so a child must not reach it).
 struct NestSection: View {
     @Environment(AppModel.self) private var model
     @Environment(EntitlementStore.self) private var store
-    @State private var restoring = false
 
     var body: some View {
         SheetSection(title: "The Whole Nest") {
@@ -451,34 +452,17 @@ struct NestSection: View {
                     HStack(spacing: 12) {
                         Text("🪺").font(.system(size: 30)).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("All \(Packs.allFriends.count) friends, \(Packs.allScenes.count) worlds and every song").font(Theme.round(16, .semibold))
-                            Text("Plus every new pack. One payment, Family Sharing on.").font(Theme.round(13)).opacity(0.75)
+                            Text("For grown-ups").font(Theme.round(16, .semibold))
+                            Text("More friends, worlds and songs, or restore a purchase.").font(Theme.round(13)).opacity(0.75)
                         }
                         .multilineTextAlignment(.leading)
                         Spacer(minLength: 0)
-                        Text("›").font(Theme.round(26, .bold))
+                        LockBadge()
                     }
                     .padding(.horizontal, 14).padding(.vertical, 10)
                 }
                 .buttonStyle(ToyButtonStyle(fill: Theme.cream, radius: 16))
-                .accessibilityLabel("The Whole Nest: every friend, world and song. For grown-ups.")
-
-                Button {
-                    Task {
-                        restoring = true
-                        await store.restore()
-                        restoring = false
-                    }
-                } label: {
-                    Text(restoring ? "Restoring…" : "Restore Purchases").font(Theme.round(15, .semibold))
-                        .padding(.horizontal, 14).frame(minHeight: 44)
-                }
-                .buttonStyle(ToyButtonStyle())
-                .disabled(restoring)
-                .padding(.top, 10)
-                if let err = store.lastError, !restoring {
-                    Text(err).font(Theme.round(13)).foregroundStyle(Theme.berry)
-                }
+                .accessibilityLabel("The Whole Nest. For grown-ups.")
             }
         }
     }
