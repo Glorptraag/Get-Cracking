@@ -1,6 +1,6 @@
 /* Record "It's a Fox!" for every friend with ElevenLabs text-to-speech.
  *
- *   ELEVENLABS_API_KEY=… node tools/gen-voice.js <takesDir> [--budget 3000]
+ *   ELEVENLABS_API_KEY=… node tools/gen-voice.js <takesDir> [--budget 3000] [--only galah,wombat]
  *
  * Uses the same ledger and budget as tools/gen-sounds.js and never re-records a
  * line it already has. The voice and its settings are fixed here so lines match.
@@ -17,11 +17,19 @@ const SETTINGS = { stability: 0.45, similarity_boost: 0.75, style: 0.35, use_spe
 const KEY = process.env.ELEVENLABS_API_KEY || 'proxy-injected';
 
 // the friend names, read from the app itself so they can never drift
-const src = fs.readFileSync(path.join(__dirname, '..', 'js', 'animals.js'), 'utf8');
-const names = [...src.matchAll(/\{ id: '([a-z]+)', name: '([^']+)'/g)].map((m) => ({ id: m[1], name: m[2] }));
+// (the 40 in js/animals.js and every pack's friends in js/packs/*.js). A friend can set
+// say: 'It's a baby kangaroo, a joey!' to override the line.
+const packDir = path.join(__dirname, '..', 'js', 'packs');
+const src = [path.join(__dirname, '..', 'js', 'animals.js')]
+  .concat(fs.existsSync(packDir) ? fs.readdirSync(packDir).filter((f) => f.endsWith('.js')).map((f) => path.join(packDir, f)) : [])
+  .map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+const oa = args.indexOf('--only'), only = oa > 0 ? args[oa + 1].split(',') : null;
+const names = [...src.matchAll(/\{ id: '([a-z0-9]+)', name: '([^']+)'(?:[^\n]*?say: '((?:[^'\\]|\\.)+)')?/g)]
+  .map((m) => ({ id: m[1], name: m[2], say: m[3] && m[3].replace(/\\'/g, "'") }))
+  .filter((a) => !only || only.includes(a.id));
 // "an Owl", "an Elephant", but "a Unicorn" (it starts with a "you" sound)
 const article = (n) => (/^[aeiou]/i.test(n) && !/^(uni|use|eu)/i.test(n) ? 'an' : 'a');
-const lines = names.map((a) => ({ id: a.id, text: `It's ${article(a.name)} ${a.name}!` })).concat([{ id: 'peekaboo', text: 'Peekaboo!' }]);
+const lines = names.map((a) => ({ id: a.id, text: a.say || `It's ${article(a.name)} ${a.name}!` })).concat(only ? [] : [{ id: 'peekaboo', text: 'Peekaboo!' }]);
 
 fs.mkdirSync(path.join(dir, 'voice'), { recursive: true });
 const ledgerPath = path.join(dir, 'ledger.json');

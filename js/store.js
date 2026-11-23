@@ -15,6 +15,7 @@
     volume: 0.7,
     sayName: true,
     hatchWho: 'animals',    // 'animals' | 'photos' | 'both'
+    packsOff: [],           // friend packs (js/packs.js) kept out of the shuffle
     hatchStyle: 'random',   // shell effect id from js/hatch/*, or 'random'
     hatchMode: 'tap',       // 'tap' (hatch waits for you) | 'auto'
     showPause: false,       // pause button visible on timer screen

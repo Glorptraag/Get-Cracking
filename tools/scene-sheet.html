@@ -3,7 +3,7 @@
 .crack-main,.crack-branch{fill:none;stroke:#3b2224;stroke-linecap:round;stroke-linejoin:round}.crack-main{stroke-width:var(--crack-w,3)}.crack-branch{stroke-width:var(--branch-w,2.4);stroke-dasharray:0 2}.crack-branch.on{stroke-dasharray:1 2}
 .egg-rays,.egg-halo{display:none}</style>
 <div id="g"></div>
-<script src="../js/util.js"></script><script src="../js/animals.js"></script><script src="../js/egg.js"></script><script src="../js/scenes.js"></script>
+<script src="../js/util.js"></script><script src="../js/animals.js"></script><script src="../js/egg.js"></script><script src="../js/scenes.js"></script><script src="../js/packs.js"></script><script src="../js/packs/aussie.js"></script><script src="../js/packs/christmas.js"></script>
 <script>
 GC.Scenes.list.forEach((s,i)=>{const svg=document.createElementNS(GC.SVGNS,'svg');g.appendChild(svg);
 const h=GC.Scenes.build(svg,s.id);const e=new GC.Egg(h.eggLayer,{x:300,y:392});e.setStep(i%9,true);

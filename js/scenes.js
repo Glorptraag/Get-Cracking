@@ -426,6 +426,11 @@
   }
 
   /* ===================================================== particles */
+  /** particle kinds a pack adds: PARTICLES[name] = (i, x, y, st, r) => markup for one particle.
+   * st is the style attribute with --dur/--dx/delay; reuse the CSS classes p-fall, p-rise,
+   * p-spin, p-firefly so reduced motion still turns them off. */
+  const PARTICLES = {};
+
   function particles(type, n) {
     if (!type) return '';
     const r = GC.seeded(type.length * 31);
@@ -434,6 +439,7 @@
     for (let i = 0; i < count; i++) {
       const x = r() * 600, y = r() * 420, dur = 6 + r() * 8, delay = -r() * dur;
       const st = `style="--dur:${dur.toFixed(1)}s;--dx:${((r() - 0.5) * 80).toFixed(0)}px;animation-delay:${delay.toFixed(1)}s"`;
+      if (PARTICLES[type]) { s += PARTICLES[type](i, x, y, st, r); continue; }
       switch (type) {
         case 'fireflies':
           s += `<g transform="translate(${f(x)} ${f(120 + y * 0.8)})"><circle class="p-firefly" ${st} r="4" fill="#fff2a0"/></g>`;
@@ -534,5 +540,21 @@
     };
   }
 
-  GC.Scenes = { list: SCENES, build, EGG, RING };
+  // the Classic pack's three free worlds in the App Store app (the web app is free in full)
+  for (const sc of SCENES) { sc.pack = 'classic'; if (['meadow', 'forest', 'pond'].includes(sc.id)) sc.starter = true; }
+
+  GC.Scenes = {
+    list: SCENES, build, EGG, RING,
+    PARTICLES,
+    /** the drawing kit pack worlds use: same props, faces and helpers as the built-in ten */
+    kit: { P, S, NS, D, O, f, sh, topPt, leftPt, rightPt, shift, lip, pebbles, roots, burrow, strata, waterSide, myco, icicles, tunnels, worm, acorns, fossil, gull, stars },
+    /** add a pack's worlds (js/packs.js calls this) */
+    add(defs, packId) {
+      for (const sc of defs) {
+        if (SCENES.some((x) => x.id === sc.id)) throw new Error(`world id "${sc.id}" is already taken`);
+        sc.pack = packId;
+        SCENES.push(sc);
+      }
+    },
+  };
 })();
