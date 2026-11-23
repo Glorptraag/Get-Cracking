@@ -137,9 +137,9 @@
       fairyWings(d, k) {
         const { w, h, f, S } = k, c = d.wingColor, hi = GC.shade(c, 0.45);
         return k.both((s) => {
-          const ux = s * (w + 16), uy = -h * 0.74, lx = s * (w + 8), ly = -h * 0.38;
-          return `<ellipse cx="${f(ux)}" cy="${f(uy)}" rx="25" ry="38" fill="${c}" ${S} transform="rotate(${s * 32} ${f(ux)} ${f(uy)})"/>` +
-            `<ellipse cx="${f(ux + s * 3)}" cy="${f(uy - 6)}" rx="11" ry="20" fill="${hi}" transform="rotate(${s * 32} ${f(ux)} ${f(uy)})"/>` +
+          const ux = s * (w + 11), uy = -h * 0.76, lx = s * (w + 5), ly = -h * 0.38;
+          return `<ellipse cx="${f(ux)}" cy="${f(uy)}" rx="22" ry="35" fill="${c}" ${S} transform="rotate(${s * 32} ${f(ux)} ${f(uy)})"/>` +
+            `<ellipse cx="${f(ux + s * 3)}" cy="${f(uy - 6)}" rx="9" ry="18" fill="${hi}" transform="rotate(${s * 32} ${f(ux)} ${f(uy)})"/>` +
             `<ellipse cx="${f(lx)}" cy="${f(ly)}" rx="17" ry="24" fill="${c}" ${S} transform="rotate(${s * -34} ${f(lx)} ${f(ly)})"/>`;
         });
       },
@@ -148,8 +148,8 @@
         const { w, h, f, S } = k, c = d.wingColor;
         return k.both((s) => {
           const x0 = s * (w - 14), y0 = -h * 0.62;
-          const p = `M${f(x0)},${f(y0)} L${f(s * (w + 12))},${f(-h * 1.06)} L${f(s * (w + 36))},${f(-h * 0.88)} L${f(s * (w + 24))},${f(-h * 0.6)} ` +
-            `L${f(s * (w + 34))},${f(-h * 0.36)} L${f(s * (w + 10))},${f(-h * 0.24)} Z`;
+          const p = `M${f(x0)},${f(y0)} L${f(s * (w + 10))},${f(-h * 1.06)} L${f(s * (w + 32))},${f(-h * 0.88)} L${f(s * (w + 21))},${f(-h * 0.6)} ` +
+            `L${f(s * (w + 30))},${f(-h * 0.36)} L${f(s * (w + 10))},${f(-h * 0.24)} Z`;
           return `<path d="${p}" fill="${c}" ${S}/>` +
             `<path d="M${f(s * (w + 2))},${f(-h * 0.64)} L${f(s * (w + 18))},${f(-h * 0.88)} M${f(s * (w + 2))},${f(-h * 0.54)} L${f(s * (w + 22))},${f(-h * 0.38)}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>`;
         });
@@ -187,7 +187,7 @@
       /* Robin: a little tail tipped up behind */
       robinTail(d, k) {
         const { w, h, f, S } = k;
-        return `<g class="c-tail"><path d="M${f(w * 0.55)},${f(-h * 0.14)} L${f(w + 18)},${f(-h * 0.6)} Q${f(w + 34)},${f(-h * 0.6)} ${f(w + 40)},${f(-h * 0.42)} L${f(w * 0.75)},${f(-h * 0.04)} Z" fill="${GC.shade(d.body, -0.12)}" ${S}/></g>`;
+        return `<g class="c-tail"><path d="M${f(w * 0.6)},${f(-h * 0.18)} Q${f(w + 4)},${f(-h * 0.44)} ${f(w + 14)},${f(-h * 0.56)} Q${f(w + 26)},${f(-h * 0.62)} ${f(w + 30)},${f(-h * 0.5)} Q${f(w + 36)},${f(-h * 0.42)} ${f(w + 28)},${f(-h * 0.36)} Q${f(w + 14)},${f(-h * 0.2)} ${f(w * 0.75)},${f(-h * 0.06)} Z" fill="${GC.shade(d.body, -0.12)}" ${S}/></g>`;
       },
       /* Christmas Beetle: short antennae with little fan-shaped clubs */
       fanAntennae(d, k) {
@@ -359,9 +359,9 @@
       twigs(d, k) {
         const { w, h, f, tube } = k, c = '#8a5a3b';
         return k.both((s) => `<g class="${s < 0 ? 'c-arm-l' : 'c-arm-r'}">` +
-          tube(`M${f(s * (w - 8))},${f(-h * 0.48)} L${f(s * (w + 30))},${f(-h * 0.8)}`, c, 5) +
-          tube(`M${f(s * (w + 16))},${f(-h * 0.68)} L${f(s * (w + 34))},${f(-h * 0.64)}`, c, 4) +
-          tube(`M${f(s * (w + 30))},${f(-h * 0.8)} L${f(s * (w + 32))},${f(-h * 0.9)} M${f(s * (w + 30))},${f(-h * 0.8)} L${f(s * (w + 40))},${f(-h * 0.84)}`, c, 3.5) + `</g>`);
+          tube(`M${f(s * (w - 8))},${f(-h * 0.48)} L${f(s * (w + 24))},${f(-h * 0.8)}`, c, 5) +
+          tube(`M${f(s * (w + 12))},${f(-h * 0.68)} L${f(s * (w + 28))},${f(-h * 0.66)}`, c, 4) +
+          tube(`M${f(s * (w + 24))},${f(-h * 0.8)} L${f(s * (w + 25))},${f(-h * 0.91)} M${f(s * (w + 24))},${f(-h * 0.8)} L${f(s * (w + 33))},${f(-h * 0.86)}`, c, 3.5) + `</g>`);
       },
     },
 
@@ -519,7 +519,7 @@
     { id: 'pudding', name: 'Christmas Pudding', shape: 'wide', body: '#8e5236', back: ['plate'], marks: ['custard'], over: ['hollyTop'], feet: 'none', nose: 'none', mouth: 'w', armColor: '#7a4430', cheekColor: '#f3828f', call: 'wobble', karaoke: ['jingle', 'bloop', 300] },
     // The Nutcracker (Advent Eggs days 3, 11, 15, 18)
     { id: 'nutcracker', name: 'Nutcracker', shape: 'tall', body: '#c23b3f', skin: SKIN_LIGHT, marks: ['nutcracker'], over: ['shako'], mouth: 'nutGrin', noseColor: '#d98a7a', armColor: '#b0343a', feetColor: '#2d2a3a', cheekColor: '#f08a8a', call: 'clack', karaoke: ['jingle', 'ork', 240], say: 'It\'s the Nutcracker!' },
-    { id: 'sugarplum', name: 'Sugar Plum Fairy', body: '#b98ad6', skin: SKIN_TAN, hair: '#4a2f45', marks: ['person', 'tutu'], tutu: '#e6c8f2', back: ['fairyWings', 'bun'], wingColor: '#f6c6e6', arms: 'wand', armColor: SKIN_TAN, feetColor: '#f29ac0', over: ['tiara', 'sparkles'], tiara: GOLD, gem: '#f28ab8', noseColor: '#8a5440', call: 'celesta', karaoke: ['jingle', 'hoot', 880], say: 'It\'s the Sugar Plum Fairy!' },
+    { id: 'sugarplum', name: 'Sugar Plum Fairy', body: '#b98ad6', skin: SKIN_TAN, hair: '#4a2f45', marks: ['person', 'tutu'], tutu: '#e6c8f2', back: ['fairyWings', 'bun'], wingColor: '#f6c6e6', arms: 'wand', armColor: SKIN_TAN, feetColor: '#f29ac0', over: ['tiara', 'sparkles'], tiara: GOLD, gem: '#f28ab8', noseColor: '#8a5440', call: 'sugarplum', karaoke: ['jingle', 'hoot', 880], say: 'It\'s the Sugar Plum Fairy!' },
     { id: 'mouseking', name: 'Mouse King', body: '#a3a0aa', belly: '#d8d4dc', ears: 'bigRound', earInner: '#f2b6c4', back: ['cape', 'tailThin'], capeColor: '#8c2f45', tailColor: '#e8a3b4', whiskers: true, noseColor: '#e58aa0', front: ['ermine'], arms: 'sceptre', over: ['crown'], call: 'mouseking', karaoke: ['jingle', 'squeak', 2600], say: 'It\'s the Mouse King!' },
     { id: 'snowfairy', name: 'Snowflake Fairy', body: '#a9d6f0', skin: SKIN_LIGHT, hair: '#f2f5fb', hairTo: 0.4, marks: ['person', 'tutu'], tutu: '#e6f4ff', tutuFlakes: true, back: ['iceWings'], wingColor: '#e6f4ff', arms: 'wand', wandTop: 'flake', armColor: SKIN_LIGHT, feetColor: '#dff1ff', over: ['iceCrown', 'sparkles'], sparkleColor: '#ffffff', noseColor: '#e0a090', call: 'icetinkle', karaoke: ['jingle', 'cheep', 3000], say: 'It\'s the Snowflake Fairy!' },
     // Christmas Eve
@@ -540,7 +540,7 @@
     starding: { len: 1.0, play: (k, t, o) => { k.glock(84, t, 1.2, 0.07); k.glock(96, t + 0.02, 0.9, 0.03); k.say.hoot(t, 1046, 0.5, o, 0.5); } },
     wobble: { len: 0.7, play: (k, t, o) => [0, 0.16, 0.3, 0.42].forEach((g, i) => k.say.bloop(t + g, 320 - i * 30, 0.14, o, 1 - i * 0.18)) },
     clack: { len: 0.6, play: (k, t, o) => { k.woodblock(t, true, 0.14); k.woodblock(t + 0.16, false, 0.14); k.claves(t + 0.38, 0.12); k.say.ork(t + 0.4, 220, 0.12, o, 0.4); } },
-    celesta: { len: 1.0, play: (k, t, o) => [79, 83, 86, 91, 95, 98].forEach((n, i) => k.glock(n, t + i * 0.09, 0.8, 0.05)) },
+    sugarplum: { len: 1.0, play: (k, t, o) => [79, 83, 86, 91, 95, 98].forEach((n, i) => k.glock(n, t + i * 0.09, 0.8, 0.05)) },
     mouseking: { len: 0.55, play: (k, t, o) => { k.say.squeak(t, 2400, 0.12, o); k.say.squeak(t + 0.18, 2800, 0.3, o); } },
     icetinkle: { len: 0.9, play: (k, t, o) => [96, 100, 103, 98, 101, 105].forEach((n, i) => k.glock(n, t + i * 0.06, 0.5, 0.035)) },
     angelaah: { len: 1.1, play: (k, t, o) => { k.say.ah(t, 523, 1.0, o, 0.8); k.say.ah(t, 659, 1.0, o, 0.4); [84, 88, 91].forEach((n, i) => k.glock(n, t + 0.7 + i * 0.07, 0.6, 0.03)); } },

@@ -1,0 +1,17 @@
+{
+  "_about": "Christmas pack calls (js/packs/christmas.js, calls), generated with the ElevenLabs Sound Effects API by tools/gen-sounds.js --manifest tools/packs/christmas.sounds.json and levelled into sounds/ by tools/pick-sounds.js --manifest. The friends who aren't animals make the sound they really would. The robin and the Christmas beetle reuse the Classic 'tweet' and 'buzz'. Every call has a synthesised stand-in.",
+  "common": "close-up, isolated, no music, no speech, no background noise",
+  "sounds": [
+    { "id": "gingerhee", "take": 1, "s": 0.8, "prompt": "A tiny cartoon gingerbread cookie character giggling hee-hee-hee, very high, squeaky and cute" },
+    { "id": "bauble", "take": 1, "s": 0.9, "prompt": "Tiny glass Christmas baubles and little bells jingling together softly, a short cheerful ting-a-ling" },
+    { "id": "starding", "take": 2, "s": 1.0, "prompt": "One bright magical bell ding with a soft sparkling shimmer, like a star twinkling" },
+    { "id": "wobble", "take": 1, "s": 0.8, "prompt": "A cartoon wobbly jelly pudding wobbling, boing-oing-oing, squishy and cute" },
+    { "id": "clack", "take": 1, "s": 0.8, "prompt": "A wooden nutcracker toy clacking its jaw twice, clack clack, then a walnut cracking" },
+    { "id": "sugarplum", "take": 2, "s": 1.0, "prompt": "A short magical run of bright twinkling celesta bell notes going up, music box sparkle" },
+    { "id": "mouseking", "take": 1, "s": 0.6, "prompt": "A cartoon mouse giving one proud bossy squeak, eek, cute" },
+    { "id": "icetinkle", "take": 1, "s": 1.0, "prompt": "Tiny icicles and little glass wind chimes tinkling, a short icy shimmer" },
+    { "id": "angelaah", "take": 1, "s": 1.2, "prompt": "A soft angelic choir humming one gentle warm aah note, heavenly" },
+    { "id": "reindeer", "take": 2, "s": 1.0, "prompt": "A reindeer giving a short snort and grunt while its harness sleigh bells jingle" },
+    { "id": "snowhoo", "take": 2, "s": 1.0, "prompt": "A soft low hooting whistle like blowing across a bottle, one gentle hooo, wintry" }
+  ]
+}

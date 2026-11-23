@@ -38,7 +38,18 @@
   "sloth": 0.94,
   "honk": 0.731,
   "crack": 0.366,
-  "pop": 0.522
+  "pop": 0.522,
+  "gingerhee": 0.784,
+  "bauble": 0.914,
+  "starding": 1.045,
+  "wobble": 0.679,
+  "clack": 0.549,
+  "sugarplum": 1.045,
+  "mouseking": 0.627,
+  "icetinkle": 0.993,
+  "angelaah": 1.228,
+  "reindeer": 0.549,
+  "snowhoo": 0.993
  },
  "voice": {
   "axolotl": 0.993,
@@ -81,7 +92,20 @@
   "squirrel": 0.888,
   "tiger": 0.967,
   "turtle": 0.784,
-  "unicorn": 0.993
+  "unicorn": 0.993,
+  "angel": 0.94,
+  "gingerbread": 1.045,
+  "mouseking": 1.045,
+  "nutcracker": 1.097,
+  "pudding": 1.045,
+  "reindeer": 0.862,
+  "robin": 0.784,
+  "shortbread": 1.176,
+  "snowfairy": 1.358,
+  "snowman": 0.888,
+  "sugarplum": 1.411,
+  "treecookie": 1.358,
+  "xmasbeetle": 1.149
  },
  "karaoke": {
   "inst": {
@@ -160,6 +184,14 @@
    "sparkle": {
     "d": 0.71,
     "m": null
+   },
+   "sleighbells": {
+    "d": 0.497,
+    "m": null
+   },
+   "celesta": {
+    "d": 1.063,
+    "m": 79.03
    }
   },
   "sing": {
@@ -322,6 +354,58 @@
    "goat": {
     "d": 0.6,
     "m": 65.36
+   },
+   "gingerbread": {
+    "d": 0.6,
+    "m": null
+   },
+   "treecookie": {
+    "d": 0.598,
+    "m": 112.55
+   },
+   "shortbread": {
+    "d": 0.455,
+    "m": 101.11
+   },
+   "pudding": {
+    "d": 0.48,
+    "m": null
+   },
+   "nutcracker": {
+    "d": 0.212,
+    "m": null
+   },
+   "sugarplum": {
+    "d": 0.611,
+    "m": 94.14
+   },
+   "mouseking": {
+    "d": 0.8,
+    "m": null
+   },
+   "snowfairy": {
+    "d": 0.554,
+    "m": null
+   },
+   "angel": {
+    "d": 0.9,
+    "m": 71.97
+   },
+   "reindeer": {
+    "d": 0.592,
+    "m": null
+   },
+   "robin": {
+    "d": 0.6,
+    "m": 97.88
+   },
+   "snowman": {
+    "d": 0.593,
+    "m": 66.96
+   },
+   "xmasbeetle": {
+    "d": 0.48,
+    "m": null
    }
   },
   "extra": {
@@ -364,7 +448,20 @@
    "sloth": 1.096,
    "ladybug": 0.736,
    "snail": 0.592,
-   "goat": 0.425
+   "goat": 0.425,
+   "gingerbread": 0.705,
+   "treecookie": 0.8,
+   "shortbread": 0.432,
+   "pudding": 0.64,
+   "nutcracker": 0.8,
+   "sugarplum": 0.8,
+   "mouseking": 0.8,
+   "snowfairy": 0.578,
+   "angel": 0.745,
+   "reindeer": 0.8,
+   "robin": 0.651,
+   "snowman": 0.551,
+   "xmasbeetle": 0.259
   }
  }
 }
