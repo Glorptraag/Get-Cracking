@@ -359,11 +359,11 @@ struct PackRow: View {
     let pack: Pack
 
     var body: some View {
+        @Bindable var model = model
         let worlds = pack.scenes.count
         let sub = "\(pack.friends.count) friends" + (worlds > 0 ? " · \(worlds) world\(worlds > 1 ? "s" : "")" : "") + " · \(pack.blurb)"
         if model.gate.pack(pack) {
-            ToggleRow(label: pack.name, sub: sub, isOn: Binding(get: { !model.settings.packsOff.contains(pack.id) },
-                                                              set: { model.setPack(pack.id, on: $0) }))
+            ToggleRow(label: pack.name, sub: sub, isOn: $model[packOn: pack.id])
         } else {
             Button { model.askForNest(.lockedPack) } label: {
                 HStack(spacing: 12) {
@@ -373,7 +373,8 @@ struct PackRow: View {
                     }
                     .multilineTextAlignment(.leading)
                     Spacer()
-                    ToySwitch(isOn: Binding(get: { false }, set: { _ in model.askForNest(.lockedPack) }))
+                    ToySwitch(isOn: .constant(false))
+                        .allowsHitTesting(false)
                         .opacity(0.6)
                         .overlay(alignment: .topTrailing) { LockBadge(size: 22).offset(x: 6, y: -8) }
                 }

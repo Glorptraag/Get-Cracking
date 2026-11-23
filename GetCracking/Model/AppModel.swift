@@ -440,6 +440,12 @@ final class AppModel {
         applyOwnership()
     }
 
+    /// a pack's switch in settings, as a bindable value
+    subscript(packOn id: String) -> Bool {
+        get { !settings.packsOff.contains(id) }
+        set { setPack(id, on: newValue) }
+    }
+
     /// Open the paywall (the parental gate comes first).
     func askForNest(_ placement: PaywallPlacement) {
         guard !store.hasWholeNest else { return }
