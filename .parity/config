@@ -1,11 +1,11 @@
 WEB_REF=main
 WEB_SCOPE=.
-WEB_SYNCED=c4600dd5b03530163809cce25fcd5887c957d580
+WEB_SYNCED=0fbc6700fd79d56a2fe986e4cfbbe8d990707185
 WEB_INSTALL=true
 WEB_CHECK=for f in js/*.js js/hatch/*.js sw.js; do node --check "$f" || exit 1; done
 MAC_REF=ios-swiftui
 MAC_SCOPE=.
-MAC_SYNCED=6eca5cb5f2b6b5ef94e9cbf21ea275c7d1cf9ae4
+MAC_SYNCED=6e6a63401a562fe39e563c9f0459b005bdbd0e82
 MAC_PROJECT=GetCracking.xcodeproj
 MAC_SCHEME=GetCracking
 MAC_MIN_OS=17.0
