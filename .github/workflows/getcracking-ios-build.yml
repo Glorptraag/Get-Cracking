@@ -19,6 +19,11 @@ jobs:
           swiftc GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
             Tests/GateChecks/main.swift -o gatecheck
           ./gatecheck
+      - name: Egg karaoke checks (keys, bends and every friend's sounds against the web, no audio)
+        run: |
+          swiftc GetCracking/Audio/KaraokeData.swift GetCracking/Audio/KaraokeIndex.swift \
+            GetCracking/Monetization/Packs.swift Tests/KaraokeChecks/main.swift -o karaokecheck
+          ./karaokecheck
       - name: Build for the iOS Simulator
         run: |
           set -o pipefail

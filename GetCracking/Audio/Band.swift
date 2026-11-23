@@ -233,10 +233,10 @@ struct Kit {
     func glock(_ n: Double, _ t: Double, _ d: Double = 1.1, _ gn: Double = 0.045) {
         tone(midi(n), t, d, .sparkle, gain: gn, partials: [(1, 1), (2.76, 0.2), (5.4, 0.06)])
     }
-    func flute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07) {
+    func flute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07, _ c: Ch = .lead) {
         let m = midi(n)
         V(t, VSpec(type: .sine, f: P(m), partials: [(1, 1), (2, 0.14), (3, 0.04)], dur: d, gain: gn, attack: 0.06, sus: 0.9,
-                   vib: (5, 14, 0.15), noise: 0.05, noiseF: m * 2), .lead)
+                   vib: (5, 14, 0.15), noise: 0.05, noiseF: m * 2), c)
     }
     func panflute(_ n: Double, _ t: Double, _ d: Double, _ gn: Double = 0.07) {
         let m = midi(n)
@@ -416,8 +416,8 @@ private let A7: [Double] = [57, 61, 64, 67], D: [Double] = [62, 66, 69]
 private let Fj: [Double] = [60, 65, 69], Bb: [Double] = [62, 65, 70], Cj: [Double] = [60, 64, 67], Dm: [Double] = [62, 65, 69]
 private let Gf: [Double] = [59, 62, 67], Cf: [Double] = [60, 64, 67], Df: [Double] = [62, 66, 69], Em: [Double] = [59, 64, 67]
 
-/// the nearest chord tone a bit below a melody note: a simple harmony line
-private func below(_ n: Double, _ chord: [Double]) -> Double {
+/// the nearest chord tone a bit below a melody note: a simple harmony line (Egg karaoke uses it too)
+func below(_ n: Double, _ chord: [Double]) -> Double {
     var best = n - 12
     for c in chord {
         for o in stride(from: -24.0, through: 12.0, by: 12.0) {
@@ -741,7 +741,10 @@ enum Band {
         let play: (Kit, Double, Ch) -> Void
     }
 
-    static let calls: [String: Call] = [
+    /// every call: the Classic ones here, the packs' in Karaoke.swift (Band.packCalls)
+    static let calls: [String: Call] = classicCalls.merging(packCalls) { a, _ in a }
+
+    private static let classicCalls: [String: Call] = [
         "moo": Call(len: 1.15) { k, t, o in k.moo(t, 125, 1.15, o) },
         "calf": Call(len: 0.8) { k, t, o in k.moo(t, 175, 0.8, o) },
         "quack": Call(len: 0.42) { k, t, o in k.quack(t, 300, 0.17, o); k.quack(t + 0.24, 290, 0.18, o) },
@@ -818,15 +821,8 @@ enum Band {
     /// every call that has a recording (Resources/Sounds/call-<name>.mp3)
     static var callNames: [String] { Array(calls.keys) }
 
-    /// which call each friend makes when it takes its solo
-    static let friendCalls: [String: String] = [
-        "chick": "cheep", "duckling": "peep", "penguin": "honk", "owl": "hoot", "hamster": "squeak", "bunny": "boing", "fox": "yip",
-        "kitten": "meow", "bearcub": "rawr", "panda": "lamb", "frog": "ribbit", "turtle": "bloop", "dino": "dino", "dragon": "dragon",
-        "mouse": "squeak", "piglet": "oink", "koala": "grunt", "raccoon": "chitter", "tiger": "roar", "lion": "roar", "calf": "calf",
-        "lamb": "lamb", "fawn": "mew", "hedgehog": "sniff", "otter": "eep", "seal": "ork", "axolotl": "bloop", "bat": "squeak",
-        "mole": "sniff", "monkey": "monkey", "elephant": "trumpet", "squirrel": "chitter", "puppy": "woof", "unicorn": "unicorn",
-        "capybara": "wheek", "redpanda": "squeak", "sloth": "sloth", "ladybug": "buzz", "snail": "bloop", "goat": "goat",
-    ]
+    /// which call each friend makes when it takes its solo (Classic and the packs: KaraokeData.swift)
+    static let friendCalls: [String: String] = FriendCalls.all
 
     /// a little magic on top of a recorded call
     private static let after: [String: (Kit, Double) -> Void] = [

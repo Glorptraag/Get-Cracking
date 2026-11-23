@@ -235,7 +235,16 @@ final class RunController {
         scene.ringLayer.play([KF(opacity: 1), KF(opacity: 0.25)], duration: 0.8, fill: true)
         let friend = pickFriend()
         let s = settings
-        // a song that isn't owned (e.g. after a refund) plays the first animal band
+        // Egg karaoke: the friend's voice loads now, and it bops on every note it sings
+        Sound.shared.preloadFriend(friend.animalId)
+        Sound.shared.onSing = { [weak self] delay, dur in
+            Task { @MainActor in
+                await GC.sleep(delay)
+                guard let self, !self.ended else { return }
+                self.egg.sing(dur)
+            }
+        }
+        // a song that isn't owned (e.g. after a refund) plays Egg karaoke
         let endSound = app?.gate.effectiveEndSound(s.endSound) ?? Packs.defaultEndSound
         // tapping the friend: it says hello in its own voice
         egg.onCheer = {

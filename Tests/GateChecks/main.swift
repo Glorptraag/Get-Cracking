@@ -31,13 +31,15 @@ check(freeTier.friend("dino"), "free: dino is allowed")
 check(!freeTier.friend("dragon"), "free: dragon is locked")
 check(!freeTier.friend("unicorn"), "free: unicorn is locked")
 check(freeTier.scene("meadow") && !freeTier.scene("reef"), "free: meadow allowed, reef locked")
+check(freeTier.endSound("karaoke"), "free: Egg karaoke (the default song) allowed")
+check(Packs.defaultEndSound == "karaoke", "Egg karaoke is the default hatching song")
 check(freeTier.endSound("band") && freeTier.endSound("tada"), "free: Animal band and the jingles allowed")
 check(!freeTier.endSound("jungle") && !freeTier.endSound("farm"), "free: Jungle jam and Farmyard hoedown locked")
 
 // owned: everything allowed
 check(Packs.allFriends.allSatisfy(nest.friend), "nest: every friend allowed")
 check(Packs.allScenes.allSatisfy(nest.scene), "nest: every world allowed")
-check(["band", "jungle", "farm", "tada"].allSatisfy(nest.endSound), "nest: every song allowed")
+check(["karaoke", "band", "jungle", "farm", "tada"].allSatisfy(nest.endSound), "nest: every song allowed")
 check(Packs.list.allSatisfy(nest.pack), "nest: every pack allowed")
 
 // shuffle pool = owned only
@@ -55,7 +57,7 @@ check(nest.canAddPhoto(liveCount: 50) && nest.photosLeft(liveCount: 50) == nil, 
 
 // downgrade: settings that point at locked things fall back, found friends stay visible
 check(freeTier.effectiveScene("reef") == "random" && freeTier.effectiveScene("pond") == "pond", "free: locked world plays as Surprise me")
-check(freeTier.effectiveEndSound("jungle") == "band", "free: locked song plays the Animal band")
+check(freeTier.effectiveEndSound("jungle") == "karaoke", "free: locked song plays Egg karaoke")
 check(!freeTier.bookShowsLock(friend: "dragon", timesFound: 3), "free: a dragon already found stays in the book")
 check(freeTier.bookShowsLock(friend: "dragon", timesFound: 0), "free: an unfound dragon shows a lock")
 check(!freeTier.bookShowsLock(friend: "chick", timesFound: 0), "free: an unfound chick shows no lock")

@@ -5,9 +5,11 @@ import UIKit
 ///   1. countdown music — an ambient "something is happening" cue that keeps
 ///      working when the child looks away from the screen
 ///   2. small sound effects — crack, pop, boop, knock
-///   3. the end tune — a cheerful celebration instead of an alarm. The three
-///      animal bands (a full band, animal voices and a solo for the friend who
-///      hatched) live in Band.swift; the short jingles are here.
+///   3. the end tune — a cheerful celebration instead of an alarm. Egg karaoke
+///      (the friend who hatched plays in the band with its own voice,
+///      Karaoke.swift) and the three animal bands (a full band, animal voices
+///      and a solo for that friend, Band.swift) are songs; the short jingles
+///      are here.
 ///   4. recorded sounds — real animal calls, the egg crack and pop, and
 ///      "It's a Fox!" for every friend (Resources/Sounds, generated once with
 ///      ElevenLabs). Every one has a synthesised stand-in.
@@ -30,6 +32,7 @@ final class Sound {
         Choice(id: "off", name: "Quiet", icon: "🔇"),
     ]
     static let endSounds: [Choice] = [
+        Choice(id: "karaoke", name: "Egg karaoke", icon: "🎤"),
         Choice(id: "band", name: "Animal band", icon: "🥁"),
         Choice(id: "jungle", name: "Jungle jam", icon: "🪇"),
         Choice(id: "farm", name: "Farmyard hoedown", icon: "🐮"),
@@ -49,6 +52,13 @@ final class Sound {
     private var pausedMusic: String?
     private var samplesLoading = false
     private(set) var volume: Double = 0.7
+
+    /// Egg karaoke: called on each note the friend sings with (seconds until
+    /// it is heard, how long it lasts), so the friend can bop along. Called
+    /// from the audio thread: hop to the main actor before touching views.
+    var onSing: ((Double, Double) -> Void)? {
+        didSet { lock.lock(); synth.onSing = onSing; lock.unlock() }
+    }
 
     private init() {
         let sr = AVAudioSession.sharedInstance().sampleRate
@@ -115,19 +125,33 @@ final class Sound {
     /// "It's a Fox!" sits clearly on top while the band ducks under it
     static let voiceGain = 1.25
 
-    /// Decode the animal calls and effects in the background (the voice lines
-    /// load one at a time, when a friend hatches).
+    /// Decode the animal calls and effects in the background, then Egg
+    /// karaoke's band and every friend's singing voice (the voice lines and
+    /// each friend's extra sound load when it hatches).
     private func loadSamples() {
         guard !samplesLoading else { return }
         samplesLoading = true
-        let names = Band.callNames + ["crack", "pop"]
+        assert(FriendCalls.all.values.allSatisfy { Band.calls[$0] != nil }, "every friend's call needs a synthesised stand-in")
+        assert(KaraokeData.synthStandIns.allSatisfy { Karaoke.syn[$0] != nil }, "every karaoke stand-in needs a synth recipe")
+        let calls: [(key: String, file: String)] = (Band.callNames + ["crack", "pop"]).map { (key: $0, file: "call-" + $0) }
+        let keys: [String] = KaraokeData.inst.keys.sorted().map(Karaoke.instKey) + KaraokeData.sing.keys.sorted().map(Karaoke.singKey)
+        let files = calls + keys.map { (key: $0, file: Karaoke.file($0)) }
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            for name in names {
-                guard let url = Bundle.main.url(forResource: "call-" + name, withExtension: "mp3"),
-                      let pcm = Sound.decode(url) else { continue }
+            for (key, file) in files {
                 guard let self else { return }
-                self.lock.lock(); self.synth.samples[name] = pcm; self.lock.unlock()
+                self.lock.lock(); let have = self.synth.samples[key] != nil; self.lock.unlock()
+                guard !have, let url = Bundle.main.url(forResource: file, withExtension: "mp3"),
+                      let pcm = Sound.decode(url) else { continue }
+                self.lock.lock(); self.synth.samples[key] = pcm; self.lock.unlock()
             }
+        }
+    }
+
+    /// have the hatching friend's karaoke voice and extra sound ready by the time the shell breaks
+    func preloadFriend(_ animalId: String?) {
+        guard let id = animalId, KaraokeData.friends[id] != nil else { return }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            for key in [Karaoke.singKey(id), Karaoke.extraKey(id)] { _ = self?.haveSample(key, file: Karaoke.file(key)) }
         }
     }
 
@@ -241,6 +265,13 @@ final class Sound {
     @discardableResult
     func endTune(_ id: String, friend: String? = nil) -> Double {
         var len = 0.0
+        if id == "karaoke" {
+            // the friend's voice decides how it plays, so have it loaded before the song starts
+            let who = Karaoke.pick(friend)
+            for key in [Karaoke.singKey(who), Karaoke.extraKey(who)] { _ = haveSample(key, file: Karaoke.file(key)) }
+            with { len = Karaoke.perform(who, on: $0) }
+            return len
+        }
         with { s in
             if Band.songs[id] != nil {
                 len = Band.perform(id, friend: friend, on: s)
@@ -587,6 +618,10 @@ final class Synth {
     var samples: [String: (data: [Float], sr: Double)] = [:]
     /// recordings are levelled to -14 LUFS (tools/pick-sounds.js); this sits them in the mix
     static let sampleGain = 0.62
+    /// Egg karaoke's bop: (seconds until the note is heard, its length); see Sound.onSing
+    var onSing: ((Double, Double) -> Void)?
+    /// at most this many recordings at once (Egg karaoke's band is all recordings)
+    static let maxPlays = 128
 
     // an animal band: its scheduled events, level, room
     private var celeb: Celebration?
@@ -633,7 +668,7 @@ final class Synth {
         tones.reserveCapacity(256)
         noises.reserveCapacity(128)
         voices.reserveCapacity(96)
-        plays.reserveCapacity(32)
+        plays.reserveCapacity(Synth.maxPlays)
     }
 
     var t: Double { Double(now) / sr }
@@ -716,19 +751,24 @@ final class Synth {
     }
 
     /// Play a recording if it has loaded. Returns its length, or 0 so the
-    /// caller can fall back to the synthesised version.
+    /// caller can fall back to the synthesised version. rate = playback speed
+    /// (and pitch); maxDur cuts it short with a fade of `fade` seconds.
     @discardableResult
-    func playSample(_ key: String, at: Double, bus: Bus, gain: Double = 1, rate: Double = 1, maxDur: Double? = nil) -> Double {
-        guard let smp = samples[key], smp.data.count > 1, plays.count < 32 else { return 0 }
+    func playSample(_ key: String, at: Double, bus: Bus, gain: Double = 1, rate: Double = 1, maxDur: Double? = nil,
+                    fade: Double = 0.06) -> Double {
+        guard let smp = samples[key], smp.data.count > 1, plays.count < Synth.maxPlays, rate > 0 else { return 0 }
         var dur = Double(smp.data.count - 1) / smp.sr / rate
         var fadeAt = Int.max
+        var fadeLen = max(1, Int(0.06 * sr))
         if let m = maxDur, m < dur {
             dur = m
-            fadeAt = max(0, Int((m - 0.06) * sr))
+            let f = min(fade, m / 2)
+            fadeAt = max(0, Int((m - f) * sr))
+            fadeLen = max(1, Int(f * sr))
         }
         plays.append(SampleVoice(start: sample(at), data: smp.data, step: smp.sr / sr * rate,
                                  gain: gain * Synth.sampleGain, end: Int(dur * sr), fadeAt: fadeAt,
-                                 fadeLen: max(1, Int(0.06 * sr)), bus: bus))
+                                 fadeLen: fadeLen, bus: bus))
         return dur
     }
 
