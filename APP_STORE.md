@@ -128,7 +128,7 @@ Kids Category wording rules: the words "for kids" and "for children" are fine he
 **Keywords** (100 max, commas, no spaces): `toddler,visual timer,countdown,preschool,routine,transition,tidy up,bedtime,hatch,animal,band,kids` (98)
 
 **Promotional text** (170 max, can change any time without review):
-`New: Aussie Bush and Christmas packs! The Whole Nest unlocks all 65 friends, 13 worlds and every song, plus every new pack. The timer and 12 friends stay free.` (156)
+`New: Aussie Bush and Christmas packs! The Whole Nest unlocks all 65 friends, 13 worlds and every song, plus every new pack. The timer and 12 friends stay free.` (159)
 
 **Description:**
 ```
@@ -170,7 +170,7 @@ Sizes: **6.9"** (1320 × 2868, iPhone 16 Pro Max simulator) is required; **6.5"*
 Take them in the simulator with **File → Save Screen** (⌘S). Suggested set, in order:
 1. The egg mid-crack in the Sunny Meadow with the ring half empty (caption: "A timer they can see")
 2. A friend just hatched with "It's a Fox!" (caption: "Then a friend hatches")
-3. The setup screen with the egg on its perch (caption: "Set it in a second")
+3. The setup screen with the egg-timer dial (caption: "Twist to set the time")
 4. The friend book with some friends found (caption: "Collect every friend")
 5. The world picker showing several worlds (caption: "13 worlds, 65 friends with The Whole Nest")
 
@@ -183,7 +183,7 @@ Get Cracking is a wordless visual timer for children aged 5 and under (Kids Cate
 
 In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 65 friends (the Classic 40 plus the Aussie Bush and Christmas packs), 13 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
 
-Parental gate: every purchase surface, Restore Purchases in the paywall, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
+Parental gate: every purchase surface, Restore Purchases, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
 
 To reach the purchase:
 1. On the home screen tap the gear button (Settings).
@@ -192,7 +192,7 @@ To reach the purchase:
 4. The paywall shows the price, Restore Purchases, Terms of Use and Privacy Policy. Tap "Unlock The Whole Nest".
 Other ways in: tap a locked world (World button), a locked hatching song (Music button), a locked friend or the "For grown-ups" banner in the friend book (Friends button), or the locked "+" after adding one photo (Settings → Who hatches?).
 
-After purchase every lock disappears. Restore Purchases is also in Settings → The Whole Nest.
+After purchase every lock disappears. Restore Purchases is on the paywall only (Settings → The Whole Nest → parental gate), so it is never reachable without the gate.
 ```
 
 ## 11. Submit
@@ -211,7 +211,7 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 | 3 | Load failure | Airplane mode, open the paywall | "Couldn't reach the App Store just now" + Try again; nothing unlocks |
 | 4 | Purchase | Online, Unlock The Whole Nest, confirm with the sandbox account | Paywall says thank you; every lock gone; friend-book banner gone; Settings row says "unlocked" |
 | 5 | Shuffle | Run a few short timers | Locked-before friends and worlds now appear |
-| 6 | Restore | Delete the app, reinstall, Settings → Restore Purchases | Unlocks again |
+| 6 | Restore | Delete the app, reinstall, Settings → The Whole Nest → gate → Restore Purchases | Unlocks again |
 | 7 | Offline launch | Owned; airplane mode; force-quit; relaunch | Still unlocked (StoreKit's receipts are on the device) |
 | 8 | Ask to Buy | In Xcode with `Products.storekit`: **Editor → Enable Ask To Buy**, buy | "Waiting for a grown-up to approve"; approve in **Debug → StoreKit → Manage Transactions** → everything unlocks by itself |
 | 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Egg karaoke |

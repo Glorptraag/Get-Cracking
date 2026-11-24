@@ -46,7 +46,7 @@ Implementation: `GetCracking/Monetization/FeatureGate.swift` (every decision), `
 ## Bill of Rights
 Always free, never moved behind the unlock:
 - The whole timer and every timer setting, hatch styles, countdown music.
-- The 12 starter friends, 3 starter worlds, the first animal band and the short jingles, one photo friend.
+- The 12 starter friends, 3 starter worlds, Egg karaoke, the first animal band and the short jingles, one photo friend.
 - The friend book itself.
 
 Downgrade rule (refund, or leaving a Family Sharing group):
@@ -80,7 +80,7 @@ All user-initiated; all open the parental gate first, then the paywall (`Paywall
 
 | Placement | Moment | Interruptive? | Notes |
 |---|---|---|---|
-| `settings` | Grown-up settings, top row "The Whole Nest", plus Restore Purchases | No | The menu is always on the table |
+| `settings` | Grown-up settings, top row "The Whole Nest: For grown-ups" (no offer or price on the row; Restore Purchases is on the paywall, behind the gate) | No | The menu is always on the table |
 | `lockedWorld` | Tapping a locked world in the world picker | No | Lock badge on the card |
 | `lockedSong` | Tapping a locked hatching song | No | 🔒 on the chip |
 | `lockedFriend` | Tapping a locked silhouette in the friend book | No | Small lock badge |
