@@ -67,7 +67,7 @@ Never, in any experiment:
 |---|---|---|---|---|---|---|
 | `com.glorptraag.getcracking.wholenest` | The Whole Nest | Non-Consumable | A$5.99 (the A$5.99 price point; other storefronts follow Apple's equalisation) | None | On (irreversible) | `[Judgment]` owner decision; `[Rule]` Family Sharing can't be turned off once on |
 
-Derived from the app's bundle id `com.glorptraag.getcracking` (`GetCracking.xcodeproj`).
+Derived from the app's bundle id `com.belladouglas.getcracking` (`GetCracking.xcodeproj`).
 
 Unit economics: A$5.99 includes 10% GST, so A$5.45 before tax; in the Small Business Program (15%) proceeds are about **A$4.63 per sale**. `[Rule]` prices include tax in Australia.
 

@@ -22,7 +22,7 @@ This branch is the **native SwiftUI iPhone app**, built for the App Store. It co
 
 1. Open `GetCracking.xcodeproj`.
 2. Select the **GetCracking** target → **Signing & Capabilities** → choose your **Team**.
-3. Change the **Bundle Identifier** (`com.glorptraag.getcracking`) to one you own.
+3. Change the **Bundle Identifier** (`com.belladouglas.getcracking`) to one you own.
 4. Pick an iPhone simulator or a device and press **Run**.
 
 New Swift files dropped into `GetCracking/` are picked up automatically; there is no file list to maintain.

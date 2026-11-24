@@ -7,7 +7,7 @@ Facts you'll need:
 | | |
 |---|---|
 | App name | Get Cracking |
-| Bundle ID | `com.glorptraag.getcracking` |
+| Bundle ID | `com.belladouglas.getcracking` |
 | Product ID | `com.glorptraag.getcracking.wholenest` |
 | Product type | Non-Consumable |
 | Reference name | The Whole Nest |
@@ -33,7 +33,7 @@ Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/
 2. Commission drops from 30% to 15%. At A$5.99 that is about **A$4.63 per sale** instead of A$3.81.
 
 ## 3. Create the in-app purchase (ASC)
-1. ASC → **Apps** → Get Cracking (create the app record first if needed: **+** → New App → iOS, name "Get Cracking", primary language English (Australia), bundle ID `com.glorptraag.getcracking`, SKU e.g. `getcracking-ios`).
+1. ASC → **Apps** → Get Cracking (create the app record first if needed: **+** → New App → iOS, name "Get Cracking", primary language English (Australia), bundle ID `com.belladouglas.getcracking`, SKU e.g. `getcracking-ios`).
 2. Left sidebar → **Monetization** → **In-App Purchases** → **+**.
 3. Type: **Non-Consumable**. Reference Name: `The Whole Nest`. Product ID: `com.glorptraag.getcracking.wholenest` (exactly; it can never be reused or renamed). **Create**.
 4. **Availability**: all countries or regions (or start with Australia only).
