@@ -57,7 +57,7 @@ Downgrade rule (refund, or leaving a Family Sharing group):
 Never, in any experiment:
 - A pitch, price or upsell on a kid-facing screen. The child only ever sees a small lock.
 - An interruptive paywall. Every placement is a grown-up tapping something.
-- Purchases, Restore, Terms or Privacy reachable without the parental gate (numbers written as words).
+- Purchases, Terms or Privacy reachable without the parental gate (numbers written as words). Restore Purchases buys nothing and sits in Settings ungated, as well as on the paywall.
 - Fake countdowns, fake scarcity, invented "values", discount-on-dismiss, push notifications.
 - Third-party analytics, ads or tracking (Kids Category). `MonetizationLog` writes to the device log only.
 - Locking anything the family made.
@@ -80,7 +80,7 @@ All user-initiated; all open the parental gate first, then the paywall (`Paywall
 
 | Placement | Moment | Interruptive? | Notes |
 |---|---|---|---|
-| `settings` | Grown-up settings, top row "The Whole Nest: For grown-ups" (no offer or price on the row; Restore Purchases is on the paywall, behind the gate) | No | The menu is always on the table |
+| `settings` | Grown-up settings, top row "The Whole Nest" (what it includes, no price), with Restore Purchases under it | No | The menu is always on the table |
 | `lockedWorld` | Tapping a locked world in the world picker | No | Lock badge on the card |
 | `lockedSong` | Tapping a locked hatching song | No | 🔒 on the chip |
 | `lockedFriend` | Tapping a locked silhouette in the friend book | No | Small lock badge |
