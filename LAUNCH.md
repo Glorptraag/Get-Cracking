@@ -35,8 +35,20 @@ The changes: one branch, automatic build numbers, machines check what machines c
 
 **A blocker is one of:** a crash; a timer that ends at the wrong time or never hatches; no sound when the ringer is on; buy or restore not working; a child reaching the purchase or a link without the parental gate; anything App Review rejects. Nothing else is a blocker. A friend whose art is slightly off, a song that could be better mixed, or a missing web nicety goes on the 1.0.1 list.
 
+## GitHub Actions: off
+
+Mac runners use Actions minutes ten times faster than Linux ones, and they were being spent on every push. So:
+
+- No workflow in this repository runs on a push or a pull request.
+- The checks are a script (`tools/check.sh`), run on the Mac, or on a Mac attached to the session. Wherever this plan says CI, it means that script's output.
+- A workflow may keep a manual trigger. Run it by hand at most once per release candidate, never to try out a fix.
+- Several commits go up in one push, after the script passes.
+
+`getcracking-ios-build.yml` on the release-candidate line still runs on every push to those branches. Until phase 1 lands, turn it off in the repository's Actions tab (the workflow's menu, Disable workflow).
+
 ## Phase 1: one trunk, frozen (agent, half a day)
 
+- [ ] [agent] In the same pull request as the fast-forward, change `getcracking-ios-build.yml` to a manual trigger only. Check: `grep -n -A3 '^on:' .github/workflows/getcracking-ios-build.yml`.
 - [ ] [agent] Fast-forward `ios-swiftui` to `claude/confident-bohr-z2ljcm` by pull request. Check: `git rev-list --left-right --count origin/ios-swiftui...origin/claude/confident-bohr-z2ljcm` prints `0 0`.
 - [ ] [Drew] Delete or close `parity/to-mac`, `claude/peaceful-heisenberg-jgwkwu` and the dated `parity/to-mac-2026112x-*` branches once the line above is done. From then on every iOS change goes to `ios-swiftui` and nowhere else.
 - [ ] [agent] Parity is closed for 1.0. Set `WEB_SYNCED` in `.parity/config` to the current `main` and note in `PARITY.md` that the next port happens after release.
@@ -46,9 +58,9 @@ The changes: one branch, automatic build numbers, machines check what machines c
 
 ## Phase 2: machines check first (agent, 1 day)
 
-- [ ] [agent] `tools/check.sh` runs the three check programs and the simulator build. The workflow calls it. The script is the source of truth, so it runs the same on the Mac if Actions minutes run out (macOS runners use them ten times faster). Check: green run URL or the script's last lines.
+- [ ] [agent] `tools/check.sh` runs the three check programs and the simulator build. It runs on the Mac. Check: the script's last lines.
 - [ ] [agent] DEBUG-only launch arguments that open the app in a named state: setup dial, timer at each of the 8 crack steps, time up, hatch, friend with karaoke playing, friend book, each pack's store card, paywall, parental gate, settings. A fast clock argument runs a 5-minute timer in 5 seconds.
-- [ ] [agent] A screenshot step in CI, as Advent Eggs already does with `simctl`: launch each state, screenshot, push to `ci-screenshots`. Include one run of the fast clock from start to hatched. Check: the files on the branch.
+- [ ] [agent] A screenshot step in the check script, using `simctl` as Advent Eggs does: launch each state and screenshot into a folder outside the repository. Include one run of the fast clock from start to hatched. Check: the list of files.
 - [ ] [agent] Checks for the timer across backgrounding: start, record the end time, simulate 3 minutes away, confirm the remaining time and the crack step are right. Add to `GateChecks`. Check: the check names in the log.
 - [ ] [agent] A check that every one of the 65 friends has art, a name recording, and a call or karaoke part that resolves to a bundled file. Check: log line with the count.
 - [ ] [agent] Read every screenshot. Fix what is broken, list what is only untidy under 1.0.1. Check: a table in the PR.
@@ -60,7 +72,7 @@ The changes: one branch, automatic build numbers, machines check what machines c
 - [ ] [Drew] Create the in-app purchase with the ID from phase 1, A$5.99, Family Sharing on.
 - [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`.
 - [ ] [agent] Confirm the privacy page is live. Check: `curl -sI https://getcrackingkids.vercel.app/privacy.html` shows 200.
-- [ ] [agent] `tools/release.sh` and a workflow on `v*` tags: archive, export with the API key, upload to TestFlight. Check: the upload line in the log.
+- [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log.
 - [ ] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step.
 
 ## Phase 4: one hands-on pass (Drew, 20 minutes, one build)
