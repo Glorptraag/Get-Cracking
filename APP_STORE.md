@@ -220,6 +220,21 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 
 Sandbox account: ASC → **Users and Access** → **Sandbox** → **Test Accounts** → **+**, Australian storefront. On the iPhone: **Settings → Developer → Sandbox Apple Account** (or Settings → App Store → Sandbox Account, depending on iOS version).
 
+### Sound and look on a real phone
+These can't be checked in CI or the simulator. A 2-minute timer is enough for each one.
+
+| # | What | Do | Expect |
+|---|---|---|---|
+| S1 | Launch | Force-quit, open the app | A soft grey-green screen, then the setup screen: no white flash |
+| S2 | Silent switch | Ring/silent switch on silent, run a timer to the hatch | The music and the hatch song still play (on purpose: the app is `.playback`) |
+| S3 | Other audio | Play a podcast, then start a timer | Both play together; the podcast isn't stopped |
+| S4 | Away and back | Mid-run, go to the Home Screen for 30 s, come back | The countdown music is playing again straight away, and the egg has caught up |
+| S5 | Phone call / Siri | Mid-run, trigger Siri (or have someone ring), then dismiss | The music comes back after |
+| S6 | Headphones | Mid-hatch, disconnect AirPods / unplug wired headphones | The song carries on from the speaker, no crackle |
+| S7 | Levels | Volume at about half, play Egg karaoke for a few friends (Settings → Music → tap Egg karaoke) | The friend sits in the band, not on top; "It's a …!" is clear over the ducked band; nothing distorts at full volume |
+| S8 | Clock | Run a 2-minute timer with "Show the clock" on | The clock's pill stays exactly the same width as the seconds tick (it used to grow and shrink) |
+| S9 | Small phone | iPhone SE or 13 mini if you have one | The setup screen fits without scrolling; "It's a Christmas Tree Cookie!" fits on one line |
+
 ---
 
 ## Parity gaps before launch
