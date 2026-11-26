@@ -1,7 +1,5 @@
 name: Get Cracking iOS build
 on:
-  push:
-    paths: ["GetCracking/**", "GetCracking.xcodeproj/**", "Config/**", "Tests/**", ".github/workflows/getcracking-ios-build.yml"]
   workflow_dispatch:
 jobs:
   build:
