@@ -17,6 +17,9 @@ OUT="${SCREENS_OUT:-${TMPDIR:-/tmp}/getcracking-screens}"
 NAME="Get Cracking 6.9"
 BUNDLE=com.belladouglas.getcracking
 
+# every simctl call gets a time limit, so a stuck simulator fails the step instead of hanging it
+lim() { local t=$1; shift; perl -e 'alarm shift; exec @ARGV' "$t" "$@"; }
+
 [ -d "$APP" ] || { echo "no app at $APP (run tools/check.sh first)"; exit 1; }
 udid=$(xcrun simctl list devices available | grep -F "$NAME (" | head -1 | grep -oE '[0-9A-F-]{36}')
 if [ -z "$udid" ]; then
@@ -27,12 +30,12 @@ if [ -z "$udid" ]; then
     [ -n "$udid" ] || { echo "FAIL could not make the $NAME simulator"; exit 1; }
 fi
 xcrun simctl boot "$udid" 2>/dev/null
-xcrun simctl bootstatus "$udid" -b > /dev/null
-xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 2>/dev/null
-xcrun simctl install "$udid" "$APP" || exit 1
+lim 300 xcrun simctl bootstatus "$udid" -b > /dev/null || { echo "FAIL the simulator did not boot"; exit 1; }
+lim 30 xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 2>/dev/null
+lim 300 xcrun simctl install "$udid" "$APP" || { echo "FAIL install"; exit 1; }
 rm -rf "$OUT"; mkdir -p "$OUT"
 
-shot() { xcrun simctl io "$udid" screenshot --type=png "$OUT/$1.png" > /dev/null 2>&1 && echo "$1.png"; }
+shot() { lim 60 xcrun simctl io "$udid" screenshot --type=png "$OUT/$1.png" > /dev/null 2>&1 && echo "$1.png" || echo "FAIL screenshot $1"; }
 
 # state, seconds to wait before the screenshot, extra launch arguments
 states=(
@@ -42,18 +45,18 @@ states=(
 )
 for entry in "${states[@]}"; do
     read -r state wait extra <<< "$entry"
-    xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
-    xcrun simctl launch "$udid" "$BUNDLE" -gc-state "$state" ${extra:-} > /dev/null || { echo "FAIL launch $state"; continue; }
+    lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
+    lim 60 xcrun simctl launch "$udid" "$BUNDLE" -gc-state "$state" ${extra:-} > /dev/null || { echo "FAIL launch $state"; continue; }
     sleep "$wait"
     shot "$state"
 done
 
 # one fast-clock run, 5:00 in 5 s, hatching by itself
-xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
-xcrun simctl launch "$udid" "$BUNDLE" -gc-state run -gc-fast -gc-friend kookaburra > /dev/null
+lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
+lim 60 xcrun simctl launch "$udid" "$BUNDLE" -gc-state run -gc-fast -gc-friend kookaburra > /dev/null || echo "FAIL launch run"
 for s in 0 1 2 3 4 5 6 8 10; do
     sleep $([ "$s" = 0 ] && echo 1.5 || echo 1)
     shot "fast-$(printf %02d "$s")s"
 done
-xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
+lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
 echo "screens: $(ls "$OUT" | wc -l | tr -d ' ') files in $OUT"
