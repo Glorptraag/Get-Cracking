@@ -13,10 +13,8 @@ enum ProductID {
     static var all: [String] { [wholeNest] }
 }
 
-/// Links shown inside the paywall (behind the parental gate).
-/// REPLACE the placeholders with the pages you host before submitting
-/// (draft texts are in APP_STORE.md). The App Store Connect metadata must
-/// carry the same Privacy Policy URL.
+/// Links shown inside the paywall (behind the parental gate). The App Store
+/// Connect metadata must carry the same Privacy Policy URL.
 enum LegalLinks {
     /// Apple's standard licence agreement. Swap for your own hosted terms if you publish them.
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!

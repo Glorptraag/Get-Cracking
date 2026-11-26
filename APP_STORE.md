@@ -49,19 +49,10 @@ Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/
 10. Optional, but say no for now: **Promote in-app purchase** on the App Store page. Promoted purchases skip the in-app parental gate, so leave it off in the Kids Category.
 
 ## 4. StoreKit configuration file for local testing (Xcode)
-Don't copy a `.storekit` file from anywhere; let Xcode write it.
-1. Xcode → **File → New → File from Template…** → iOS → **StoreKit Configuration File** → Next.
-2. Name `Products`, save it in the repo's **`Config/`** folder (not inside `GetCracking/`, so it never ships in the app). Leave "Sync this file with an app in App Store Connect" **unticked** for now (you can tick it later, once the IAP exists in ASC, to pull it in automatically).
-3. In the editor: **+** (bottom left) → **Add Non-Consumable In-App Purchase**.
-   - Reference Name: `The Whole Nest`
-   - Product ID: `com.belladouglas.getcracking.wholenest`
-   - Price: `5.99`
-   - Family Shareable: **ticked**
-   - Localization: Display Name `The Whole Nest`, Description `Every friend, world and song, plus every new pack.`
-4. **Editor → Default Storefront → Australia** (and **Editor → Default Localization → English (Australia)**), so the paywall shows A$5.99.
-5. **Product → Scheme → Edit Scheme…** → **Run** → **Options** → **StoreKit Configuration** → `Products.storekit`. Close.
-6. Run in the simulator. Settings (⚙️) → The Whole Nest → answer the gate → the paywall shows **A$5.99**. Buy it; locks disappear; the friend book banner goes away.
-7. To undo a test purchase: **Debug → StoreKit → Manage Transactions…** → select it → **Delete** (or **Refund** to test the downgrade rule).
+`Config/Products.storekit` is in the repository with the one product from `ProductID.swift` (Non-Consumable, A$5.99, Family Shareable, Australian storefront), and the shared scheme's **Run** action uses it. `tools/check.sh` checks the file and `ProductID.swift` agree.
+1. Open the project, check **Product → Scheme → Edit Scheme…** → **Run** → **Options** → **StoreKit Configuration** shows `Products.storekit` (pick it there if it doesn't).
+2. Run in the simulator. Settings (⚙️) → The Whole Nest → answer the gate → the paywall shows **A$5.99**. Buy it; locks disappear; the friend book banner goes away.
+3. To undo a test purchase: **Debug → StoreKit → Manage Transactions…** → select it → **Delete** (or **Refund** to test the downgrade rule).
 
 ## 5. Kids Category and age rating (ASC → App Information)
 1. **Category**: Primary **Kids**, age band **Ages 5 and Under**. (Secondary: Education is optional; leave blank unless you want it.)

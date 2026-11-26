@@ -38,7 +38,7 @@ run() {
 }
 
 if compile gatecheck GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
-    GetCracking/Model/TimeDial.swift Tests/GateChecks/*.swift; then
+    GetCracking/Monetization/ProductID.swift GetCracking/Model/TimeDial.swift Tests/GateChecks/*.swift; then
     run gate gatecheck
 else echo "gate: FAIL (compile)"; fail=1; fi
 

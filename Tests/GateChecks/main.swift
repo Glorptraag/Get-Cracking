@@ -1,8 +1,7 @@
 // Gate decision checks for The Whole Nest, with no StoreKit and no test target.
 // CI compiles this with the app's own Packs.swift and FeatureGate.swift:
 //
-//   swiftc GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
-//          Tests/GateChecks/main.swift -o gatecheck && ./gatecheck
+//   tools/check.sh --no-build
 //
 // It lives outside GetCracking/ so it never ships in the app.
 
@@ -138,6 +137,21 @@ check(TimeDial.ringMinutes(50, currentSecs: 10 * 60, first: true) == 50 && TimeD
       "dial: a first tap jumps anywhere; a drag elsewhere just follows")
 check(TimeDial.spoken(300) == "5 minutes" && TimeDial.spoken(60) == "1 minute" && TimeDial.spoken(165) == "2 minutes 45 seconds"
       && TimeDial.spoken(15) == "15 seconds", "dial: VoiceOver reads the time as the web's aria-valuetext")
+
+// the local StoreKit file (Config/Products.storekit, the scheme's Run action) sells exactly what ProductID.swift names
+if let data = FileManager.default.contents(atPath: "Config/Products.storekit"),
+   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+   let products = json["products"] as? [[String: Any]] {
+    check(products.compactMap { $0["productID"] as? String } == ProductID.all, "storekit: Products.storekit has the one product in ProductID.swift")
+    let p = products.first ?? [:]
+    check(p["type"] as? String == "NonConsumable" && p["familyShareable"] as? Bool == true && p["displayPrice"] as? String == "5.99",
+          "storekit: The Whole Nest is a family-shared non-consumable at 5.99")
+    check(((json["subscriptionGroups"] as? [Any]) ?? []).isEmpty, "storekit: no subscriptions")
+} else {
+    check(false, "storekit: Config/Products.storekit reads as JSON (run from the repository root)")
+}
+check(ProductID.unlocksAll == Set(ProductID.all) && ProductID.wholeNest.hasPrefix("com.belladouglas.getcracking."),
+      "storekit: the product ID sits under the bundle ID")
 
 print(failures == 0 ? "All gate checks passed" : "\(failures) gate check(s) FAILED")
 exit(failures == 0 ? 0 : 1)

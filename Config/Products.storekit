@@ -1,0 +1,55 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "5C3E1D2A",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "5.99",
+      "familyShareable" : true,
+      "internalID" : "6E4C8A10",
+      "localizations" : [
+        {
+          "description" : "Every friend, world and song, plus every new pack.",
+          "displayName" : "The Whole Nest",
+          "locale" : "en_AU"
+        },
+        {
+          "description" : "Every friend, world and song, plus every new pack.",
+          "displayName" : "The Whole Nest",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.belladouglas.getcracking.wholenest",
+      "referenceName" : "The Whole Nest",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "B68AX5ZHDT",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_AU",
+    "_storefront" : "AUS",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
