@@ -55,6 +55,17 @@ MainActor.assumeIsolated {
     check(Packs.allScenes == Scenes.list.map(\.id), "Packs.swift worlds = Scenes.list, same order")
     check(Animals.classic.count == 40, "the Classic 40 are unchanged in number")
 
+    // every friend, Classic and pack: it draws, stands on the ground and fits the stage
+    var drawn = 0
+    for id in Packs.allFriends {
+        guard let a = Animals.byId[id] else { check(false, "\(id): has art"); continue }
+        let node = Animals.render(a)
+        let bb = node.bounds
+        if shapes(node) >= 12 && finite(bb) && bb.width > 60 && bb.width < 320 && bb.height > 60 && bb.height < 320 { drawn += 1 }
+        else { check(false, "\(a.name): draws (\(shapes(node)) shapes, \(size(bb)))") }
+    }
+    check(drawn == 65 && Packs.allFriends.count == 65, "friends: \(drawn) of \(Packs.allFriends.count) friends have art that draws")
+
     let packs = Packs.list.filter { $0.id != "classic" }
     for pk in packs {
         print("\n\(pk.name) (\(pk.id)): \(pk.friends.count) friends, \(pk.scenes.count) worlds")

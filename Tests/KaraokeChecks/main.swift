@@ -92,6 +92,12 @@ for id in everyone {
     if KaraokeData.extra[id] == nil || !recording("kextra-" + id) { missing.append("extra") }
     check(missing.isEmpty, "\(id): call, karaoke world, voice, sing and extra" + (missing.isEmpty ? "" : " — missing \(missing)"))
 }
+let voiced = everyone.filter { id in
+    recording("voice-" + id)
+        && ((FriendCalls.all[id].map { recording("call-" + $0) } ?? false)
+            || (KaraokeData.sing[id] != nil && recording("ksing-" + id)))
+}
+check(voiced.count == 65, "friends: \(voiced.count) of \(everyone.count) friends have a name recording and a call or karaoke part, all bundled")
 check(Set(FriendCalls.all.keys) == Set(everyone), "every friend has exactly one call entry")
 check(KaraokeData.friends.count == 65 && Set(KaraokeData.friends.keys) == Set(everyone), "every friend has a karaoke entry, and no stray ones")
 check(Set(aussie.compactMap { KaraokeData.friends[$0]?.world }) == ["bush", "water"], "Aussie Bush friends play in the bush band (the platypus by the water)")
