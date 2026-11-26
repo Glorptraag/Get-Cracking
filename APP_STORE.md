@@ -8,7 +8,7 @@ Facts you'll need:
 |---|---|
 | App name | Get Cracking |
 | Bundle ID | `com.belladouglas.getcracking` |
-| Product ID | `com.glorptraag.getcracking.wholenest` |
+| Product ID | `com.belladouglas.getcracking.wholenest` |
 | Product type | Non-Consumable |
 | Reference name | The Whole Nest |
 | Price | A$5.99, Australia as the base storefront |
@@ -35,7 +35,7 @@ Placeholders still in the app (search `LegalLinks` in `GetCracking/Monetization/
 ## 3. Create the in-app purchase (ASC)
 1. ASC → **Apps** → Get Cracking (create the app record first if needed: **+** → New App → iOS, name "Get Cracking", primary language English (Australia), bundle ID `com.belladouglas.getcracking`, SKU e.g. `getcracking-ios`).
 2. Left sidebar → **Monetization** → **In-App Purchases** → **+**.
-3. Type: **Non-Consumable**. Reference Name: `The Whole Nest`. Product ID: `com.glorptraag.getcracking.wholenest` (exactly; it can never be reused or renamed). **Create**.
+3. Type: **Non-Consumable**. Reference Name: `The Whole Nest`. Product ID: `com.belladouglas.getcracking.wholenest` (exactly; it can never be reused or renamed). **Create**.
 4. **Availability**: all countries or regions (or start with Australia only).
 5. **Price Schedule** → **Add Pricing** → Base Country or Region: **Australia** → price **A$5.99**. Let Apple fill the other storefronts automatically. Confirm.
 6. **Family Sharing**: **Turn On**. Read the warning: it can't be undone. (On purpose: the paywall tells parents it's on.)
@@ -54,7 +54,7 @@ Don't copy a `.storekit` file from anywhere; let Xcode write it.
 2. Name `Products`, save it in the repo's **`Config/`** folder (not inside `GetCracking/`, so it never ships in the app). Leave "Sync this file with an app in App Store Connect" **unticked** for now (you can tick it later, once the IAP exists in ASC, to pull it in automatically).
 3. In the editor: **+** (bottom left) → **Add Non-Consumable In-App Purchase**.
    - Reference Name: `The Whole Nest`
-   - Product ID: `com.glorptraag.getcracking.wholenest`
+   - Product ID: `com.belladouglas.getcracking.wholenest`
    - Price: `5.99`
    - Family Shareable: **ticked**
    - Localization: Display Name `The Whole Nest`, Description `Every friend, world and song, plus every new pack.`
@@ -181,7 +181,7 @@ Paste into **App Review Information → Notes** (app version) and the IAP's **Re
 ```
 Get Cracking is a wordless visual timer for children aged 5 and under (Kids Category). No account or sign-in is needed, and the app makes no network requests of its own.
 
-In-app purchase: "The Whole Nest" (com.glorptraag.getcracking.wholenest), a Non-Consumable that unlocks all 65 friends (the Classic 40 plus the Aussie Bush and Christmas packs), 13 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
+In-app purchase: "The Whole Nest" (com.belladouglas.getcracking.wholenest), a Non-Consumable that unlocks all 65 friends (the Classic 40 plus the Aussie Bush and Christmas packs), 13 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
 
 Parental gate: every purchase surface, Restore Purchases, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
 

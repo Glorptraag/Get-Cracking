@@ -45,7 +45,7 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 | Content packs | done | done | web 8e30287 (js/packs.js). iPhone: `Monetization/Packs.swift` registry, per-pack toggles (`Settings.packsOff`), friend book grouped by pack |
 | Aussie Bush pack | done | done | web js/packs/aussie.js → `Art/Packs/AussieArt.swift`, `AussieWorlds.swift` (parity/to-mac-20261123-packart); audio in -karaoke. `Tests/ArtChecks` pixel-matched the web renders in CI |
 | Christmas pack | done | done | web js/packs/christmas.js → `Art/Packs/ChristmasArt.swift`, `ChristmasWorld.swift`; audio in -karaoke |
-| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.glorptraag.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Egg karaoke, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
+| The Whole Nest | n/a | done | iPhone-only, never ported back: the web stays free in full. One A$5.99 non-consumable (`com.belladouglas.getcracking.wholenest`) unlocks all friends, worlds, songs, unlimited photo friends and every pack; free tier = timer, 12 starter friends, 3 worlds, Egg karaoke, Animal band + jingles, 1 photo friend. Parental gate, locks in pickers and friend book. See MONETIZATION.md and APP_STORE.md (parity/to-mac-20261123-store) |
 
 ## Idioms
 

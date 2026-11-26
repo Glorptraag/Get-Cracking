@@ -65,7 +65,7 @@ Never, in any experiment:
 ## Products and prices
 | Product ID | Reference name | Type | Price (base storefront Australia) | Intro offer | Family Sharing | Basis |
 |---|---|---|---|---|---|---|
-| `com.glorptraag.getcracking.wholenest` | The Whole Nest | Non-Consumable | A$5.99 (the A$5.99 price point; other storefronts follow Apple's equalisation) | None | On (irreversible) | `[Judgment]` owner decision; `[Rule]` Family Sharing can't be turned off once on |
+| `com.belladouglas.getcracking.wholenest` | The Whole Nest | Non-Consumable | A$5.99 (the A$5.99 price point; other storefronts follow Apple's equalisation) | None | On (irreversible) | `[Judgment]` owner decision; `[Rule]` Family Sharing can't be turned off once on |
 
 Derived from the app's bundle id `com.belladouglas.getcracking` (`GetCracking.xcodeproj`).
 
@@ -110,7 +110,7 @@ The Kids Category rules out an analytics SDK, so the only numbers are App Store 
 ## For you to do by hand (Xcode and App Store Connect)
 The full click-by-click list is in `APP_STORE.md`. In short:
 - [ ] Paid Apps Agreement, tax and banking; Small Business Program
-- [ ] Create the Non-Consumable `com.glorptraag.getcracking.wholenest`, A$5.99, Australia as base, Family Sharing on, review screenshot and notes; submit it with the app version
+- [ ] Create the Non-Consumable `com.belladouglas.getcracking.wholenest`, A$5.99, Australia as base, Family Sharing on, review screenshot and notes; submit it with the app version
 - [ ] Create `Products.storekit` in Xcode and select it in the scheme to test locally
 - [ ] Host the privacy policy (and terms if you want your own) and replace `LegalLinks` in `ProductID.swift`
 - [ ] Kids Category (5 and under), age rating, App Privacy "Data Not Collected"

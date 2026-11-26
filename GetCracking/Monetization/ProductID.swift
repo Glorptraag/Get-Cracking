@@ -6,7 +6,7 @@ import Foundation
 ///
 /// The id must match App Store Connect exactly (see APP_STORE.md).
 enum ProductID {
-    static let wholeNest = "com.glorptraag.getcracking.wholenest"
+    static let wholeNest = "com.belladouglas.getcracking.wholenest"
 
     /// everything that unlocks the full app
     static let unlocksAll: Set<String> = [wholeNest]
