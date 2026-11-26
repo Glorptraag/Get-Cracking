@@ -128,7 +128,7 @@ A wordless timer for little ones. Set the time and watch the egg crack bit by bi
 Made for toddlers who can't read a clock yet: "when the egg hatches" is something they can see, hear and wait for. Use it for tidy-up time, teeth, screen time, turn-taking, bath time or bedtime.
 
 FREE, FOREVER
-• The full timer, from 10 seconds to 60 minutes
+• The full timer, from 15 seconds to 60 minutes
 • 12 friends to hatch: chick, duckling, bunny, kitten, puppy, piglet, fox, owl, frog, penguin, elephant and dino
 • 3 worlds: Sunny Meadow, Mossy Forest and Lily Pond
 • Egg karaoke: the friend who hatched sings its own song with a little band

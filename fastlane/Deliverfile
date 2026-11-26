@@ -1,0 +1,10 @@
+# fastlane deliver: store text from fastlane/metadata, screenshots from fastlane/screenshots.
+# Phase 5 of LAUNCH.md. Uses the App Store Connect API key (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8).
+app_identifier "com.belladouglas.getcracking"
+platform "ios"
+app_version "1.0"
+skip_binary_upload true
+overwrite_screenshots true
+submit_for_review false
+automatic_release false
+precheck_include_in_app_purchases false
