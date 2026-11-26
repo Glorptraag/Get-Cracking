@@ -59,5 +59,8 @@ struct RootView: View {
             await model.store.start()
             model.applyOwnership()
         }
+        #if DEBUG
+        .task { await DebugLaunch.apply(model) }
+        #endif
     }
 }

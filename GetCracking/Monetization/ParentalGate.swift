@@ -11,7 +11,11 @@ enum PaywallPlacement: String, Identifiable {
 /// links sit behind it (Kids Category rule, Guideline 1.3).
 struct GatedPaywall: View {
     let placement: PaywallPlacement
+    #if DEBUG
+    @State private var passed = DebugLaunch.skipsGate
+    #else
     @State private var passed = false
+    #endif
 
     var body: some View {
         Group {

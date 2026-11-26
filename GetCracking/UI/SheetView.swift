@@ -23,6 +23,7 @@ struct SheetView: View {
             }
             .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 8)
 
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     switch kind {
@@ -46,6 +47,14 @@ struct SheetView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 40)
                 .padding(.top, 6)
+            }
+            #if DEBUG
+            .task {
+                guard let target = DebugLaunch.scrollTarget else { return }
+                await GC.sleep(0.6)
+                proxy.scrollTo(target, anchor: .center)
+            }
+            #endif
             }
         }
         .background(Theme.paper.ignoresSafeArea())
@@ -390,6 +399,7 @@ struct PackRow: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(pack.name), locked. Part of The Whole Nest, for grown-ups.")
             .accessibilityAddTraits(.isButton)
+            .id("pack-" + pack.id)
         }
     }
 }
