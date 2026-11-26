@@ -138,6 +138,35 @@ check(TimeDial.ringMinutes(50, currentSecs: 10 * 60, first: true) == 50 && TimeD
 check(TimeDial.spoken(300) == "5 minutes" && TimeDial.spoken(60) == "1 minute" && TimeDial.spoken(165) == "2 minutes 45 seconds"
       && TimeDial.spoken(15) == "15 seconds", "dial: VoiceOver reads the time as the web's aria-valuetext")
 
+// the timer across backgrounding (Model/TimerClock.swift): the clock is wall time,
+// so a run that comes back after minutes away shows the right time and crack step at once
+do {
+    let t0 = 1_000_000.0
+    var c = TimerClock(total: 300, now: t0)
+    let endAt = t0 + 300
+    check(c.remaining(at: t0) == 300 && c.step(at: t0) == 0, "background: a 5:00 run starts at 5:00, step 0")
+    let back = t0 + 180   // 3 minutes away: no ticks at all in between
+    check(c.remaining(at: back) == endAt - back && c.remaining(at: back) == 120, "background: 3 min away, 2:00 left on return")
+    check(c.step(at: back) == TimerClock.step(for: 0.6) && c.step(at: back) == 5, "background: 3 of 5 min away, the egg is at crack step 5")
+    check(!c.isUp(at: back) && c.isUp(at: endAt) && c.isUp(at: endAt + 600), "background: time is up at the recorded end, and stays up after a long time away")
+    check(c.step(at: endAt + 600) == 8 && c.remaining(at: endAt + 600) == 0, "background: back long after the end, step 8 and 0:00, never negative")
+    c.pause(at: t0 + 60)
+    check(c.remaining(at: t0 + 60 + 180) == 240 && c.step(at: t0 + 240) == TimerClock.step(for: 0.2), "background: paused at 4:00, 3 min away, still 4:00 and step 1")
+    c.resume(at: t0 + 240)
+    check(c.remaining(at: t0 + 240) == 240 && c.remaining(at: t0 + 420) == 60, "background: resumed, it counts down from 4:00 again")
+    var a = TimerClock(total: 300, now: t0)
+    a.adjust(-400, at: t0 + 100)
+    check(a.remaining(at: t0 + 100) == 5, "−/+: never below 5 s left")
+    a.adjust(600, at: t0 + 100)
+    check(a.remaining(at: t0 + 100) == 605 && a.total >= 605 && a.elapsed(at: t0 + 100) >= 0, "−/+: adding time past the start grows the ring")
+    var h = TimerClock(total: 300, now: t0)
+    h.pause(at: t0 + 10)
+    h.finish(at: t0 + 20)
+    check(h.isUp(at: t0 + 20) && !h.isPaused, "hatch now: time is up at once, even from pause")
+    check((0...100).map { TimerClock.step(for: Double($0) / 100) } == (0...100).map { i in TimerClock.stepAt.filter { Double(i) / 100 >= $0 }.count },
+          "crack steps: one per STEP_AT landmark, never going back")
+}
+
 // the local StoreKit file (Config/Products.storekit, the scheme's Run action) sells exactly what ProductID.swift names
 if let data = FileManager.default.contents(atPath: "Config/Products.storekit"),
    let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],

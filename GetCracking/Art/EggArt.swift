@@ -37,7 +37,7 @@ enum EggArt {
         (8, [(-6, -152), (-12, -160)]),
     ]
     /// fraction of the timer at which each crack step happens
-    static let stepAt: [Double] = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.8, 0.9]
+    static var stepAt: [Double] { TimerClock.stepAt }
     /// how much of the main zig-zag shows at each step (0…1)
     static let mainLenByStep: [Double] = [0, 0, 0.22, 0.46, 0.72, 1, 1, 1, 1]
     /// crack line width at each step: the cracks deepen as time passes
@@ -56,11 +56,7 @@ enum EggArt {
         EggPalette(shell: "#fff1c2", spot: "#f3b54a"),
     ]
 
-    static func stepFor(_ fraction: Double) -> Int {
-        var n = 0
-        for (i, at) in stepAt.enumerated() where fraction >= at { n = i + 1 }
-        return n
-    }
+    static func stepFor(_ fraction: Double) -> Int { TimerClock.step(for: fraction) }
 
     static func patternNodes(_ kind: EggPattern, _ spot: String) -> [VNode] {
         switch kind {

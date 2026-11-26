@@ -116,16 +116,20 @@ final class RunController {
     let ring: Ring
 
     @ObservationIgnored private weak var app: AppModel?
-    @ObservationIgnored private var total: Double
-    @ObservationIgnored private var endAt: Double
-    @ObservationIgnored private var remainingWhenPaused: Double
+    @ObservationIgnored private var clock: TimerClock
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var knockTask: Task<Void, Never>?
     @ObservationIgnored private var trayTask: Task<Void, Never>?
     @ObservationIgnored private var zz: [VNode] = []
     @ObservationIgnored private(set) var ended = false
 
-    private static var wall: Double { Date().timeIntervalSinceReferenceDate }
+    private static var wall: Double {
+        #if DEBUG
+        return Date().timeIntervalSinceReferenceDate * DebugLaunch.clockSpeed
+        #else
+        return Date().timeIntervalSinceReferenceDate
+        #endif
+    }
 
     init(app: AppModel, sceneId: String) {
         let built = Scenes.build(sceneId)
@@ -137,9 +141,7 @@ final class RunController {
         scene = built
         egg = egg0
         ring = ring0
-        total = t
-        endAt = RunController.wall + t
-        remainingWhenPaused = t
+        clock = TimerClock(total: t, now: RunController.wall)
         egg0.onBoop = { Sound.shared.boop() }
         ring0.set(0)
         ring0.light(0)
@@ -167,16 +169,15 @@ final class RunController {
         tick()
     }
 
-    var remaining: Double {
-        phase == .paused ? remainingWhenPaused : max(0, endAt - RunController.wall)
-    }
+    var remaining: Double { clock.remaining(at: RunController.wall) }
 
     func tick() {
         guard !ended, phase == .running || phase == .paused else { return }
-        let rem = remaining
-        let elapsed = GC.clamp(1 - rem / total, 0, 1)
+        let now = RunController.wall
+        let rem = clock.remaining(at: now)
+        let elapsed = clock.elapsed(at: now)
         ring.set(elapsed)
-        let st = EggArt.stepFor(elapsed)
+        let st = TimerClock.step(for: elapsed)
         if st > egg.step {
             egg.setStep(st)
             ring.light(st)
@@ -211,6 +212,9 @@ final class RunController {
     }
 
     private func pickFriend() -> (node: VNode, name: String, animalId: String?) {
+        #if DEBUG
+        if let id = DebugLaunch.friend, let a = Animals.byId[id] { return (Animals.render(a), a.name, a.id) }
+        #endif
         let photos = app?.photos ?? []
         let who = settings.hatchWho
         let usePhoto = !photos.isEmpty && (who == "photos" || (who == "both" && Double.random(in: 0..<1) < 0.4))
@@ -283,17 +287,25 @@ final class RunController {
         guard phase == .running || phase == .paused || phase == .ready else { return }
         if phase == .paused { setPaused(false) }
         if phase == .running {
-            endAt = RunController.wall
+            clock.finish(at: RunController.wall)
             tick()
         }
         if phase == .ready { hatch() }
     }
 
+    #if DEBUG
+    /// launch states (DebugLaunch): put the run at a fraction of its time
+    func debugJump(to fraction: Double) {
+        clock = TimerClock(total: clock.total, now: RunController.wall - fraction * clock.total)
+        tick()
+    }
+    #endif
+
     func togglePause() { setPaused(phase != .paused) }
 
     func setPaused(_ on: Bool) {
         if on && phase == .running {
-            remainingWhenPaused = max(0, endAt - RunController.wall)
+            clock.pause(at: RunController.wall)
             phase = .paused
             egg.setPaused(true)
             Sound.shared.pauseMusic()
@@ -303,7 +315,7 @@ final class RunController {
             egg.fx.add(zz)
             scene.ringLayer.opacity = 0.55
         } else if !on && phase == .paused {
-            endAt = RunController.wall + remainingWhenPaused
+            clock.resume(at: RunController.wall)
             phase = .running
             egg.setPaused(false)
             for z in zz { z.removeFromParent() }
@@ -316,12 +328,8 @@ final class RunController {
 
     func adjust(_ seconds: Double) {
         guard phase == .running || phase == .paused else { return }
-        let rem = remaining
-        let next = max(5, rem + seconds)
-        let delta = next - rem
-        total = max(next, total + delta)
-        if phase == .paused { remainingWhenPaused = next } else { endAt = RunController.wall + next }
-        if next > 30 { Sound.shared.setTension(0) }
+        clock.adjust(seconds, at: RunController.wall)
+        if remaining > 30 { Sound.shared.setTension(0) }
         timeBump += 1
         tick()
     }
@@ -404,7 +412,10 @@ final class AppModel {
     @ObservationIgnored private var thumbs: [String: VNode] = [:]
 
     init() {
-        let s = Store.loadSettings()
+        var s = Store.loadSettings()
+        #if DEBUG
+        s = DebugLaunch.settings(s)
+        #endif
         settings = s
         // until StoreKit answers (a moment after launch), go by what it said last time
         let gate = FeatureGate(ownsWholeNest: EntitlementStore.lastKnownHasNest)
