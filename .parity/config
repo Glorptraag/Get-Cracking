@@ -1,6 +1,6 @@
 WEB_REF=main
 WEB_SCOPE=.
-WEB_SYNCED=c4600dd5b03530163809cce25fcd5887c957d580
+WEB_SYNCED=47bd2669a4283844aace03594c3ff24b341a7096
 WEB_INSTALL=true
 WEB_CHECK=for f in js/*.js js/hatch/*.js sw.js; do node --check "$f" || exit 1; done
 MAC_REF=ios-swiftui

@@ -18,6 +18,8 @@ To update the notes, edit `.parity/` on the port branch and commit as `parity: s
 
 Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking starts there. The next sync picks up everything `main` has gained since.
 
+**Parity is closed for 1.0 (26 Nov 2026).** `WEB_SYNCED` is set to `main` at `47bd266`, so nothing the web has today is owed to the iPhone app. Do not port anything until 1.0 is on the App Store; the next port happens after release and picks up what `main` gains after `47bd266`.
+
 ## Features
 
 | Feature | web | mac | notes |
@@ -60,7 +62,7 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 - Web Audio synth → `AVAudioEngine` synth in `Audio/Sound.swift`; `speechSynthesis` → `AVSpeechSynthesizer`.
 - `localStorage` → `Model/Store.swift`; IndexedDB photos → on-device files via `PhotosPicker`.
 - Wake Lock → `UIApplication.shared.isIdleTimerDisabled`.
-- Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac). Cloud runs compile-check on GitHub's macOS runner: `.github/workflows/getcracking-ios-build.yml` builds every push to a branch that touches the app (from parity/to-mac-20261123-store on), and runs `Tests/GateChecks` (StoreKit-free gate decisions).
+- Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac). The checks are `tools/check.sh`, run on the Mac (the three programs in `Tests/` and a simulator build). `.github/workflows/getcracking-ios-build.yml` runs the same script, by hand only: no workflow runs on a push.
 - Never declare a module-wide `typealias` that shadows a SwiftUI or Foundation name: the audio port's `typealias Path` hid SwiftUI's `Path` (now `PitchPath`).
 - Web `starter: true` / `pack` on friends and worlds → `Packs.swift` (`Pack.starterFriends`, `starterScenes`); `GC.Packs.register` → a new `Pack` entry in `Packs.list` plus the art. Store gating (`FeatureGate`) is iPhone-only.
 - Fredoka has no tabular figures, so `monospacedDigit()` (and the web's `font-variant-numeric: tabular-nums`) does nothing: the iPhone clock draws each digit in a fixed-width cell (`ClockDigits` in UI/TimerView.swift). The web clock still changes width every second (147 px at 1:11, 182 px at 0:08 on a 390 px phone); fix it there and record the port as already matched.
