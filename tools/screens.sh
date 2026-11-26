@@ -32,7 +32,7 @@ fi
 xcrun simctl boot "$udid" 2>/dev/null
 lim 300 xcrun simctl bootstatus "$udid" -b > /dev/null || { echo "FAIL the simulator did not boot"; exit 1; }
 lim 30 xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 2>/dev/null
-lim 300 xcrun simctl install "$udid" "$APP" || { echo "FAIL install"; exit 1; }
+lim ${INSTALL_LIMIT:-300} xcrun simctl install "$udid" "$APP" || { echo "FAIL install"; exit 1; }
 rm -rf "$OUT"; mkdir -p "$OUT"
 
 shot() { lim 60 xcrun simctl io "$udid" screenshot --type=png "$OUT/$1.png" > /dev/null 2>&1 && echo "$1.png" || echo "FAIL screenshot $1"; }

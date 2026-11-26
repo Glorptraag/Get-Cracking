@@ -60,11 +60,11 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 ## Phase 2: machines check first (agent, 1 day)
 
 - [x] [agent] `tools/check.sh` runs the three check programs and the simulator build. It runs on the Mac. Check: the script's last lines. Done (`63ca7e7`). A check program is only recompiled when its sources change.
-- [x] [agent] DEBUG-only launch arguments that open the app in a named state: setup dial, timer at each of the 8 crack steps, time up, hatch, friend with karaoke playing, friend book, each pack's store card, paywall, parental gate, settings. A fast clock argument runs a 5-minute timer in 5 seconds. Done (`44748b6`): `-gc-state <name>`, `-gc-fast` (60×), `-gc-friend`, `-gc-scene`; see `GetCracking/App/DebugLaunch.swift`.
-- [ ] [agent] A screenshot step in the check script, using `simctl` as Advent Eggs does: launch each state and screenshot into a folder outside the repository. Include one run of the fast clock from start to hatched. Check: the list of files.
+- [x] [agent] DEBUG-only launch arguments that open the app in a named state: setup dial, timer at each of the 8 crack steps, time up, hatch, friend with karaoke playing, friend book, each pack's store card, paywall, parental gate, settings. A fast clock argument runs a 5-minute timer in 5 seconds. Done (`44748b6`): `-gc-state <name>`, `-gc-fast` (60×), `-gc-friend`, `-gc-scene`; see `GetCracking/App/DebugLaunch.swift`. Builds; not yet seen running, because the screenshot step has not run.
+- [ ] [agent] A screenshot step in the check script, using `simctl` as Advent Eggs does: launch each state and screenshot into a folder outside the repository. Include one run of the fast clock from start to hatched. Check: the list of files. Written (`tools/screens.sh`, `tools/check.sh --screens`, `389993f`, `ff61cad`) but not yet run to the end: on 26–27 Nov the Mac was saturated by other sessions' simulator test runs (load average 600–970) and the simulator stopped answering `simctl launch` and `simctl io screenshot`. Run `tools/check.sh --screens` on a quiet Mac.
 - [x] [agent] Checks for the timer across backgrounding: start, record the end time, simulate 3 minutes away, confirm the remaining time and the crack step are right. Add to `GateChecks`. Check: the check names in the log. Done (`dee8acc`): `background:` checks on `Model/TimerClock.swift`.
 - [x] [agent] A check that every one of the 65 friends has art, a name recording, and a call or karaoke part that resolves to a bundled file. Check: log line with the count. Done (`c067a8b`): `friends: 65 of 65` in the art and karaoke logs.
-- [ ] [agent] Read every screenshot. Fix what is broken, list what is only untidy under 1.0.1. Check: a table in the PR.
+- [ ] [agent] Read every screenshot. Fix what is broken, list what is only untidy under 1.0.1. Check: a table in the PR. Waits on the screenshot step.
 
 ## Phase 3: store plumbing (in parallel)
 
@@ -74,8 +74,8 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 - [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`.
 - [ ] [Drew] Deploy `main` to Vercel production. On 26 Nov `https://getcrackingkids.vercel.app/` answered 200 but `/privacy.html` answered 404, although `privacy.html` is on `main`.
 - [ ] [agent] Confirm the privacy page is live. Check: `curl -sI https://getcrackingkids.vercel.app/privacy.html` shows 200.
-- [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log.
-- [x] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step. Text done (`2fae649`); screenshots wait on the screenshot step.
+- [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log. Written (`7362590`, `5d367f3`); `archive` mode proven. The upload waits on the API key above.
+- [ ] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step. Text done (`2fae649`): `fastlane/metadata/en-AU` and `en-US`, review notes, `Deliverfile`. Screenshots wait on the screenshot step. The description now says 15 seconds, the dial's real minimum.
 
 ## Phase 4: one hands-on pass (Drew, 20 minutes, one build)
 
