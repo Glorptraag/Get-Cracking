@@ -7,8 +7,8 @@ enum PaywallPlacement: String, Identifiable {
     var id: String { rawValue }
 }
 
-/// The parental gate, then the paywall. Purchases, Restore and the
-/// Terms / Privacy links all sit behind it (Kids Category rule).
+/// The parental gate, then the paywall. Purchases and the Terms / Privacy
+/// links sit behind it (Kids Category rule, Guideline 1.3).
 struct GatedPaywall: View {
     let placement: PaywallPlacement
     @State private var passed = false

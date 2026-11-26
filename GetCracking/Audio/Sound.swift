@@ -147,11 +147,16 @@ final class Sound {
         }
     }
 
-    /// have the hatching friend's karaoke voice and extra sound ready by the time the shell breaks
+    /// have the hatching friend's karaoke voice and extra sound ready by the time
+    /// the shell breaks, and its "It's a Fox!" line (decoding that on the main
+    /// thread as the friend lands could drop frames)
     func preloadFriend(_ animalId: String?) {
-        guard let id = animalId, KaraokeData.friends[id] != nil else { return }
+        let voice = animalId ?? "peekaboo"
+        let karaoke = animalId.flatMap { KaraokeData.friends[$0] != nil ? [Karaoke.singKey($0), Karaoke.extraKey($0)] : nil } ?? []
+        let files: [(key: String, file: String)] = karaoke.map { (key: $0, file: Karaoke.file($0)) }
+            + [(key: "voice/" + voice, file: "voice-" + voice)]
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            for key in [Karaoke.singKey(id), Karaoke.extraKey(id)] { _ = self?.haveSample(key, file: Karaoke.file(key)) }
+            for (key, file) in files { _ = self?.haveSample(key, file: file) }
         }
     }
 

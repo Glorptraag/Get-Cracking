@@ -108,13 +108,7 @@ struct TimerView: View {
         return TimelineView(.animation(minimumInterval: nil, paused: !paused || still)) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
             let fade = paused ? (still ? 0.6 : 0.75 + 0.25 * cos(t * 2 * .pi / 1.8)) : 1
-            Text(run.timeText)
-                .font(Theme.round(fs, .bold))
-                .monospacedDigit()
-                .tracking(-0.01 * fs)
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1)
-                .fixedSize()
+            ClockDigits(text: run.timeText, size: fs)
                 .padding(.horizontal, 0.45 * fs).padding(.top, 0.04 * fs).padding(.bottom, 0.02 * fs)
                 .toy(Theme.cream, radius: fs, border: 6, depth: 7)
                 .opacity(fade)
@@ -332,5 +326,26 @@ struct TimerView: View {
             .frame(height: 74)
         }
         .buttonStyle(ToyButtonStyle(fill: danger ? Theme.danger : Theme.cream, radius: 16))
+    }
+}
+
+/// mm:ss with every digit in a cell of the same width. Fredoka has no
+/// tabular figures (so `.monospacedDigit()` does nothing): a "1" is two-thirds
+/// the width of a "0", and the clock's pill grew and shrank every second.
+private struct ClockDigits: View {
+    let text: String
+    let size: CGFloat
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(text.enumerated()), id: \.offset) { _, ch in
+                Text(String(ch))
+                    .frame(width: (ch == ":" ? 0.24 : 0.57) * size)
+            }
+        }
+        .font(Theme.round(size, .bold))
+        .foregroundStyle(Theme.ink)
+        .lineLimit(1)
+        .fixedSize()
     }
 }

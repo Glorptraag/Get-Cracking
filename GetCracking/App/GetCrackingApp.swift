@@ -46,6 +46,10 @@ struct RootView: View {
         .onChange(of: model.settings) { _, new in Store.save(new) }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            // iOS can stop the audio engine while the app is suspended, and doesn't
+            // always say so; restart it, or the countdown music stays silent until
+            // the next crack sound happens to restart it
+            if model.run != nil { Sound.shared.ensure() }
             model.run?.tick()
             // a refund or family-sharing change while away sends no update of its own
             Task { await model.store.refreshEntitlements() }

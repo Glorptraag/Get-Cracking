@@ -76,7 +76,7 @@ Don't copy a `.storekit` file from anywhere; let Xcode write it.
    - Result should be **4+**.
 3. Kids Category rules this app already meets, and must keep meeting forever (even if the category changes later):
    - No third-party analytics, ads or tracking. (`MonetizationLog` writes to the device log only.)
-   - Purchases, Restore, Terms and Privacy links all sit behind the parental gate.
+   - Purchases and the Terms and Privacy links sit behind the parental gate. (Restore Purchases buys nothing, so it isn't gated.)
    - No links out of the app anywhere else; no push notifications.
 
 ## 6. App Privacy (ASC → App Privacy)
@@ -183,7 +183,7 @@ Get Cracking is a wordless visual timer for children aged 5 and under (Kids Cate
 
 In-app purchase: "The Whole Nest" (com.belladouglas.getcracking.wholenest), a Non-Consumable that unlocks all 65 friends (the Classic 40 plus the Aussie Bush and Christmas packs), 13 worlds, every hatching song, unlimited photo friends and future content packs. The free tier (the full timer, 12 friends, 3 worlds, Egg karaoke, the first animal band and jingles, one photo friend) is complete on its own.
 
-Parental gate: every purchase surface, Restore Purchases, and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
+Parental gate: every purchase surface and the Terms of Use / Privacy Policy links are behind a parental gate that shows two numbers written as words (for example "nineteen plus twenty-three") and asks for the answer in digits (42). A wrong answer shows a new question. Children only ever see a small lock icon; there are no interruptive paywalls and nothing is shown on the timer screen.
 
 To reach the purchase:
 1. On the home screen tap the gear button (Settings).
@@ -192,7 +192,7 @@ To reach the purchase:
 4. The paywall shows the price, Restore Purchases, Terms of Use and Privacy Policy. Tap "Unlock The Whole Nest".
 Other ways in: tap a locked world (World button), a locked hatching song (Music button), a locked friend or the "For grown-ups" banner in the friend book (Friends button), or the locked "+" after adding one photo (Settings → Who hatches?).
 
-After purchase every lock disappears. Restore Purchases is on the paywall only (Settings → The Whole Nest → parental gate), so it is never reachable without the gate.
+After purchase every lock disappears. Restore Purchases is in Settings under The Whole Nest, and on the paywall.
 ```
 
 ## 11. Submit
@@ -211,14 +211,29 @@ Do this on a real iPhone before submitting. TestFlight builds use the sandbox, s
 | 3 | Load failure | Airplane mode, open the paywall | "Couldn't reach the App Store just now" + Try again; nothing unlocks |
 | 4 | Purchase | Online, Unlock The Whole Nest, confirm with the sandbox account | Paywall says thank you; every lock gone; friend-book banner gone; Settings row says "unlocked" |
 | 5 | Shuffle | Run a few short timers | Locked-before friends and worlds now appear |
-| 6 | Restore | Delete the app, reinstall, Settings → The Whole Nest → gate → Restore Purchases | Unlocks again |
+| 6 | Restore | Delete the app, reinstall, Settings → Restore Purchases | Unlocks again |
 | 7 | Offline launch | Owned; airplane mode; force-quit; relaunch | Still unlocked (StoreKit's receipts are on the device) |
 | 8 | Ask to Buy | In Xcode with `Products.storekit`: **Editor → Enable Ask To Buy**, buy | "Waiting for a grown-up to approve"; approve in **Debug → StoreKit → Manage Transactions** → everything unlocks by itself |
 | 9 | Refund / downgrade | Xcode Transaction Manager → **Refund** the purchase, return to the app | Locks come back; extra photos stay and still hatch; friends already found stay in the book; a locked world/song setting plays Surprise me / Egg karaoke |
-| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → The Whole Nest → gate → Restore Purchases | Unlocked without paying |
+| 10 | Family Sharing | After release (sandbox can't fully simulate it): a family member installs from the App Store, opens Settings → Restore Purchases | Unlocked without paying |
 | 11 | Foreground refresh | Refund in Transaction Manager while the app is in the background, then bring it back | Locks return without a relaunch |
 
 Sandbox account: ASC → **Users and Access** → **Sandbox** → **Test Accounts** → **+**, Australian storefront. On the iPhone: **Settings → Developer → Sandbox Apple Account** (or Settings → App Store → Sandbox Account, depending on iOS version).
+
+### Sound and look on a real phone
+These can't be checked in CI or the simulator. A 2-minute timer is enough for each one.
+
+| # | What | Do | Expect |
+|---|---|---|---|
+| S1 | Launch | Force-quit, open the app | A soft grey-green screen, then the setup screen: no white flash |
+| S2 | Silent switch | Ring/silent switch on silent, run a timer to the hatch | The music and the hatch song still play (on purpose: the app is `.playback`) |
+| S3 | Other audio | Play a podcast, then start a timer | Both play together; the podcast isn't stopped |
+| S4 | Away and back | Mid-run, go to the Home Screen for 30 s, come back | The countdown music is playing again straight away, and the egg has caught up |
+| S5 | Phone call / Siri | Mid-run, trigger Siri (or have someone ring), then dismiss | The music comes back after |
+| S6 | Headphones | Mid-hatch, disconnect AirPods / unplug wired headphones | The song carries on from the speaker, no crackle |
+| S7 | Levels | Volume at about half, play Egg karaoke for a few friends (Settings → Music → tap Egg karaoke) | The friend sits in the band, not on top; "It's a …!" is clear over the ducked band; nothing distorts at full volume |
+| S8 | Clock | Run a 2-minute timer with "Show the clock" on | The clock's pill stays exactly the same width as the seconds tick (it used to grow and shrink) |
+| S9 | Small phone | iPhone SE or 13 mini if you have one | The setup screen fits without scrolling; "It's a Christmas Tree Cookie!" fits on one line |
 
 ---
 

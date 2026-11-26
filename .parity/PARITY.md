@@ -63,3 +63,10 @@ Baseline: the iPhone app was ported from web commit `c4600dd`, so web tracking s
 - Build check: `xcodebuild -scheme GetCracking -destination 'generic/platform=iOS Simulator'` (needs a Mac). Cloud runs compile-check on GitHub's macOS runner: `.github/workflows/getcracking-ios-build.yml` builds every push to a branch that touches the app (from parity/to-mac-20261123-store on), and runs `Tests/GateChecks` (StoreKit-free gate decisions).
 - Never declare a module-wide `typealias` that shadows a SwiftUI or Foundation name: the audio port's `typealias Path` hid SwiftUI's `Path` (now `PitchPath`).
 - Web `starter: true` / `pack` on friends and worlds → `Packs.swift` (`Pack.starterFriends`, `starterScenes`); `GC.Packs.register` → a new `Pack` entry in `Packs.list` plus the art. Store gating (`FeatureGate`) is iPhone-only.
+- Fredoka has no tabular figures, so `monospacedDigit()` (and the web's `font-variant-numeric: tabular-nums`) does nothing: the iPhone clock draws each digit in a fixed-width cell (`ClockDigits` in UI/TimerView.swift). The web clock still changes width every second (147 px at 1:11, 182 px at 0:08 on a 390 px phone); fix it there and record the port as already matched.
+
+## iPhone-only polish (pre-launch pass)
+
+- Launch screen is the `LaunchBackground` colour (the dimmed setup screen's average tone) instead of a white flash: `UILaunchScreen` in Config/Info.plist.
+- The audio engine is restarted when the app returns to the foreground during a run (RootView), so the countdown music never stays silent.
+- The "It's a Fox!" line is decoded off the main thread when the hatch starts (`Sound.preloadFriend`).
