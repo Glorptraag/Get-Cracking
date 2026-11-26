@@ -1,0 +1,26 @@
+name: Get Cracking TestFlight upload
+# By hand only, at most once per release candidate. Normally run tools/release.sh upload on the Mac instead.
+on:
+  workflow_dispatch:
+jobs:
+  upload:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pick the newest Xcode
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+      - name: Checks (no build; the archive builds the app)
+        run: tools/check.sh --no-build
+      - name: Archive, export and upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          RELEASE_OUT: ${{ runner.temp }}/release
+        run: tools/release.sh upload
