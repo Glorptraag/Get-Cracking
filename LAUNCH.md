@@ -48,22 +48,22 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 
 ## Phase 1: one trunk, frozen (agent, half a day)
 
-- [ ] [agent] In PR 10, before it merges, change `getcracking-ios-build.yml` to a manual trigger only. Check: `grep -n -A3 '^on:' .github/workflows/getcracking-ios-build.yml`.
-- [ ] [agent] Merge PR 15 into the store branch. Both sides touched `ProductID.swift`, `MONETIZATION.md`, `APP_STORE.md` and `ParentalGate.swift`: keep the new product ID from the store branch and the ungated Restore and polish from PR 15. Check: `tools/check.sh` passes, or until it exists, the three check programs and a simulator build.
-- [ ] [agent] Merge PR 10 into `ios-swiftui`. Check: `git rev-list --left-right --count origin/ios-swiftui...origin/parity/to-mac-20261123-store` prints `0 0`.
+- [x] [agent] In PR 10, before it merges, change `getcracking-ios-build.yml` to a manual trigger only. Check: `grep -n -A3 '^on:' .github/workflows/getcracking-ios-build.yml`. Done 26 Nov (`3077f84`), pushed together with the merge so no run fired.
+- [x] [agent] Merge PR 15 into the store branch. Both sides touched `ProductID.swift`, `MONETIZATION.md`, `APP_STORE.md` and `ParentalGate.swift`: keep the new product ID from the store branch and the ungated Restore and polish from PR 15. Check: `tools/check.sh` passes, or until it exists, the three check programs and a simulator build. Done 26 Nov (`d5b41f9`): clean merge, product ID and ungated Restore both kept.
+- [x] [agent] Merge PR 10 into `ios-swiftui`. Check: `git rev-list --left-right --count origin/ios-swiftui...origin/parity/to-mac-20261123-store` prints `0 0`. Done 26 Nov: the store branch took the launch plan, then `ios-swiftui` fast-forwarded to it (`0 0`).
 - [ ] [Drew] Delete or close `parity/to-mac`, `claude/peaceful-heisenberg-jgwkwu` and the dated `parity/to-mac-2026112x-*` branches once the line above is done. From then on every iOS change goes to `ios-swiftui` and nowhere else.
-- [ ] [agent] Parity is closed for 1.0. Set `WEB_SYNCED` in `.parity/config` to the current `main` and note in `PARITY.md` that the next port happens after release.
-- [ ] [agent] Build number from the commit count, set at archive time. Check: two archives from two commits show different `CFBundleVersion`.
+- [x] [agent] Parity is closed for 1.0. Set `WEB_SYNCED` in `.parity/config` to the current `main` and note in `PARITY.md` that the next port happens after release. Done (`699456d`).
+- [x] [agent] Build number from the commit count, set at archive time. Check: two archives from two commits show different `CFBundleVersion`. Done (`7362590`): `tools/release.sh archive` at `7362590` gave `CFBundleVersion` 50, at `2fae649` gave 56.
 - [x] [Drew] Product ID renamed to match the bundle ID (`48c6b33`, 26 Nov).
-- [ ] [agent] Read the ID from `ProductID.swift`, remove the "REPLACE the placeholders" comment if it is still there, and add `Products.storekit` with that one product, attached to the scheme's run action. Check: the gate checks pass.
+- [x] [agent] Read the ID from `ProductID.swift`, remove the "REPLACE the placeholders" comment if it is still there, and add `Products.storekit` with that one product, attached to the scheme's run action. Check: the gate checks pass. Done (`4f211c7`): `Config/Products.storekit`, four `storekit:` gate checks.
 
 ## Phase 2: machines check first (agent, 1 day)
 
-- [ ] [agent] `tools/check.sh` runs the three check programs and the simulator build. It runs on the Mac. Check: the script's last lines.
-- [ ] [agent] DEBUG-only launch arguments that open the app in a named state: setup dial, timer at each of the 8 crack steps, time up, hatch, friend with karaoke playing, friend book, each pack's store card, paywall, parental gate, settings. A fast clock argument runs a 5-minute timer in 5 seconds.
+- [x] [agent] `tools/check.sh` runs the three check programs and the simulator build. It runs on the Mac. Check: the script's last lines. Done (`63ca7e7`). A check program is only recompiled when its sources change.
+- [x] [agent] DEBUG-only launch arguments that open the app in a named state: setup dial, timer at each of the 8 crack steps, time up, hatch, friend with karaoke playing, friend book, each pack's store card, paywall, parental gate, settings. A fast clock argument runs a 5-minute timer in 5 seconds. Done (`44748b6`): `-gc-state <name>`, `-gc-fast` (60×), `-gc-friend`, `-gc-scene`; see `GetCracking/App/DebugLaunch.swift`.
 - [ ] [agent] A screenshot step in the check script, using `simctl` as Advent Eggs does: launch each state and screenshot into a folder outside the repository. Include one run of the fast clock from start to hatched. Check: the list of files.
-- [ ] [agent] Checks for the timer across backgrounding: start, record the end time, simulate 3 minutes away, confirm the remaining time and the crack step are right. Add to `GateChecks`. Check: the check names in the log.
-- [ ] [agent] A check that every one of the 65 friends has art, a name recording, and a call or karaoke part that resolves to a bundled file. Check: log line with the count.
+- [x] [agent] Checks for the timer across backgrounding: start, record the end time, simulate 3 minutes away, confirm the remaining time and the crack step are right. Add to `GateChecks`. Check: the check names in the log. Done (`dee8acc`): `background:` checks on `Model/TimerClock.swift`.
+- [x] [agent] A check that every one of the 65 friends has art, a name recording, and a call or karaoke part that resolves to a bundled file. Check: log line with the count. Done (`c067a8b`): `friends: 65 of 65` in the art and karaoke logs.
 - [ ] [agent] Read every screenshot. Fix what is broken, list what is only untidy under 1.0.1. Check: a table in the PR.
 
 ## Phase 3: store plumbing (in parallel)
@@ -72,9 +72,10 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 - [ ] [Drew] App record for `com.belladouglas.getcracking`, Kids Category and age band as in section 5. Made for Kids cannot be undone later.
 - [ ] [Drew] Create the in-app purchase with the ID in `ProductID.swift`, A$5.99, Family Sharing on.
 - [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`.
+- [ ] [Drew] Deploy `main` to Vercel production. On 26 Nov `https://getcrackingkids.vercel.app/` answered 200 but `/privacy.html` answered 404, although `privacy.html` is on `main`.
 - [ ] [agent] Confirm the privacy page is live. Check: `curl -sI https://getcrackingkids.vercel.app/privacy.html` shows 200.
 - [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log.
-- [ ] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step.
+- [x] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step. Text done (`2fae649`); screenshots wait on the screenshot step.
 
 ## Phase 4: one hands-on pass (Drew, 20 minutes, one build)
 
