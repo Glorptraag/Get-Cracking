@@ -1,6 +1,6 @@
 # Get Cracking (iPhone): plan to the App Store
 
-Written 25 Nov 2026. This file is the single list of what stands between the app and a public 1.0. Tick items here as they land. Nothing outside this file blocks the release.
+Written 25 Nov 2026, revised 26 Nov. This file is the single list of what stands between the app and a public 1.0. Tick items here as they land. Nothing outside this file blocks the release.
 
 ## Goal
 
@@ -14,12 +14,12 @@ The goal checker only reads the conversation, so every item below names a comman
 
 ## Where it stands
 
-- **The release candidate is not on this branch.** `ios-swiftui` has 40 friends, no karaoke, no packs, no purchase, and `APP_STORE.md` on the newer line says it does not compile. The real app is `claude/confident-bohr-z2ljcm` (25 Nov), which sits on `parity/to-mac-20261123-store`: 26 commits ahead of `ios-swiftui`, none behind, so it fast-forwards.
+- **The release candidate is not on this branch.** `ios-swiftui` has 40 friends, no karaoke, no packs, no purchase, and `APP_STORE.md` on the newer line says it does not compile. The real app is split over two open pull requests: PR 10 (`parity/to-mac-20261123-store` into `ios-swiftui`, 25 commits ahead, none behind) and PR 15 (`claude/confident-bohr-z2ljcm` into that store branch: the 25 Nov polish and the ungated Restore). On 26 Nov the store branch gained one more commit, so the two have diverged by one commit against two and PR 15 needs a real merge.
 - That line has feature parity with the web app (65 friends, 13 worlds, karaoke, packs), StoreKit 2 with one non-consumable at A$5.99, a parental gate, a privacy manifest, and a CI workflow that runs about 158 standalone checks and a simulator build.
 - `parity/to-mac` and `claude/peaceful-heisenberg-jgwkwu` are second ports of the same work and are not merged anywhere.
 - The build number is `1` on every branch and nothing bumps it. App Store Connect refuses a second upload with the same number.
 - There is no `.storekit` file, so the purchase cannot be tried in the simulator.
-- The product ID is `com.glorptraag.getcracking.wholenest` while the bundle ID is now `com.belladouglas.getcracking`.
+- The product ID was renamed to the `com.belladouglas` prefix on 26 Nov (`48c6b33` on the store branch), so it now matches the bundle ID.
 - CI does not archive or upload. No screenshots. Store text is drafted in `APP_STORE.md`.
 - `APP_STORE.md` has an 11-test TestFlight script plus nine on-device checks, with no rule for when testing is finished.
 
@@ -48,13 +48,14 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 
 ## Phase 1: one trunk, frozen (agent, half a day)
 
-- [ ] [agent] In the same pull request as the fast-forward, change `getcracking-ios-build.yml` to a manual trigger only. Check: `grep -n -A3 '^on:' .github/workflows/getcracking-ios-build.yml`.
-- [ ] [agent] Fast-forward `ios-swiftui` to `claude/confident-bohr-z2ljcm` by pull request. Check: `git rev-list --left-right --count origin/ios-swiftui...origin/claude/confident-bohr-z2ljcm` prints `0 0`.
+- [ ] [agent] In PR 10, before it merges, change `getcracking-ios-build.yml` to a manual trigger only. Check: `grep -n -A3 '^on:' .github/workflows/getcracking-ios-build.yml`.
+- [ ] [agent] Merge PR 15 into the store branch. Both sides touched `ProductID.swift`, `MONETIZATION.md`, `APP_STORE.md` and `ParentalGate.swift`: keep the new product ID from the store branch and the ungated Restore and polish from PR 15. Check: `tools/check.sh` passes, or until it exists, the three check programs and a simulator build.
+- [ ] [agent] Merge PR 10 into `ios-swiftui`. Check: `git rev-list --left-right --count origin/ios-swiftui...origin/parity/to-mac-20261123-store` prints `0 0`.
 - [ ] [Drew] Delete or close `parity/to-mac`, `claude/peaceful-heisenberg-jgwkwu` and the dated `parity/to-mac-2026112x-*` branches once the line above is done. From then on every iOS change goes to `ios-swiftui` and nowhere else.
 - [ ] [agent] Parity is closed for 1.0. Set `WEB_SYNCED` in `.parity/config` to the current `main` and note in `PARITY.md` that the next port happens after release.
 - [ ] [agent] Build number from the commit count, set at archive time. Check: two archives from two commits show different `CFBundleVersion`.
-- [ ] [Drew] Decide the product ID before creating it in App Store Connect, because it cannot be renamed after. Default: rename to `com.belladouglas.getcracking.wholenest` so it matches the bundle ID.
-- [ ] [agent] Apply that ID in `ProductID.swift`, remove the "REPLACE the placeholders" comment, and add `Products.storekit` with the one product, attached to the scheme's run action. Check: the gate checks pass.
+- [x] [Drew] Product ID renamed to match the bundle ID (`48c6b33`, 26 Nov).
+- [ ] [agent] Read the ID from `ProductID.swift`, remove the "REPLACE the placeholders" comment if it is still there, and add `Products.storekit` with that one product, attached to the scheme's run action. Check: the gate checks pass.
 
 ## Phase 2: machines check first (agent, 1 day)
 
@@ -69,7 +70,7 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 
 - [ ] [Drew] App Store Connect: Paid Apps Agreement, tax, banking, Small Business Program (`APP_STORE.md` sections 1 and 2).
 - [ ] [Drew] App record for `com.belladouglas.getcracking`, Kids Category and age band as in section 5. Made for Kids cannot be undone later.
-- [ ] [Drew] Create the in-app purchase with the ID from phase 1, A$5.99, Family Sharing on.
+- [ ] [Drew] Create the in-app purchase with the ID in `ProductID.swift`, A$5.99, Family Sharing on.
 - [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`.
 - [ ] [agent] Confirm the privacy page is live. Check: `curl -sI https://getcrackingkids.vercel.app/privacy.html` shows 200.
 - [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log.
