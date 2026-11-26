@@ -3,6 +3,7 @@
 # Tests/ and a simulator build. Wherever LAUNCH.md says CI, it means this.
 #
 #   tools/check.sh              checks + build
+#   tools/check.sh --screens    checks + build + screenshots of every launch state (tools/screens.sh)
 #   tools/check.sh --no-build   the check programs only
 #
 # Output (binaries, logs, art contact sheets, the build) goes to
@@ -38,7 +39,7 @@ run() {
 }
 
 if compile gatecheck GetCracking/Monetization/Packs.swift GetCracking/Monetization/FeatureGate.swift \
-    GetCracking/Monetization/ProductID.swift GetCracking/Model/TimeDial.swift Tests/GateChecks/*.swift; then
+    GetCracking/Monetization/ProductID.swift GetCracking/Model/TimeDial.swift GetCracking/Model/TimerClock.swift Tests/GateChecks/*.swift; then
     run gate gatecheck
 else echo "gate: FAIL (compile)"; fail=1; fi
 
@@ -49,7 +50,7 @@ else echo "karaoke: FAIL (compile)"; fail=1; fi
 
 if compile artcheck GetCracking/Core/VNode.swift GetCracking/Core/SVGPath.swift GetCracking/Core/Motion.swift GetCracking/Core/Util.swift \
     GetCracking/Art/Animals.swift GetCracking/Art/Loops.swift GetCracking/Art/Props.swift GetCracking/Art/Scenes.swift \
-    GetCracking/Art/EggArt.swift GetCracking/Art/Icons.swift \
+    GetCracking/Art/EggArt.swift GetCracking/Model/TimerClock.swift GetCracking/Art/Icons.swift \
     GetCracking/Art/Packs/*.swift GetCracking/Monetization/Packs.swift Tests/ArtChecks/*.swift; then
     run art artcheck "$OUT/art-png"
 else echo "art: FAIL (compile)"; fail=1; fi
@@ -66,6 +67,13 @@ if [ "${1:-}" != "--no-build" ]; then
         grep -E "error:" "$OUT/build.log" | sort -u | head -30
         echo "build: FAIL"; fail=1
     fi
+fi
+
+if [ "${1:-}" = "--screens" ] && [ $fail -eq 0 ]; then
+    echo "== screenshots"
+    tools/screens.sh "$OUT/build/Debug-iphonesimulator/GetCracking.app" > "$OUT/screens.log" 2>&1 || fail=1
+    grep -E "FAIL" "$OUT/screens.log"
+    tail -1 "$OUT/screens.log"
 fi
 
 if [ $fail -eq 0 ]; then echo "ALL CHECKS PASSED"; else echo "CHECKS FAILED"; fi
