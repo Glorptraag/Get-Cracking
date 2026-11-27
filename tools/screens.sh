@@ -38,6 +38,8 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 shot() { lim 60 xcrun simctl io "$udid" screenshot --type=png "$OUT/$1.png" > /dev/null 2>&1 && echo "$1.png" || echo "FAIL screenshot $1"; }
 
 # state, seconds to wait before the screenshot, extra launch arguments
+# A cold launch takes a few seconds to draw; SCREENS_EXTRA adds to every wait (default 5).
+extra_wait="${SCREENS_EXTRA:-5}"
 states=(
     "setup 3" "crack1 3" "crack2 3" "crack3 3" "crack4 3" "crack5 3" "crack6 3" "crack7 3" "crack8 3"
     "timeup 3" "hatch 1.6" "friend 6 -gc-friend fox" "book 3" "world 3" "sound 3" "settings 3"
@@ -47,7 +49,7 @@ for entry in "${states[@]}"; do
     read -r state wait extra <<< "$entry"
     lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
     lim 60 xcrun simctl launch "$udid" "$BUNDLE" -gc-state "$state" ${extra:-} > /dev/null || { echo "FAIL launch $state"; continue; }
-    sleep "$wait"
+    sleep "$(echo "$wait + $extra_wait" | bc)"
     shot "$state"
 done
 
@@ -55,7 +57,7 @@ done
 lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
 lim 60 xcrun simctl launch "$udid" "$BUNDLE" -gc-state run -gc-fast -gc-friend kookaburra > /dev/null || echo "FAIL launch run"
 for s in 0 1 2 3 4 5 6 8 10; do
-    sleep $([ "$s" = 0 ] && echo 1.5 || echo 1)
+    sleep $([ "$s" = 0 ] && echo "1.5 + $extra_wait" | bc || echo 1)
     shot "fast-$(printf %02d "$s")s"
 done
 lim 30 xcrun simctl terminate "$udid" "$BUNDLE" 2>/dev/null
