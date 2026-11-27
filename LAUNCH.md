@@ -69,12 +69,12 @@ Mac runners use Actions minutes ten times faster than Linux ones, and they were 
 ## Phase 3: store plumbing (in parallel)
 
 - [ ] [Drew] App Store Connect: Paid Apps Agreement, tax, banking, Small Business Program (`APP_STORE.md` sections 1 and 2).
-- [ ] [Drew] App record for `com.belladouglas.getcracking`, Kids Category and age band as in section 5. Made for Kids cannot be undone later.
-- [ ] [Drew] Create the in-app purchase with the ID in `ProductID.swift`, A$5.99, Family Sharing on.
-- [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`.
-- [ ] [Drew] Deploy `main` to Vercel production. On 26 Nov `https://getcrackingkids.vercel.app/` answered 200 but `/privacy.html` answered 404, although `privacy.html` is on `main`.
+- [x] [Drew] App record for `com.belladouglas.getcracking`, Kids Category and age band as in section 5. Made for Kids cannot be undone later. 27 Nov: record exists (Apple ID 6838728056); App Information filled: Education with Utilities, Made for Kids, ages 5 and under, 4+, content rights (bundled fonts), free in all 175 countries, App Privacy answered "Data Not Collected" (still to Publish).
+- [ ] [Drew] Create the in-app purchase with the ID in `ProductID.swift`, A$5.99, Family Sharing on. 27 Nov: created (Apple ID 6839851014) with display name and description. Still to do: price A$5.99 (needs the Paid Apps Agreement) and Family Sharing on (irreversible, left to Drew).
+- [ ] [Drew] App Store Connect API key (App Manager) in repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`. Not needed for uploads: Xcode's signed-in account uploads (see below). API access has not been requested yet.
+- [ ] [Drew] Deploy `main` to Vercel production. On 26 Nov `https://getcrackingkids.vercel.app/` answered 200 but `/privacy.html` answered 404, although `privacy.html` is on `main`. Still 404 on 27 Nov: `main` builds only go to preview; production is stuck on `bc516de`. Promote `dpl_43JRtPcfJnsTNL8AfU741io7sDZD` (PR 14) and fix the project's production branch.
 - [ ] [agent] Confirm the privacy page is live. Check: `curl -sI https://getcrackingkids.vercel.app/privacy.html` shows 200.
-- [ ] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log. Written (`7362590`, `5d367f3`); `archive` mode proven. The upload waits on the API key above.
+- [x] [agent] `tools/release.sh`, run on the Mac, with a manual-only workflow that calls it: archive, export with the API key, upload to TestFlight. Check: the upload line in the log. Written (`7362590`, `5d367f3`); `archive` mode proven. The upload waits on the API key above. 27 Nov: build 59 uploaded to App Store Connect without an API key: `tools/release.sh archive`, then `xcodebuild -exportArchive -allowProvisioningUpdates` with `method app-store-connect, destination upload`, signed by Xcode's account. Log: `Upload succeeded`. Tagged `v1.0-rc1`.
 - [ ] [agent] Move the drafted store text and review notes from `APP_STORE.md` sections 8 and 10 into `fastlane/metadata`. Store screenshots at iPhone 6.9" from the screenshot step. Text done (`2fae649`): `fastlane/metadata/en-AU` and `en-US`, review notes, `Deliverfile`. Screenshots wait on the screenshot step. The description now says 15 seconds, the dial's real minimum.
 
 ## Phase 4: one hands-on pass (Drew, 20 minutes, one build)
